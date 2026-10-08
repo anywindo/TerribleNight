@@ -18,4 +18,14 @@ enum AttendanceStatus: string
             self::ON_LEAVE => 'On Leave',
         };
     }
+
+    public function color(): string
+    {
+        return match($this) {
+            self::PRESENT => 'success',
+            self::ABSENT => 'danger',
+            self::LATE => 'warning',
+            self::ON_LEAVE => 'info',
+        };
+    }
 }

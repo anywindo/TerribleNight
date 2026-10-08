@@ -17,8 +17,8 @@ class SecurityHeaders
         'X-Frame-Options'         => 'DENY',
         'X-XSS-Protection'        => '1; mode=block',
         'Referrer-Policy'         => 'strict-origin-when-cross-origin',
-        'Permissions-Policy'      => 'geolocation=(), camera=(), microphone=()',
-        'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000;",
+        'Permissions-Policy'      => 'geolocation=(self), camera=(self), microphone=()',
+        'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://nominatim.openstreetmap.org https://unpkg.com; img-src 'self' data: https://ui-avatars.com https://*.tile.openstreetmap.org https://unpkg.com https://cdnjs.cloudflare.com;",
     ];
 
     public function handle(Request $request, Closure $next): Response

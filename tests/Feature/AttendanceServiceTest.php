@@ -50,7 +50,9 @@ it('throws exception if starting break before starting shift', function () {
     [$user, $shift, $service] = setupAttendanceServiceTest();
 
     $service->recordEvent($user, $shift, EventType::START_BREAK, [
-        'latitude' => -6.2, 'longitude' => 106.8, 'selfie_path' => 'path.jpg'
+        'latitude' => -6.2,
+        'longitude' => 106.8,
+        'selfie_path' => 'path.jpg'
     ]);
 })->throws(ValidationException::class);
 
@@ -58,10 +60,14 @@ it('throws exception if starting shift twice', function () {
     [$user, $shift, $service] = setupAttendanceServiceTest();
 
     $service->recordEvent($user, $shift, EventType::START_SHIFT, [
-        'latitude' => -6.2, 'longitude' => 106.8, 'selfie_path' => 'path.jpg'
+        'latitude' => -6.2,
+        'longitude' => 106.8,
+        'selfie_path' => 'path.jpg'
     ]);
-    
+
     $service->recordEvent($user, $shift, EventType::START_SHIFT, [
-        'latitude' => -6.2, 'longitude' => 106.8, 'selfie_path' => 'path2.jpg'
+        'latitude' => -6.2,
+        'longitude' => 106.8,
+        'selfie_path' => 'path2.jpg'
     ]);
 })->throws(ValidationException::class);

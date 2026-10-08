@@ -3,5 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {},
-    "devDependencies": {}
+    "devDependencies": {
+        "bootstrap": "5.3.8"
+    }
 }

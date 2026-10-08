@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
             'email' => 'hr@example.com',
             'nik' => 'HR-00001',
             'password' => bcrypt('password'),
-            'work_location' => 'Head Office (Jakarta)',
+            'location_id' => \App\Models\Location::first()->id ?? null,
         ]);
         $hrRoleSanctum = \Spatie\Permission\Models\Role::findByName('HR', 'sanctum');
         $hrRoleWeb = \Spatie\Permission\Models\Role::findByName('HR', 'web');
@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
         $employeeRoleWeb = \Spatie\Permission\Models\Role::findByName('Employee', 'web');
 
         $managers = User::factory(3)->create([
-            'work_location' => 'Head Office (Jakarta)',
+            'location_id' => \App\Models\Location::first()->id ?? null,
         ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb) {
             $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
         });
@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
         foreach ($managers as $manager) {
             $createdSupervisors = User::factory(2)->create([
                 'immediate_manager_id' => $manager->id,
-                'work_location' => $manager->work_location,
+                'location_id' => $manager->location_id,
             ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb) {
                 $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
             });
@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'direct_supervisor_id' => $supervisors->first()->id,
             'immediate_manager_id' => $managers->first()->id,
-            'work_location' => 'Head Office (Jakarta)',
+            'location_id' => \App\Models\Location::first()->id ?? null,
         ]);
         $employee->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
 
@@ -60,7 +60,7 @@ class UserSeeder extends Seeder
             User::factory(5)->create([
                 'direct_supervisor_id' => $supervisor->id,
                 'immediate_manager_id' => $supervisor->immediate_manager_id,
-                'work_location' => $supervisor->work_location,
+                'location_id' => $supervisor->location_id,
             ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb) {
                 $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
             });

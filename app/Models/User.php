@@ -29,7 +29,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'nik',
-        'work_location',
+        'location_id',
         'direct_supervisor_id',
         'immediate_manager_id',
         'avatar',
@@ -69,6 +69,11 @@ class User extends Authenticatable
     public function immediateManager()
     {
         return $this->belongsTo(User::class, 'immediate_manager_id');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function attendances()

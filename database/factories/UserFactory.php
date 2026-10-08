@@ -28,7 +28,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'nik' => fake()->unique()->numerify('EMP-#####'),
             'phone' => fake()->phoneNumber(),
-            'work_location' => fake()->randomElement(['Head Office (Jakarta)', 'Branch Office (Bandung)', 'Branch Office (Surabaya)']),
+            'location_id' => \App\Models\Location::inRandomOrder()->first()?->id,
             'avatar' => null, // Factory won't generate real image files, we'll leave it null
             'is_active' => true,
             'email_verified_at' => now(),

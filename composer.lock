@@ -4,8 +4,61 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b1f49ba28f7d8b72bc4d88edbaa0567f",
+    "content-hash": "ddccad803bf9437d5897b1a00f70db11",
     "packages": [
+        {
+            "name": "almasaeed2010/adminlte",
+            "version": "v4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ColorlibHQ/AdminLTE.git",
+                "reference": "7917b42d98302a971ddd37c80d0b5e4aa9ef5863"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ColorlibHQ/AdminLTE/zipball/7917b42d98302a971ddd37c80d0b5e4aa9ef5863",
+                "reference": "7917b42d98302a971ddd37c80d0b5e4aa9ef5863",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Colorlib"
+                }
+            ],
+            "description": "AdminLTE - admin control panel and dashboard that's based on Bootstrap 4",
+            "homepage": "https://adminlte.io/",
+            "keywords": [
+                "JS",
+                "admin",
+                "back-end",
+                "css",
+                "less",
+                "responsive",
+                "template",
+                "theme",
+                "web"
+            ],
+            "support": {
+                "issues": "https://github.com/ColorlibHQ/AdminLTE/issues",
+                "source": "https://github.com/ColorlibHQ/AdminLTE/tree/v4.0.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.me/daniel007in",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/danny007in",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-05-19T14:18:38+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.14.8",
