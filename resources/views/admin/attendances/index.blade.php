@@ -44,8 +44,7 @@
                                 <th>Karyawan</th>
                                 <th>Lokasi Kerja</th>
                                 <th>Shift</th>
-                                <th>Jadwal Masuk</th>
-                                <th>Jadwal Keluar</th>
+
                                 <th>Masuk Aktual</th>
                                 <th>Keluar Aktual</th>
                                 <th>Foto</th>
@@ -64,10 +63,9 @@
                                         <div>{{ $attendance->user->name ?? '-' }}</div>
                                         <div class="text-muted small">{{ $attendance->user->nik ?? '-' }}</div>
                                     </td>
-                                    <td>{{ $attendance->user->work_location ?? '-' }}</td>
+                                    <td>{{ $attendance->user->location->name ?? '-' }}</td>
                                     <td>{{ $attendance->shift->shift_name ?? '-' }}</td>
-                                    <td>{{ $attendance->shift->default_start_time ? \Carbon\Carbon::parse($attendance->shift->default_start_time)->format('H:i') : '-' }}</td>
-                                    <td>{{ $attendance->shift->default_end_time ? \Carbon\Carbon::parse($attendance->shift->default_end_time)->format('H:i') : '-' }}</td>
+
                                     <td>
                                         @if($checkIn)
                                             @php
@@ -122,7 +120,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="text-center">Belum ada data presensi.</td>
+                                    <td colspan="8" class="text-center">Belum ada data presensi.</td>
                                 </tr>
                             @endforelse
                         </tbody>

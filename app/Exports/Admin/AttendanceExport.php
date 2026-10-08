@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Illuminate\Database\Eloquent\Builder;
 
 class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
@@ -20,9 +21,9 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
         $this->endDate = $endDate;
     }
 
-    public function query(): \Illuminate\Database\Eloquent\Builder
+    public function query(): Builder|\Illuminate\Database\Query\Builder
     {
-        $query = Attendance::with(['user', 'shift', 'events'])->orderBy('date', 'desc');
+        $query = Attendance::with(['user.location', 'shift', 'events'])->orderBy('date', 'desc');
 
         if ($this->startDate) {
             $query->whereDate('date', '>=', $this->startDate);
@@ -45,8 +46,7 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             'Nama Lokasi Kerja',
             'Tanggal',
             'Shift',
-            'Shift Mulai',
-            'Shift Selesai',
+
             'Masuk Aktual',
             'Keluar Aktual',
         ];
@@ -64,11 +64,10 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             $attendance->user->nik ?? $attendance->user->id ?? '-',
             $attendance->user->name ?? '-',
             '-', // Cost Center
-            $attendance->user->work_location ?? '-',
+            $attendance->user->location->name ?? '-',
             $attendance->date ? $attendance->date->format('Y-m-d') : '-',
             $attendance->shift ? $attendance->shift->shift_name : '-',
-            $attendance->shift ? $attendance->shift->default_start_time : '-',
-            $attendance->shift ? $attendance->shift->default_end_time : '-',
+
             $checkInEvent ? $checkInEvent->timestamp->format('H:i:s') : '-',
             $checkOutEvent ? $checkOutEvent->timestamp->format('H:i:s') : '-',
         ];

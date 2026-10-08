@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TeamController;
 use Illuminate\Support\Facades\Route;
 
+/*
 Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
 
 Route::prefix('v1')->group(function () {
@@ -54,3 +55,4 @@ Route::prefix('v1')->group(function () {
 
     });
 });
+*/

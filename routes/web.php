@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         
         Route::resource('roles', RoleController::class);
-        
+        Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
         Route::resource('employees', EmployeeController::class);
         Route::resource('shifts', ShiftController::class);
         Route::resource('locations', LocationController::class);

@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\WebpEncoder;
 
 class FileUploadService
 {
@@ -19,8 +20,8 @@ class FileUploadService
      */
     public function uploadImage(UploadedFile $file, string $directory = 'selfies', int $quality = 70): string
     {
-        // Define path
-        $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        // Convert to WebP format
+        $filename = uniqid() . '_' . time() . '.webp';
         $path = $directory . '/' . $filename;
 
         // Process image with Intervention Image
@@ -30,8 +31,8 @@ class FileUploadService
         // Resize to a max dimension to save space while keeping aspect ratio
         $image->scaleDown(width: 800, height: 800);
 
-        // Compress and encode
-        $encodedImage = $image->encodeUsingFileExtension('jpeg', quality: $quality);
+        // Compress and encode to webp
+        $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
 
         // Store to local disk (public)
         Storage::disk('public')->put($path, (string) $encodedImage);

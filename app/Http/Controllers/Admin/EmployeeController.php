@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use App\Services\FileUploadService;
+use App\Exports\Admin\EmployeeExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeController extends Controller
 {
@@ -45,16 +48,24 @@ class EmployeeController extends Controller
             'nik' => 'nullable|string|max:50|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'location_id' => 'nullable|exists:locations,id',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
-        $employee = User::create([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'nik' => $request->nik,
             'password' => Hash::make($request->password),
             'location_id' => $request->location_id,
             'is_active' => $request->has('is_active'),
-        ]);
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $fileUploadService = new FileUploadService();
+            $data['avatar'] = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+        }
+
+        $employee = User::create($data);
 
         if($request->has('role')) {
             $employee->syncRoles([$request->role]);
@@ -77,10 +88,16 @@ class EmployeeController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,'.$employee->id,
             'nik' => 'nullable|string|max:50|unique:users,nik,'.$employee->id,
             'location_id' => 'nullable|exists:locations,id',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $data = $request->only(['name', 'email', 'nik', 'location_id']);
         $data['is_active'] = $request->has('is_active');
+        
+        if ($request->hasFile('avatar')) {
+            $fileUploadService = new FileUploadService();
+            $data['avatar'] = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+        }
         
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
@@ -102,5 +119,11 @@ class EmployeeController extends Controller
         }
         $employee->delete();
         return redirect()->route('admin.employees.index')->with('success', 'Employee deleted successfully.');
+    }
+
+    public function export()
+    {
+        $filename = 'Data_Karyawan_' . date('Y-m-d_H-i-s') . '.xlsx';
+        return Excel::download(new EmployeeExport, $filename);
     }
 }

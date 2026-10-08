@@ -16,48 +16,85 @@ class AttendanceSeeder extends Seeder
     public function run(): void
     {
         $employees = User::role('Employee')->get();
-        $shift = Shift::first();
+        $shifts = Shift::all();
 
-        if ($employees->isEmpty() || !$shift) {
-            return; // Ensure users and shifts exist
+        if ($employees->isEmpty() || $shifts->isEmpty()) {
+            return;
         }
 
-        foreach ($employees as $employee) {
-            // Create an attendance record for yesterday
-            $attendance = Attendance::factory()->create([
-                'user_id' => $employee->id,
-                'shift_id' => $shift->id,
-                'date' => Carbon::yesterday()->toDateString(),
-                'status' => AttendanceStatus::PRESENT,
-            ]);
+        // Generate data for the past 14 days up to today
+        $startDate = Carbon::today()->subDays(14);
+        $endDate = Carbon::today();
 
-            // Start Shift Event
-            AttendanceEvent::factory()->create([
-                'attendance_id' => $attendance->id,
-                'event_type' => EventType::START_SHIFT,
-                'timestamp' => Carbon::yesterday()->setTimeFromTimeString($shift->default_start_time),
-            ]);
+        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+            // Skip weekends
+            if ($date->isWeekend()) {
+                continue;
+            }
 
-            // Start Break
-            AttendanceEvent::factory()->create([
-                'attendance_id' => $attendance->id,
-                'event_type' => EventType::START_BREAK,
-                'timestamp' => Carbon::yesterday()->setTime(12, 0, 0),
-            ]);
+            foreach ($employees as $employee) {
+                $shift = $shifts->random();
+                $isAbsent = rand(1, 100) <= 5; // 5% chance of absence
+                $isLeave = rand(1, 100) <= 2; // 2% chance of leave
 
-            // End Break
-            AttendanceEvent::factory()->create([
-                'attendance_id' => $attendance->id,
-                'event_type' => EventType::END_BREAK,
-                'timestamp' => Carbon::yesterday()->setTime(13, 0, 0),
-            ]);
+                if ($isLeave) {
+                    Attendance::factory()->create([
+                        'user_id' => $employee->id,
+                        'shift_id' => $shift->id,
+                        'date' => $date->toDateString(),
+                        'status' => AttendanceStatus::ON_LEAVE,
+                    ]);
+                    continue;
+                }
 
-            // End Shift Event
-            AttendanceEvent::factory()->create([
-                'attendance_id' => $attendance->id,
-                'event_type' => EventType::END_SHIFT,
-                'timestamp' => Carbon::yesterday()->setTimeFromTimeString($shift->default_end_time),
-            ]);
+                if ($isAbsent) {
+                    Attendance::factory()->create([
+                        'user_id' => $employee->id,
+                        'shift_id' => $shift->id,
+                        'date' => $date->toDateString(),
+                        'status' => AttendanceStatus::ABSENT,
+                    ]);
+                    continue;
+                }
+
+                // Calculate random check-in/out times
+                $scheduledStart = Carbon::parse($shift->default_start_time);
+                $scheduledEnd = Carbon::parse($shift->default_end_time);
+                
+                $isLate = rand(1, 100) <= 15; // 15% chance of being late
+                $isEarlyOut = rand(1, 100) <= 10; // 10% chance of leaving early
+
+                $actualStart = $isLate 
+                    ? $scheduledStart->copy()->addMinutes(rand(5, 60))
+                    : $scheduledStart->copy()->subMinutes(rand(5, 30));
+                    
+                $actualEnd = $isEarlyOut 
+                    ? $scheduledEnd->copy()->subMinutes(rand(5, 30))
+                    : $scheduledEnd->copy()->addMinutes(rand(5, 60));
+
+                $status = $isLate ? AttendanceStatus::LATE : AttendanceStatus::PRESENT;
+
+                $attendance = Attendance::factory()->create([
+                    'user_id' => $employee->id,
+                    'shift_id' => $shift->id,
+                    'date' => $date->toDateString(),
+                    'status' => $status,
+                ]);
+
+                // Start Shift Event
+                AttendanceEvent::factory()->create([
+                    'attendance_id' => $attendance->id,
+                    'event_type' => EventType::START_SHIFT,
+                    'timestamp' => $date->copy()->setTimeFromTimeString($actualStart->toTimeString()),
+                ]);
+
+                // End Shift Event
+                AttendanceEvent::factory()->create([
+                    'attendance_id' => $attendance->id,
+                    'event_type' => EventType::END_SHIFT,
+                    'timestamp' => $date->copy()->setTimeFromTimeString($actualEnd->toTimeString()),
+                ]);
+            }
         }
     }
 }

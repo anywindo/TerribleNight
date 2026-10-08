@@ -12,7 +12,7 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Attendance::with(['user', 'shift', 'events'])->orderBy('date', 'desc');
+        $query = Attendance::with(['user.location', 'shift', 'events'])->orderBy('date', 'desc');
 
         if ($request->filled('search')) {
             $search = $request->search;

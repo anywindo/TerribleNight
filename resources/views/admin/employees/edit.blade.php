@@ -7,7 +7,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <form action="{{ route('admin.employees.update', $employee) }}" method="POST">
+            <form action="{{ route('admin.employees.update', $employee) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="card-body">
@@ -69,6 +69,25 @@
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Foto Profil (Avatar)</label>
+                            <div class="d-flex align-items-center gap-3">
+                                @if($employee->avatar && Storage::disk('public')->exists($employee->avatar))
+                                    <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($employee->avatar) }}')" title="Lihat Foto">
+                                        <img src="{{ Storage::url($employee->avatar) }}" alt="Avatar" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                    </a>
+                                @else
+                                    <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto">
+                                        <img src="{{ asset('placeholder.svg') }}" alt="Default Avatar" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                    </a>
+                                @endif
+                                <div>
+                                    <input type="file" name="avatar" class="form-control form-control-sm @error('avatar') is-invalid @enderror" accept="image/*">
+                                    <div class="form-text small">Maks 5MB. Biarkan kosong jika tidak ingin mengubah.</div>
+                                    @error('avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -79,4 +98,26 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Lightbox -->
+<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0 pb-0 justify-content-end">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <img id="lightboxImage" src="" class="img-fluid rounded" alt="Avatar" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLightbox(imageUrl) {
+        document.getElementById('lightboxImage').src = imageUrl;
+        var lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
+        lightboxModal.show();
+    }
+</script>
 @endsection

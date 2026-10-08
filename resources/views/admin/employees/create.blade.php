@@ -7,7 +7,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <form action="{{ route('admin.employees.store') }}" method="POST">
+            <form action="{{ route('admin.employees.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="card-body">
                     <div class="row">
@@ -71,6 +71,15 @@
                                     Akun Aktif (Bisa Login)
                                 </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Foto Profil (Avatar)</label>
+                            <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*">
+                            <div class="form-text">Maksimal 5MB. Format: JPG, PNG.</div>
+                            @error('avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
                 </div>
