@@ -126,4 +126,23 @@ class EmployeeController extends Controller
         $filename = 'Data_Karyawan_' . date('Y-m-d_H-i-s') . '.xlsx';
         return Excel::download(new EmployeeExport, $filename);
     }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new \App\Exports\EmployeeTemplateExport, 'Employee_Import_Template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv,xls|max:2048',
+        ]);
+
+        try {
+            Excel::import(new \App\Imports\EmployeesImport, $request->file('file'));
+            return redirect()->route('admin.employees.index')->with('success', 'Employees imported successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.employees.index')->with('error', 'Error importing employees: ' . $e->getMessage());
+        }
+    }
 }

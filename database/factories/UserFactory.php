@@ -24,10 +24,11 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'nik' => fake()->unique()->numerify('EMP-#####'),
-            'phone' => fake()->phoneNumber(),
+            'name' => fake('id_ID')->name(),
+            'email' => fake('id_ID')->unique()->safeEmail(),
+            'employee_id' => fake('id_ID')->unique()->numerify('EMP-#####'),
+            'nik' => fake('id_ID')->unique()->numerify('################'),
+            'phone' => fake('id_ID')->phoneNumber(),
             'location_id' => \App\Models\Location::inRandomOrder()->first()?->id,
             'avatar' => null, // Factory won't generate real image files, we'll leave it null
             'is_active' => true,

@@ -25,6 +25,7 @@
                             </button>
                         </div>
                     </form>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#importModal" class="btn btn-info btn-sm text-nowrap text-white"><i class="bi bi-file-earmark-arrow-up"></i> Import Excel</a>
                     <a href="{{ route('admin.employees.export') }}" class="btn btn-success btn-sm text-nowrap"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
                     <a href="{{ route('admin.employees.create') }}" class="btn btn-primary btn-sm text-nowrap"><i class="bi bi-plus"></i> Tambah Karyawan</a>
                 </div>
@@ -115,6 +116,35 @@
                 <img id="lightboxImage" src="" class="img-fluid rounded" alt="Avatar" style="max-height: 80vh;">
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('admin.employees.import') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title">Import Data Karyawan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Upload File Excel</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                    <div class="form-text">Pastikan file sesuai dengan template yang disediakan.</div>
+                </div>
+                <div class="mb-0 text-center">
+                    <a href="{{ route('admin.employees.template') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-download"></i> Download Template
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Import</button>
+            </div>
+        </form>
     </div>
 </div>
 

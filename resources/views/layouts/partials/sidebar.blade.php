@@ -78,6 +78,7 @@
                     </a>
                 </li> --}}
 
+                @can('manage-rbac')
                 <li class="nav-header">SISTEM</li>
 
                 <li class="nav-item">
@@ -87,6 +88,7 @@
                         <p>Hak Akses (RBAC)</p>
                     </a>
                 </li>
+                @endcan
 
             </ul>
         </nav>

@@ -19,6 +19,11 @@ class AuthController extends Controller
 
             $user = Auth::user();
             
+            // Skip role selection for super-admin
+            if ($user->isSuperAdmin()) {
+                return redirect()->intended('/admin/dashboard');
+            }
+
             // Redirect based on role
             if ($user->isAdmin()) {
                 return redirect()->intended('/role-selection');

@@ -62,9 +62,8 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Role Akses (Dashboard)</label>
                             <select name="role" class="form-select @error('role') is-invalid @enderror">
-                                <option value="">-- Pilih Role (Kosongkan jika karyawan biasa) --</option>
                                 @foreach($roles as $role)
-                                    <option value="{{ $role->name }}" {{ $employee->hasRole($role->name) ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    <option value="{{ $role->name }}" {{ $employee->hasRole($role->name) || ($employee->roles->count() === 0 && $role->name === 'Employee') ? 'selected' : '' }}>{{ $role->name }}</option>
                                 @endforeach
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'employee_id',
         'nik',
         'location_id',
         'direct_supervisor_id',
@@ -126,7 +127,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole(['super-admin', 'admin']);
+        return $this->hasRole(['super-admin', 'admin', 'HR']);
     }
 
     public function isSuperAdmin(): bool

@@ -9,11 +9,25 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        // Create Superadmin
+        $superadmin = User::factory()->create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@example.com',
+            'employee_id' => 'SA-00001',
+            'nik' => '1111222233334444',
+            'password' => bcrypt('password'),
+            'location_id' => \App\Models\Location::first()->id ?? null,
+        ]);
+        $superAdminRoleSanctum = \Spatie\Permission\Models\Role::findByName('super-admin', 'sanctum');
+        $superAdminRoleWeb = \Spatie\Permission\Models\Role::findByName('super-admin', 'web');
+        $superadmin->roles()->syncWithoutDetaching([$superAdminRoleSanctum->id, $superAdminRoleWeb->id]);
+
         // Create an HR Admin
         $hr = User::factory()->create([
             'name' => 'HR Admin',
             'email' => 'hr@example.com',
-            'nik' => 'HR-00001',
+            'employee_id' => 'HR-00001',
+            'nik' => '5555666677778888',
             'password' => bcrypt('password'),
             'location_id' => \App\Models\Location::first()->id ?? null,
         ]);
@@ -47,7 +61,8 @@ class UserSeeder extends Seeder
         $employee = User::factory()->create([
             'name' => 'John Employee',
             'email' => 'employee@example.com',
-            'nik' => 'EMP-00001',
+            'employee_id' => 'EMP-00001',
+            'nik' => '9999000011112222',
             'password' => bcrypt('password'),
             'direct_supervisor_id' => $supervisors->first()->id,
             'immediate_manager_id' => $managers->first()->id,

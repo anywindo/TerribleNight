@@ -23,6 +23,11 @@ Route::middleware('auth')->group(function () {
         if (!auth()->user()->isAdmin()) {
             return redirect('/attendance');
         }
+        
+        if (auth()->user()->isSuperAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('auth.role-selection');
     })->name('role.selection');
 
@@ -34,7 +39,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin|HR|super-admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         
-        Route::resource('roles', RoleController::class);
+        Route::middleware(['permission:manage-rbac'])->group(function () {
+            Route::resource('roles', RoleController::class);
+        });
+        Route::get('employees/template', [EmployeeController::class, 'downloadTemplate'])->name('employees.template');
+        Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
         Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
         Route::resource('employees', EmployeeController::class);
         Route::resource('shifts', ShiftController::class);
