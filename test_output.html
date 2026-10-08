@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="id" >
+
+<head>
+
+    
+    <meta charset="utf-8">
+
+            
+        <script>
+            (() => {
+                'use strict';
+                const root = document.documentElement;
+
+                // Applications with their own theming opt out of AdminLTE's
+                // color mode entirely, here as well as in the bundle.
+                if (root.getAttribute('data-lte-color-mode') === 'off') {
+                    return;
+                }
+
+                const STORAGE_KEY = 'lte-theme';
+                const authored = null;
+                let stored = null;
+
+                                    try {
+                        stored = localStorage.getItem(STORAGE_KEY);
+                    } catch (e) {
+                        // localStorage may be unavailable (private mode, sandboxed iframe).
+                    }
+                
+                // Mirror the precedence in color-mode.ts: the visitor's stored
+                // choice wins, then a theme this page declared itself, then the
+                // OS preference.
+                let resolved = 'light';
+
+                if (stored === 'dark' || stored === 'light') {
+                    resolved = stored;
+                } else if (authored === 'dark' || authored === 'light') {
+                    resolved = authored;
+                } else if (globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    resolved = 'dark';
+                }
+
+                root.setAttribute('data-bs-theme', resolved);
+                root.style.colorScheme = resolved;
+
+                // Flag values computed here, so the bundle does not mistake
+                // them for a theme the page declared and stop following the OS
+                // preference.
+                if (resolved !== authored) {
+                    root.setAttribute('data-lte-theme-resolved', '');
+                }
+            })();
+        </script>
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+        
+            <meta name="theme-color" content="#0d6efd" media="(prefers-color-scheme: light)">
+    
+            <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)">
+        <meta name="csrf-token" content="">
+
+    
+    
+    
+    <title>
+                Karyawan            </title>
+
+    
+    
+    
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.3.0/index.css" crossorigin="anonymous">
+    
+    
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/styles/overlayscrollbars.min.css" crossorigin="anonymous">
+    
+    
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous">
+    
+    
+                
+                            <link rel="stylesheet" href="https://teribblenight.test/vendor/adminlte/dist/css/adminlte.min.css">
+            
+            
+                
+    
+    <link rel="stylesheet" href="//cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css">
+                            
+            
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+            
+    
+    
+</head>
+
+<body class="layout-fixed sidebar-expand-lg sidebar-mini bg-body-tertiary" >
+
+    
+        
+    <div class="skip-links">
+        <a href="#main" class="skip-link">Lompat ke konten utama</a>
+        <a href="#navigation" class="skip-link">Lompat ke navigasi</a>
+    </div>
+
+    <div class="app-wrapper">
+
+        
+                    <div id="adminlte-preloader" class="preloader flex-column justify-content-center align-items-center d-flex w-100 h-100 top-0 start-0 bg-body position-fixed" style="z-index:9999;transition:opacity .3s ease-in-out">
+
+    
+        
+        <img src="https://teribblenight.test/vendor/adminlte/dist/assets/img/AdminLTELogo.png"
+             class="rounded-circle animation__shake"
+             alt="AdminLTE Preloader Image"
+             width="60"
+             height="60"
+             style="animation-iteration-count:infinite;animation-name:shake;animation-duration:1s">
+
+    
+</div>
+
+
+<style>
+    @media (prefers-reduced-motion: reduce) {
+        #adminlte-preloader {
+            transition: none !important;
+        }
+
+        #adminlte-preloader img {
+            animation: none !important;
+        }
+    }
+</style>
+
+
+<script>
+    (() => {
+        'use strict';
+        const preloader = document.getElementById('adminlte-preloader');
+
+        if (! preloader) {
+            return;
+        }
+
+        const hidePreloader = () => {
+            preloader.style.opacity = '0';
+            window.setTimeout(() => preloader.remove(), 300);
+        };
+
+        if (document.readyState === 'complete') {
+            hidePreloader();
+        } else {
+            window.addEventListener('load', hidePreloader);
+        }
+    })();
+</script>
+        
+        
+                    <nav class="app-header navbar navbar-expand bg-body">
+
+    <div class="container-fluid">
+
+        
+        <ul class="navbar-nav">
+            
+            <li class="nav-item">
+    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button"
+       aria-label="Toggle navigasi">
+        <i class="bi bi-list"></i>
+        <span class="visually-hidden">Toggle navigasi</span>
+    </a>
+</li>
+
+            
+            
+            
+                    </ul>
+
+        
+        <ul class="navbar-nav ms-auto">
+            
+            
+            
+            <li class="nav-item d-none d-md-flex align-items-center">
+
+    <form class="navbar-search ms-md-3" role="search" action="#"
+          method="get">
+
+        
+        
+        <label for="navbar-search-input" class="visually-hidden">
+            search
+        </label>
+
+        <div class="navbar-search-field">
+
+            
+            <input type="search" class="form-control" id="navbar-search-input"
+                   name="adminlteSearch"
+                   placeholder="search"
+                   aria-label="search"
+                   autocomplete="off">
+
+            
+            <button class="navbar-search-submit" type="submit"
+                    aria-label="Cari">
+                <i class="bi bi-search" aria-hidden="true"></i>
+            </button>
+
+        </div>
+
+    </form>
+
+</li>
+
+
+<li class="nav-item d-md-none">
+    <a class="nav-link" href="#" aria-label="Cari">
+        <i class="bi bi-search" aria-hidden="true"></i>
+    </a>
+</li>
+
+<li class="nav-item dropdown adminlte-darkmode-widget">
+
+        <a class="nav-link" href="#" id="adminlte-color-mode" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false"
+           aria-label="Toggle mode warna">
+
+            <i class="bi bi-sun-fill  d-none "
+               data-lte-theme-icon="light"></i>
+
+            <i class="bi bi-moon-fill  d-none "
+               data-lte-theme-icon="dark"></i>
+
+            <i class="bi bi-circle-half "
+               data-lte-theme-icon="auto"></i>
+
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminlte-color-mode"
+            style="--bs-dropdown-min-width: 8rem;">
+
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center "
+                        data-bs-theme-value="light" aria-pressed="false">
+                    <i class="bi bi-sun-fill me-2"></i>
+                    Terang
+                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                </button>
+            </li>
+
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center "
+                        data-bs-theme-value="dark" aria-pressed="false">
+                    <i class="bi bi-moon-fill me-2"></i>
+                    Gelap
+                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                </button>
+            </li>
+
+            <li>
+                <button type="button" class="dropdown-item d-flex align-items-center  active "
+                        data-bs-theme-value="auto" aria-pressed="true">
+                    <i class="bi bi-circle-half me-2"></i>
+                    Otomatis
+                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                </button>
+            </li>
+
+        </ul>
+
+    </li>
+
+
+<li class="nav-item">
+    <a class="nav-link" href="#" role="button" data-lte-toggle="fullscreen"
+       aria-label="Toggle layar penuh">
+        <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
+        <i data-lte-icon="minimize" class="bi bi-fullscreen-exit d-none"></i>
+    </a>
+</li>
+
+
+            
+            
+            
+                    </ul>
+
+    </div>
+
+</nav>
+        
+        
+                    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+
+    
+            <div class="sidebar-brand">
+        <a href="https://teribblenight.test/home" class="brand-link ">
+
+            
+            <img src="https://teribblenight.test/vendor/adminlte/dist/assets/img/AdminLTELogo.png" alt="Admin Logo" class="brand-image opacity-75 shadow">
+
+            
+            <span class="brand-text fw-light"><b>SIM</b>SDM</span>
+
+        </a>
+    </div>
+
+    
+    
+    
+    
+    <div class="sidebar-wrapper">
+        
+        <nav id="navigation"
+            aria-label="Navigasi utama"
+            class="mt-2">
+            <ul class="nav sidebar-menu flex-column"
+                id="adminlte-sidebar-menu"
+                data-lte-toggle="treeview"
+                >
+                
+                <li  class="nav-item">
+
+    <a class="nav-link  "
+       href="https://teribblenight.test/admin/dashboard"        >
+
+        <i class="nav-icon bi bi-speedometer2 "></i>
+
+        <p>
+            Dasbor
+
+                    </p>
+
+    </a>
+
+</li>
+
+<li  class="nav-header ">
+
+    MANAJEMEN KEHADIRAN
+
+</li>
+
+<li  class="nav-item">
+
+    <a class="nav-link  "
+       href="https://teribblenight.test/admin/attendances"        >
+
+        <i class="nav-icon bi bi-clock-history "></i>
+
+        <p>
+            Kehadiran
+
+                    </p>
+
+    </a>
+
+</li>
+
+<li  class="nav-item">
+
+    <a class="nav-link  "
+       href="https://teribblenight.test/admin/corrections"        >
+
+        <i class="nav-icon bi bi-pencil-square "></i>
+
+        <p>
+            Koreksi
+
+                            <span class="nav-badge badge text-bg-success me-3">
+                    Baru
+                </span>
+                    </p>
+
+    </a>
+
+</li>
+
+<li  class="nav-header ">
+
+    MANAJEMEN KARYAWAN
+
+</li>
+
+<li  class="nav-item">
+
+    <a class="nav-link  "
+       href="https://teribblenight.test/admin/employees"        >
+
+        <i class="nav-icon bi bi-people-fill "></i>
+
+        <p>
+            Karyawan
+
+                    </p>
+
+    </a>
+
+</li>
+
+            </ul>
+        </nav>
+    </div>
+
+</aside>
+        
+        
+                    <main class="app-main">
+
+    
+    
+    
+    
+    
+            <div class="app-content-header">
+            <div class="container-fluid">
+                    <h1>Karyawan</h1>
+            </div>
+        </div>
+    
+    
+    <div class="app-content ">
+        <div class="container-fluid">
+                            <div class="card mb-4 card-info">
+
+    
+            <div class="card-header">
+
+            
+            
+                
+                                    <h3 class="card-title">
+                        <i class="bi bi-people-fill me-1" aria-hidden="true"></i>                                                    Direktori Karyawan                                            </h3>
+                
+                
+                <div class="card-tools">
+
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                </div>
+
+                
+            
+        </div>
+    
+    
+            <div class="card-body">
+                            <p>Kelola karyawan, tetapkan shift, dan awasi detail mereka.</p>
+
+                
+        <div class="mb-3">
+            <a href="https://teribblenight.test/admin/employees/create" class="btn btn-primary">
+                <i class="bi bi-plus-lg mr-2"></i> Tambah Karyawan
+            </a>
+            <button type="button" class="btn btn-secondary">
+     <i class="bi bi-file-earmark-arrow-up"></i>      Impor Karyawan     
+</button>
+        </div>
+
+        
+        <div class="table-responsive">
+
+<table id="employeeTable" class="table table-bordered table-hover table-striped table-sm" style="width:100%">
+
+    
+    <thead >
+        <tr>
+                            <th                                         >
+                    NIK
+                </th>
+                            <th                                         >
+                    Nama
+                </th>
+                            <th                                         >
+                    Email
+                </th>
+                            <th                                         >
+                    No. Telepon
+                </th>
+                            <th                                         >
+                    Peran
+                </th>
+                            <th                      style="width:10%"                      dt-no-export >
+                    Aksi
+                </th>
+                    </tr>
+    </thead>
+
+    
+    <tbody><tr>
+                            <td>HR-00001</td>
+                            <td>HR Admin</td>
+                            <td>hr@example.com</td>
+                            <td>820.584.5657</td>
+                            <td>
+                                                                    <span class="badge bg-primary">HR</span>
+                                                                    <span class="badge bg-primary">HR</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-23843</td>
+                            <td>Tito Tremblay</td>
+                            <td>gordon.quitzon@example.com</td>
+                            <td>657.612.6872</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-08102</td>
+                            <td>Hollie Fadel</td>
+                            <td>major62@example.net</td>
+                            <td>+1.205.432.1261</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-21804</td>
+                            <td>Mrs. Agnes Hamill</td>
+                            <td>maggio.gwen@example.org</td>
+                            <td>1-608-347-7861</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-67976</td>
+                            <td>Dr. Kendall Kertzmann</td>
+                            <td>ohara.bridie@example.com</td>
+                            <td>773.968.9240</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-78105</td>
+                            <td>Mohamed Corkery</td>
+                            <td>khand@example.com</td>
+                            <td>(484) 657-3769</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-51204</td>
+                            <td>Prof. Brennan Rodriguez</td>
+                            <td>derek48@example.org</td>
+                            <td>680-761-3721</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-88976</td>
+                            <td>Howard Cronin</td>
+                            <td>jbechtelar@example.com</td>
+                            <td>848.589.4042</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-45323</td>
+                            <td>Prof. Maximillia Will PhD</td>
+                            <td>hunter63@example.com</td>
+                            <td>+1 (660) 566-7908</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-81750</td>
+                            <td>Eveline Orn</td>
+                            <td>erdman.tristin@example.com</td>
+                            <td>(786) 519-2481</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-00001</td>
+                            <td>John Employee</td>
+                            <td>employee@example.com</td>
+                            <td>+1-872-727-2190</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-13319</td>
+                            <td>Russel Weissnat</td>
+                            <td>barton54@example.com</td>
+                            <td>(520) 660-4248</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-18502</td>
+                            <td>Angelina Roberts</td>
+                            <td>torrey.schmeler@example.com</td>
+                            <td>+1-504-955-0721</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-99036</td>
+                            <td>Khalid Blanda</td>
+                            <td>libby.walker@example.com</td>
+                            <td>+17193453419</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-67719</td>
+                            <td>Josh Tillman DDS</td>
+                            <td>candida99@example.com</td>
+                            <td>520.935.8379</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-94033</td>
+                            <td>Kameron Herman</td>
+                            <td>elvis00@example.net</td>
+                            <td>1-640-337-0754</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-67182</td>
+                            <td>Raven Watsica</td>
+                            <td>emmy.bailey@example.net</td>
+                            <td>1-631-662-9252</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-22885</td>
+                            <td>Trudie Welch</td>
+                            <td>predovic.korey@example.net</td>
+                            <td>540-528-2166</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-21653</td>
+                            <td>Kaylin Kuphal</td>
+                            <td>quigley.jazmyn@example.org</td>
+                            <td>+1-820-619-4704</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-08109</td>
+                            <td>Casper Franecki</td>
+                            <td>ruben89@example.org</td>
+                            <td>+1-985-576-5260</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-15581</td>
+                            <td>Dr. Herminia Kuphal III</td>
+                            <td>zohara@example.com</td>
+                            <td>(480) 580-3044</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-66170</td>
+                            <td>Alexys Hane</td>
+                            <td>gennaro14@example.com</td>
+                            <td>1-475-576-5861</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-70377</td>
+                            <td>Dr. Wendell Bode</td>
+                            <td>block.winfield@example.org</td>
+                            <td>743-959-7227</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-70219</td>
+                            <td>Arely Effertz</td>
+                            <td>ratke.annalise@example.net</td>
+                            <td>(463) 306-6648</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-51698</td>
+                            <td>Marisa Torphy</td>
+                            <td>michelle17@example.com</td>
+                            <td>+1.272.318.5233</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-42341</td>
+                            <td>Magnolia Cummings I</td>
+                            <td>xhowe@example.net</td>
+                            <td>+1.831.400.0337</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-24941</td>
+                            <td>Imogene Jast</td>
+                            <td>leannon.halie@example.net</td>
+                            <td>872-837-0313</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-05768</td>
+                            <td>Jaeden Rice</td>
+                            <td>xwolf@example.com</td>
+                            <td>+1-316-934-3539</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-11482</td>
+                            <td>Noemie Funk</td>
+                            <td>clemens25@example.org</td>
+                            <td>(386) 893-4553</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-65670</td>
+                            <td>Mateo Wilderman Sr.</td>
+                            <td>gulgowski.juana@example.org</td>
+                            <td>860-249-8521</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-22541</td>
+                            <td>Dr. Angel Yost MD</td>
+                            <td>bergnaum.timmothy@example.org</td>
+                            <td>832.585.7961</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-49421</td>
+                            <td>Fay Reilly</td>
+                            <td>mitchell.thompson@example.net</td>
+                            <td>1-616-565-1947</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-76681</td>
+                            <td>Rodrigo Bergnaum</td>
+                            <td>ngorczany@example.com</td>
+                            <td>+1.573.427.0747</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-84193</td>
+                            <td>Adriana Kshlerin</td>
+                            <td>gustave69@example.org</td>
+                            <td>+1.458.348.4032</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-09191</td>
+                            <td>Ms. Genesis Thompson IV</td>
+                            <td>arianna85@example.net</td>
+                            <td>+1-703-533-0987</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-83948</td>
+                            <td>Prof. Quincy Toy</td>
+                            <td>zcorkery@example.org</td>
+                            <td>+1-347-705-5347</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-69337</td>
+                            <td>Fae Ratke</td>
+                            <td>rahul31@example.net</td>
+                            <td>1-270-786-4040</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-93324</td>
+                            <td>Karson Buckridge</td>
+                            <td>jonathon26@example.com</td>
+                            <td>+1-727-399-4604</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-91320</td>
+                            <td>Agnes Fahey</td>
+                            <td>paucek.twila@example.org</td>
+                            <td>+1 (636) 598-5819</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-59263</td>
+                            <td>Crystel Rau</td>
+                            <td>morissette.cleta@example.org</td>
+                            <td>+1-984-376-7545</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr>
+                                            <tr>
+                            <td>EMP-26307</td>
+                            <td>Mr. Johann Effertz</td>
+                            <td>zbins@example.com</td>
+                            <td>+1-203-707-3797</td>
+                            <td>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                                    <span class="badge bg-primary">Employee</span>
+                                                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" title="Edit">
+     <i class="bi bi-pencil"></i>         
+</button>
+                                <button type="button" class="btn btn-danger btn-sm" title="Hapus">
+     <i class="bi bi-trash"></i>         
+</button>
+                            </td>
+                        </tr></tbody>
+
+    
+    
+</table>
+
+</div>
+                    </div>
+    
+    
+    
+    
+    
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+    
+</main>
+        
+        
+        
+        
+        
+    </div>
+
+    
+
+    
+            <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/browser/overlayscrollbars.browser.es6.min.js" crossorigin="anonymous" data-navigate-once></script>
+    
+    
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous" data-navigate-once></script>
+    
+    
+                
+                            <script src="https://teribblenight.test/vendor/adminlte/dist/js/adminlte.min.js" data-navigate-once></script>
+                
+    
+    <script>
+    (() => {
+        'use strict';
+
+        // Runs the callback against the document as it stands right now, or
+        // as soon as it is parsed on the very first load.
+
+        window._AdminLTE_Ready = (callback) => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', callback, { once: true });
+            } else {
+                callback();
+            }
+        };
+
+        // Runs the callback at most once per javascript context. Use it for
+        // the listeners bound to the document itself, which survive a body
+        // swap and would otherwise pile up on every navigation.
+
+        window._AdminLTE_Once = (key, callback) => {
+            window._AdminLTE_OnceKeys = window._AdminLTE_OnceKeys || {};
+
+            if (window._AdminLTE_OnceKeys[key]) {
+                return;
+            }
+
+            window._AdminLTE_OnceKeys[key] = true;
+            callback();
+        };
+
+                // AdminLTE re-initializes its own plugins on 'turbo:load', but it
+        // knows nothing about Livewire, so the sidebar, the treeview and the
+        // card tools would stay dead after a 'wire:navigate' visit. Its
+        // 'initialize()' tears the previous cycle down first, so calling it
+        // again is safe.
+
+        window._AdminLTE_Once('spa-navigation', () => {
+            document.addEventListener('livewire:navigated', () => {
+                if (typeof adminlte !== 'undefined' && typeof adminlte.initialize === 'function') {
+                    adminlte.initialize();
+                }
+            });
+        });
+            })();
+</script>
+
+            
+        <script>
+            (() => {
+                'use strict';
+                const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
+                const Default = {
+                    scrollbarTheme: "os-theme-light",
+                    scrollbarAutoHide: "leave",
+                    scrollbarClickScroll: true,
+                };
+
+                window._AdminLTE_Ready(function () {
+                    const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+
+                    // Disable OverlayScrollbars on mobile devices to prevent
+                    // touch interference.
+                    const isMobile = window.innerWidth <= 992;
+
+                    if (
+                        sidebarWrapper &&
+                        typeof OverlayScrollbarsGlobal !== 'undefined' &&
+                        OverlayScrollbarsGlobal?.OverlayScrollbars !== undefined &&
+                        !isMobile
+                    ) {
+                        OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+                            scrollbars: {
+                                theme: Default.scrollbarTheme,
+                                autoHide: Default.scrollbarAutoHide,
+                                clickScroll: Default.scrollbarClickScroll,
+                            },
+                        });
+                    }
+                });
+            })();
+        </script>
+    
+    
+    <script src="//code.jquery.com/jquery-3.7.1.min.js" ></script>
+                            
+            
+
+    
+
+    
+    
+
+            
+            
+
+            
+            
+
+                                                <script src="//cdn.datatables.net/2.1.8/js/dataTables.min.js" ></script>
+                            
+        
+            
+
+            
+            
+
+                                                <script src="//cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js" ></script>
+                            
+        
+            
+
+            
+            
+
+            
+            
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+    
+    
+        <script>
+
+    // The DataTables plugin still requires jQuery, so the initialization is
+    // guarded in order to not break a jQuery free application. Note the
+    // vanilla javascript alternative recommended by AdminLTE v4 is Tabulator.
+
+    window._AdminLTE_Ready(() => {
+
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.DataTable === 'undefined') {
+            console.warn('The datatable component requires the jQuery based Datatables plugin.');
+
+            return;
+        }
+
+        window.jQuery('#employeeTable').DataTable({"language":{"url":"\/\/cdn.datatables.net\/plug-ins\/1.13.6\/i18n\/id.json"}});
+    });
+
+</script>
+    
+</body>
+
+</html>
