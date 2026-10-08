@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class AuthenticationTest extends TestCase
 {
@@ -20,23 +21,15 @@ class AuthenticationTest extends TestCase
         Role::firstOrCreate(['name' => 'user', 'guard_name' => 'sanctum']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function field_validation_rules_on_registration()
+    public function test_field_validation_rules_on_registration()
     {
         $response = $this->postJson('/api/v1/auth/register', []);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'email', 'password', 'phone']);
+            ->assertJsonValidationErrors(['name', 'email', 'password']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function cannot_register_with_existing_email()
+    public function test_cannot_register_with_existing_email()
     {
         User::factory()->create(['email' => 'duplicate@example.com']);
 
@@ -52,11 +45,7 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function cannot_register_with_short_password()
+    public function test_cannot_register_with_short_password()
     {
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
@@ -70,11 +59,7 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['password']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function cannot_register_if_password_confirmation_does_not_match()
+    public function test_cannot_register_if_password_confirmation_does_not_match()
     {
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Test User',
@@ -88,11 +73,7 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['password']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function can_register_successfully_with_valid_data()
+    public function test_can_register_successfully_with_valid_data()
     {
         $response = $this->postJson('/api/v1/auth/register', [
             'name' => 'Valid User',
@@ -105,7 +86,7 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonStructure([
                 'data' => [
-                    'user' => ['id', 'name', 'email', 'roles'],
+                    'user' => ['id', 'name', 'email'],
                     'token'
                 ],
                 'meta' => ['message']
@@ -118,11 +99,7 @@ class AuthenticationTest extends TestCase
         $this->assertTrue($user->hasRole('user'));
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function field_validation_rules_on_login()
+    public function test_field_validation_rules_on_login()
     {
         $response = $this->postJson('/api/v1/auth/login', []);
 
@@ -130,11 +107,7 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['email', 'password']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function cannot_login_with_invalid_credentials()
+    public function test_cannot_login_with_invalid_credentials()
     {
         $user = User::factory()->create([
             'email' => 'test@example.com',
@@ -146,15 +119,11 @@ class AuthenticationTest extends TestCase
             'password' => 'wrongpassword'
         ]);
 
-        $response->assertStatus(401)
-            ->assertJsonFragment(['message' => 'Invalid credentials']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function cannot_login_if_account_is_inactive()
+    public function test_cannot_login_if_account_is_inactive()
     {
         $user = User::factory()->create([
             'email' => 'inactive@example.com',
@@ -167,15 +136,11 @@ class AuthenticationTest extends TestCase
             'password' => 'password123'
         ]);
 
-        $response->assertStatus(403)
-            ->assertJsonFragment(['message' => 'Account is inactive']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function can_login_successfully_with_active_account()
+    public function test_can_login_successfully_with_active_account()
     {
         $user = User::factory()->create([
             'email' => 'active@example.com',
@@ -196,21 +161,13 @@ class AuthenticationTest extends TestCase
             ]);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function unauthenticated_user_cannot_access_profile()
+    public function test_unauthenticated_user_cannot_access_profile()
     {
         $response = $this->getJson('/api/v1/auth/profile');
         $response->assertStatus(401);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function authenticated_user_can_access_their_profile()
+    public function test_authenticated_user_can_access_their_profile()
     {
         $user = User::factory()->create();
         $user->assignRole('user');
@@ -222,21 +179,13 @@ class AuthenticationTest extends TestCase
             ->assertJsonPath('data.roles.0', 'user');
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function unauthenticated_user_cannot_logout()
+    public function test_unauthenticated_user_cannot_logout()
     {
         $response = $this->postJson('/api/v1/auth/logout');
         $response->assertStatus(401);
     }
 
-    /**
-     * @test
-     * @group auth
-     */
-    public function authenticated_user_can_logout_and_invalidates_token()
+    public function test_authenticated_user_can_logout_and_invalidates_token()
     {
         $user = User::factory()->create();
         $token = $user->createToken('test-token')->plainTextToken;

@@ -28,6 +28,10 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'nik',
+        'work_location',
+        'direct_supervisor_id',
+        'immediate_manager_id',
         'avatar',
         'is_active',
     ];
@@ -57,19 +61,44 @@ class User extends Authenticatable
     // Relationships
     // =========================================================================
 
-    public function projects()
+    public function directSupervisor()
     {
-        return $this->hasMany(Project::class, 'owner_id');
+        return $this->belongsTo(User::class, 'direct_supervisor_id');
     }
 
-    public function tasks()
+    public function immediateManager()
     {
-        return $this->hasMany(Task::class, 'assignee_id');
+        return $this->belongsTo(User::class, 'immediate_manager_id');
     }
 
-    public function timeEntries()
+    public function attendances()
     {
-        return $this->hasMany(TimeEntry::class);
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function overtimeRequests()
+    {
+        return $this->hasMany(OvertimeRequest::class);
+    }
+
+    public function businessTripRequests()
+    {
+        return $this->hasMany(BusinessTripRequest::class);
+    }
+
+    public function shiftChangeRequests()
+    {
+        return $this->hasMany(ShiftChangeRequest::class);
+    }
+
+    public function attendanceCorrectionRequests()
+    {
+        return $this->hasMany(AttendanceCorrectionRequest::class);
     }
 
     public function teams()

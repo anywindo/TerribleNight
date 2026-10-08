@@ -21,6 +21,20 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Eloquent\TeamRepository::class
         );
 
+        $this->app->bind(
+            \App\Repositories\Contracts\AttendanceRepositoryInterface::class,
+            \App\Repositories\Eloquent\AttendanceRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\AttendanceCorrectionRequestRepositoryInterface::class,
+            \App\Repositories\Eloquent\AttendanceCorrectionRequestRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\ShiftRepositoryInterface::class,
+            \App\Repositories\Eloquent\ShiftRepository::class
+        );
     }
 
     /**

@@ -22,9 +22,22 @@ Route::prefix('v1')->group(function () {
 
     // Protected API Routes
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-        
+        // Employee Routes
+        Route::prefix('employee')->group(function () {
+            Route::get('attendance/history', [\App\Http\Controllers\Api\V1\Employee\AttendanceController::class, 'history']);
+            Route::post('attendance/events', [\App\Http\Controllers\Api\V1\Employee\AttendanceController::class, 'storeEvent']);
+            
+            Route::get('correction-requests', [\App\Http\Controllers\Api\V1\Employee\AttendanceCorrectionRequestController::class, 'index']);
+            Route::post('correction-requests', [\App\Http\Controllers\Api\V1\Employee\AttendanceCorrectionRequestController::class, 'store']);
+        });
 
-
+        // Admin/HR Routes
+        Route::prefix('admin')->middleware('role:admin|super-admin')->group(function () {
+            Route::get('attendances', [\App\Http\Controllers\Api\V1\Admin\AttendanceController::class, 'index']);
+            
+            Route::get('correction-requests', [\App\Http\Controllers\Api\V1\Admin\AttendanceCorrectionRequestController::class, 'index']);
+            Route::put('correction-requests/{id}/process', [\App\Http\Controllers\Api\V1\Admin\AttendanceCorrectionRequestController::class, 'process']);
+        });
 
         // Teams
         Route::post('teams/{team}/members', [TeamController::class, 'addMember']);
