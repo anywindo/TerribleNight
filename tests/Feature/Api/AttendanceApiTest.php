@@ -65,7 +65,7 @@ class AttendanceApiTest extends TestCase
         \Illuminate\Support\Facades\Storage::fake('public');
 
         $employee = $this->createEmployeeUser();
-        $shift = \App\Models\Shift::factory()->create();
+        $shift = Shift::factory()->create();
 
         $file = \Illuminate\Http\Testing\File::image('selfie.jpg');
 

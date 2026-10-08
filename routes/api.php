@@ -32,7 +32,9 @@ Route::prefix('v1')->group(function () {
         });
 
         // Admin/HR Routes
-        Route::prefix('admin')->middleware('role:admin|super-admin')->group(function () {
+        Route::prefix('admin')->middleware('role:admin|super-admin|HR')->group(function () {
+            Route::apiResource('employees', \App\Http\Controllers\Api\V1\Admin\EmployeeController::class);
+            
             Route::get('attendances', [\App\Http\Controllers\Api\V1\Admin\AttendanceController::class, 'index']);
             
             Route::get('correction-requests', [\App\Http\Controllers\Api\V1\Admin\AttendanceCorrectionRequestController::class, 'index']);

@@ -20,8 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Global: force JSON on every request
-        $middleware->prepend(ForceJsonResponse::class);
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+        ]);
 
         // Global: security headers on every response
         $middleware->append(SecurityHeaders::class);
@@ -31,8 +33,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // API middleware group
         $middleware->api(prepend: [
+            ForceJsonResponse::class,
             // Ensuring pure stateless API Token auth. Removing Stateful SPA middleware.
         ]);
+
+        $middleware->redirectGuestsTo('/');
 
         // Rate limiters are registered in AppServiceProvider
         $middleware->alias([

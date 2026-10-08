@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class AttendanceExport implements FromQuery, WithHeadings, WithMapping
 {
-    public function query()
+    public function query(): \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Relations\Relation
     {
         // For larger datasets, returning a query is better than all()
         return Attendance::query()->with('user', 'shift', 'events');

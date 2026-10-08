@@ -26,6 +26,11 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'nik' => fake()->unique()->numerify('EMP-#####'),
+            'phone' => fake()->phoneNumber(),
+            'work_location' => fake()->randomElement(['Head Office (Jakarta)', 'Branch Office (Bandung)', 'Branch Office (Surabaya)']),
+            'avatar' => null, // Factory won't generate real image files, we'll leave it null
+            'is_active' => true,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
