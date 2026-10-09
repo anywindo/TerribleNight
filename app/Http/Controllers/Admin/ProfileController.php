@@ -24,7 +24,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 

@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+c@extends('layouts.admin')
 
 @section('title', 'Riwayat Istirahat')
 @section('page_title', 'Riwayat Istirahat')
@@ -10,10 +10,12 @@
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h3 class="card-title mb-0">Riwayat Istirahat Karyawan</h3>
                     <div class="d-flex align-items-center ms-auto gap-2">
-                        <form action="{{ route('admin.breaks.index') }}" method="GET" class="d-flex gap-2 align-items-center">
+                        <form action="{{ route('admin.breaks.index') }}" method="GET"
+                            class="d-flex gap-2 align-items-center">
                             <div class="d-flex align-items-center text-nowrap">
                                 <span class="me-2 small text-muted">Show</span>
-                                <select name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                                <select name="per_page" class="form-select form-select-sm w-auto"
+                                    onchange="this.form.submit()">
                                     <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
                                     <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
                                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
@@ -25,10 +27,11 @@
                                 <select name="location_id" class="form-select" onchange="this.form.submit()">
                                     <option value="">Semua Lokasi</option>
                                     @foreach($locations ?? [] as $loc)
-                                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>
+                                            {{ $loc->name }}</option>
                                     @endforeach
                                 </select>
-                                
+
                                 <select name="shift_id" class="form-select" onchange="this.form.submit()">
                                     <option value="">Semua Shift</option>
                                     @foreach($shifts ?? [] as $shift)
@@ -72,7 +75,7 @@
                                 @php
                                     $startBreak = $attendance->events->where('event_type', 'START_BREAK')->first();
                                     $endBreak = $attendance->events->where('event_type', 'END_BREAK')->first();
-                                    
+
                                     $duration = '-';
                                     if ($startBreak && $endBreak) {
                                         $diff = \Carbon\Carbon::parse($endBreak->timestamp)->diff(\Carbon\Carbon::parse($startBreak->timestamp));
@@ -95,7 +98,7 @@
                                         } else {
                                             $actualStartTime = \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i:s');
                                             $expectedStartTime = \Carbon\Carbon::parse($attendance->shift->break_start)->format('H:i:s');
-                                            
+
                                             $actualEndTime = \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i:s');
                                             $expectedEndTime = \Carbon\Carbon::parse($attendance->shift->break_end)->format('H:i:s');
 
@@ -123,17 +126,17 @@
                                     }
 
                                     // Prepare data for detail modal
-                                    $inPhoto = $startBreak && $startBreak->selfie_path && Storage::disk('public')->exists($startBreak->selfie_path) 
-                                        ? Storage::url($startBreak->selfie_path) 
+                                    $inPhoto = $startBreak && $startBreak->selfie_path && Storage::disk('public')->exists($startBreak->selfie_path)
+                                        ? Storage::url($startBreak->selfie_path)
                                         : asset('placeholder.svg');
-                                        
-                                    $outPhoto = $endBreak && $endBreak->selfie_path && Storage::disk('public')->exists($endBreak->selfie_path) 
-                                        ? Storage::url($endBreak->selfie_path) 
+
+                                    $outPhoto = $endBreak && $endBreak->selfie_path && Storage::disk('public')->exists($endBreak->selfie_path)
+                                        ? Storage::url($endBreak->selfie_path)
                                         : asset('placeholder.svg');
 
                                     $inStatusLabel = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'Awal' : 'Tepat') : '-';
                                     $inStatusColor = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'danger' : 'success') : 'secondary';
-                                    
+
                                     $outStatusLabel = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'Terlambat' : 'Tepat') : '-';
                                     $outStatusColor = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'danger' : 'success') : 'secondary';
 
@@ -160,7 +163,8 @@
                                         ]
                                     ];
                                 @endphp
-                                <tr onclick='showBreakDetail(@json($detailData))' style="cursor: pointer;" class="hover-bg-light">
+                                <tr onclick='showBreakDetail(@json($detailData))' style="cursor: pointer;"
+                                    class="hover-bg-light">
                                     <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
                                     <td>{{ $attendance->user->employee_id ?? '-' }}</td>
                                     <td>
@@ -175,14 +179,16 @@
                                     <td>{{ $attendance->shift->shift_name ?? '-' }}</td>
                                     <td>
                                         @if ($startBreak)
-                                            <span class="{{ $startColorClass }} fw-bold">{{ \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') }}</span>
+                                            <span
+                                                class="{{ $startColorClass }} fw-bold">{{ \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td>
                                         @if ($endBreak)
-                                            <span class="{{ $endColorClass }} fw-bold">{{ \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') }}</span>
+                                            <span
+                                                class="{{ $endColorClass }} fw-bold">{{ \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
@@ -193,15 +199,20 @@
                                     <td>
                                         <div class="d-flex gap-1">
                                             @if($startBreak)
-                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1"
+                                                    style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1 opacity-50"
+                                                    style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
 
                                             @if($endBreak)
-                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1"
+                                                    style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat"
+                                                    class="img-thumbnail p-1 opacity-50"
+                                                    style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
                                         </div>
                                     </td>
@@ -245,7 +256,7 @@
                                 <option value="custom">Ditentukan (Custom)</option>
                             </select>
                         </div>
-                        
+
                         <!-- Hidden inputs for filter -->
                         <input type="hidden" name="search" value="{{ request('search') }}">
                         <input type="hidden" name="date" value="{{ request('date') }}">
@@ -276,13 +287,15 @@
     <div class="modal fade" id="detailBreakModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
             <div class="modal-content overflow-hidden border-0 shadow-lg bg-body d-flex flex-column" style="height: 90vh;">
-                <div class="modal-header bg-body-tertiary border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-shrink-0">
+                <div
+                    class="modal-header bg-body-tertiary border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-shrink-0">
                     <div>
                         <h5 class="modal-title fw-bold mb-0" id="detailEmployeeName">-</h5>
                         <div class="text-muted small" id="detailDate">-</div>
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <span id="detailShiftStatusBadge" class="badge text-bg-secondary px-3 py-2 rounded-pill fs-6">-</span>
+                        <span id="detailShiftStatusBadge"
+                            class="badge text-bg-secondary px-3 py-2 rounded-pill fs-6">-</span>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                 </div>
@@ -297,18 +310,22 @@
                                 </div>
                                 <span id="inStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
                             </div>
-                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
-                                <img id="inPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Mulai Istirahat">
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle"
+                                style="flex: 1 1 50%; position: relative;">
+                                <img id="inPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute"
+                                    alt="Foto Mulai Istirahat">
                             </div>
                             <div style="flex: 1 1 50%; position: relative;">
                                 <div id="inMap" class="w-100 h-100 position-absolute"></div>
                             </div>
-                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                            <div
+                                class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
                                 <div>
                                     <div class="text-muted small mb-1">Koordinat GPS</div>
                                     <div class="font-monospace small" id="inCoordinates">-</div>
                                 </div>
-                                <a id="inMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                <a id="inMapsLink" href="#" target="_blank"
+                                    class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
                                     <i class="bi bi-google"></i> Buka Maps
                                 </a>
                             </div>
@@ -323,18 +340,22 @@
                                 </div>
                                 <span id="outStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
                             </div>
-                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
-                                <img id="outPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Selesai Istirahat">
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle"
+                                style="flex: 1 1 50%; position: relative;">
+                                <img id="outPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute"
+                                    alt="Foto Selesai Istirahat">
                             </div>
                             <div style="flex: 1 1 50%; position: relative;">
                                 <div id="outMap" class="w-100 h-100 position-absolute"></div>
                             </div>
-                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                            <div
+                                class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
                                 <div>
                                     <div class="text-muted small mb-1">Koordinat GPS</div>
                                     <div class="font-monospace small" id="outCoordinates">-</div>
                                 </div>
-                                <a id="outMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                <a id="outMapsLink" href="#" target="_blank"
+                                    class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
                                     <i class="bi bi-google"></i> Buka Maps
                                 </a>
                             </div>
@@ -355,7 +376,7 @@
             // Header
             document.getElementById('detailEmployeeName').textContent = data.employee;
             document.getElementById('detailDate').textContent = data.date;
-            
+
             const shiftBadge = document.getElementById('detailShiftStatusBadge');
             shiftBadge.className = `badge text-bg-${data.shiftStatusColor} px-3 py-2 rounded-pill fs-6`;
             shiftBadge.textContent = data.shiftStatusLabel;
@@ -364,7 +385,7 @@
             document.getElementById('inTime').textContent = data.in.time;
             document.getElementById('inCoordinates').textContent = data.in.lat && data.in.lng ? `${data.in.lat}, ${data.in.lng}` : 'Tidak ada data GPS';
             document.getElementById('inPhoto').src = data.in.photo;
-            
+
             const inBadge = document.getElementById('inStatusBadge');
             inBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.in.statusColor}`;
             inBadge.textContent = data.in.statusLabel;
@@ -381,7 +402,7 @@
             document.getElementById('outTime').textContent = data.out.time;
             document.getElementById('outCoordinates').textContent = data.out.lat && data.out.lng ? `${data.out.lat}, ${data.out.lng}` : 'Tidak ada data GPS';
             document.getElementById('outPhoto').src = data.out.photo;
-            
+
             const outBadge = document.getElementById('outStatusBadge');
             outBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.out.statusColor}`;
             outBadge.textContent = data.out.statusLabel;

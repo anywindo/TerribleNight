@@ -53,7 +53,7 @@ class EmployeeController extends Controller
             'nik' => 'nullable|string|max:50|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'location_id' => 'nullable|exists:locations,id',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data = [
@@ -97,7 +97,7 @@ class EmployeeController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,'.$employee->id,
             'nik' => 'nullable|string|max:50|unique:users,nik,'.$employee->id,
             'location_id' => 'nullable|exists:locations,id',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data = $request->only(['name', 'email', 'nik', 'location_id']);
