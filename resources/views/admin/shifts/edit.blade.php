@@ -29,6 +29,19 @@
                             @error('default_end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jam Mulai Istirahat (Opsional)</label>
+                            <input type="time" name="break_start" class="form-control @error('break_start') is-invalid @enderror" value="{{ old('break_start', $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '') }}">
+                            @error('break_start')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jam Selesai Istirahat (Opsional)</label>
+                            <input type="time" name="break_end" class="form-control @error('break_end') is-invalid @enderror" value="{{ old('break_end', $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '') }}">
+                            @error('break_end')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
                 </div>
                 <div class="card-footer">
                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>

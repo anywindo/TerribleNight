@@ -6,15 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\Admin\AttendanceExport;
 
-class AttendanceController extends Controller
+class BreakController extends Controller
 {
     public function index(Request $request)
     {
+        // Get attendances that have any break events
         $query = Attendance::with(['user.location', 'shift', 'events'])
             ->whereHas('events', function($q) {
-                $q->whereIn('event_type', ['START_SHIFT', 'END_SHIFT']);
+                $q->whereIn('event_type', ['START_BREAK', 'END_BREAK']);
             })
             ->orderBy('date', 'desc');
 
@@ -33,22 +33,6 @@ class AttendanceController extends Controller
         $perPage = $request->input('per_page', 10);
         $attendances = $query->paginate($perPage)->appends($request->all());
 
-        return view('admin.attendances.index', compact('attendances'));
-    }
-
-    public function export(Request $request)
-    {
-        $startDate = null;
-        $endDate = null;
-
-        if ($request->export_type === 'today') {
-            $startDate = now()->toDateString();
-            $endDate = now()->toDateString();
-        } elseif ($request->export_type === 'custom') {
-            $startDate = $request->start_date;
-            $endDate = $request->end_date;
-        } // 'all' will leave them as null
-
-        return Excel::download(new AttendanceExport($startDate, $endDate), 'attendance_'.date('Y-m-d_H-i-s').'.xlsx');
+        return view('admin.breaks.index', compact('attendances'));
     }
 }

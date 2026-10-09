@@ -71,9 +71,26 @@
                                             @php
                                                 $scheduledStart = $attendance->shift->default_start_time ? \Carbon\Carbon::parse($attendance->shift->default_start_time) : null;
                                                 $actualStart = $checkIn->timestamp;
-                                                $isLate = $scheduledStart && $actualStart->format('H:i') > $scheduledStart->format('H:i');
+                                                $isLate = false;
+                                                $isWarning = false;
+                                                if ($scheduledStart) {
+                                                    $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
+                                                    if ($ruleEnabled) {
+                                                        $ruleMinutes = \App\Models\Setting::get('attendance_rule_minutes', 15);
+                                                        $cutoff = $scheduledStart->copy()->subMinutes($ruleMinutes);
+                                                        if ($actualStart->format('H:i:s') >= $cutoff->format('H:i:s')) {
+                                                            if ($actualStart->format('H:i:s') <= $scheduledStart->format('H:i:s')) {
+                                                                $isWarning = true;
+                                                            } else {
+                                                                $isLate = true;
+                                                            }
+                                                        }
+                                                    } else {
+                                                        $isLate = $actualStart->format('H:i:s') > $scheduledStart->format('H:i:s');
+                                                    }
+                                                }
                                             @endphp
-                                            <span class="{{ $isLate ? 'text-danger fw-bold' : 'text-success' }}">{{ $actualStart->format('H:i') }}</span>
+                                            <span class="{{ $isWarning ? 'text-warning fw-bold' : ($isLate ? 'text-danger fw-bold' : 'text-success') }}">{{ $actualStart->format('H:i') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
@@ -113,8 +130,8 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge text-bg-{{ $attendance->status->color() ?? 'secondary' }}">
-                                            {{ $attendance->status->label() ?? $attendance->status->value }}
+                                        <span class="badge text-bg-{{ $attendance->shift_status['color'] }}">
+                                            {{ $attendance->shift_status['label'] }}
                                         </span>
                                     </td>
                                 </tr>
@@ -171,27 +188,7 @@
         </div>
     </div>
 
-    <!-- Modal Lightbox -->
-    <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-transparent border-0">
-                <div class="modal-header border-0 pb-0 justify-content-end">
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center pt-0">
-                    <img id="lightboxImage" src="" class="img-fluid rounded" alt="Selfie" style="max-height: 80vh;">
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        function showLightbox(imageUrl) {
-            document.getElementById('lightboxImage').src = imageUrl;
-            var lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
-            lightboxModal.show();
-        }
-
         function toggleCustomDate() {
             var type = document.getElementById('export_type').value;
             var container = document.getElementById('custom_date_container');

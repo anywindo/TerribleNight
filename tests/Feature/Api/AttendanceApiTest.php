@@ -43,7 +43,7 @@ class AttendanceApiTest extends TestCase
             'user_id' => $employee->id,
             'shift_id' => $shift->id,
             'date' => Carbon::today(),
-            'status' => AttendanceStatus::PRESENT,
+            'status' => AttendanceStatus::EXACT,
         ]);
 
         $response = $this->actingAs($employee, 'sanctum')->getJson('/api/v1/employee/attendance/history');
@@ -96,7 +96,7 @@ class AttendanceApiTest extends TestCase
             'user_id' => $employee->id,
             'shift_id' => $shift->id,
             'date' => Carbon::today(),
-            'status' => AttendanceStatus::PRESENT,
+            'status' => AttendanceStatus::EXACT,
         ]);
 
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/v1/admin/attendances');

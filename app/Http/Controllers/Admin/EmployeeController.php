@@ -29,13 +29,18 @@ class EmployeeController extends Controller
             });
         }
 
-        $employees = $query->paginate(10)->appends($request->all());
+        $perPage = $request->input('per_page', 10);
+        $employees = $query->paginate($perPage)->appends($request->all());
         return view('admin.employees.index', compact('employees'));
     }
 
     public function create()
     {
-        $roles = Role::where('guard_name', 'web')->get();
+        $rolesQuery = Role::where('guard_name', 'web');
+        if (!auth()->user()->hasRole('super-admin')) {
+            $rolesQuery->where('name', '!=', 'super-admin');
+        }
+        $roles = $rolesQuery->get();
         $locations = \App\Models\Location::orderBy('name')->get();
         return view('admin.employees.create', compact('roles', 'locations'));
     }
@@ -76,7 +81,11 @@ class EmployeeController extends Controller
 
     public function edit(User $employee)
     {
-        $roles = Role::where('guard_name', 'web')->get();
+        $rolesQuery = Role::where('guard_name', 'web');
+        if (!auth()->user()->hasRole('super-admin')) {
+            $rolesQuery->where('name', '!=', 'super-admin');
+        }
+        $roles = $rolesQuery->get();
         $locations = \App\Models\Location::orderBy('name')->get();
         return view('admin.employees.edit', compact('employee', 'roles', 'locations'));
     }
@@ -117,6 +126,11 @@ class EmployeeController extends Controller
         if ($employee->id == auth()->id()) {
             return redirect()->route('admin.employees.index')->with('error', 'Cannot delete yourself.');
         }
+
+        if ($employee->hasRole('super-admin')) {
+            return redirect()->route('admin.employees.index')->with('error', 'Cannot delete a Superadmin account.');
+        }
+
         $employee->delete();
         return redirect()->route('admin.employees.index')->with('success', 'Employee deleted successfully.');
     }

@@ -1,14 +1,15 @@
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+<aside class="app-sidebar bg-dark shadow" data-bs-theme="dark">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
         <a href="{{ route('admin.dashboard') }}" class="brand-link">
-            <span class="brand-text fw-light"><b>KIRANA</b> GROUP</span>
+            <img src="{{ asset('logoKirana.jpg') }}" alt="Kirana Logo" class="brand-image opacity-75 shadow">
+            <span class="brand-text fw-light fs-5"><b>Kirana</b> Group</span>
         </a>
     </div>
     <!--end::Sidebar Brand-->
 
     <!--begin::Sidebar Wrapper-->
-    <div class="sidebar-wrapper">
+    <div class="sidebar-wrapper flex-grow-1" style="padding-bottom: 70px;">
         <nav class="mt-2">
             <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
 
@@ -46,9 +47,18 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('admin.locations.index') }}" class="nav-link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.locations.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-geo-alt-fill"></i>
                         <p>Lokasi Kerja (GPS)</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.settings.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-gear-fill"></i>
+                        <p>Pengaturan HR</p>
                     </a>
                 </li>
 
@@ -59,6 +69,14 @@
                         class="nav-link {{ request()->routeIs('admin.attendances.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-calendar-check-fill"></i>
                         <p>Riwayat Presensi</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.breaks.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.breaks.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-cup-hot-fill"></i>
+                        <p>Riwayat Istirahat</p>
                     </a>
                 </li>
 
@@ -79,19 +97,32 @@
                 </li> --}}
 
                 @can('manage-rbac')
-                <li class="nav-header">SISTEM</li>
+                    <li class="nav-header">SISTEM</li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.roles.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-shield-lock-fill"></i>
-                        <p>Hak Akses (RBAC)</p>
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.roles.index') }}"
+                            class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                            <i class="nav-icon bi bi-shield-lock-fill"></i>
+                            <p>Hak Akses (RBAC)</p>
+                        </a>
+                    </li>
                 @endcan
 
             </ul>
         </nav>
     </div>
     <!--end::Sidebar Wrapper-->
+
+    <!--begin::Sidebar Footer / Logout-->
+    <div class="sidebar-footer border-top border-secondary position-absolute bottom-0 w-100 bg-dark"
+        style="z-index: 10;">
+        <a href="#" class="btn btn-danger w-100 text-start text-white"
+            onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">
+            <i class="bi bi-box-arrow-right me-2"></i> Logout
+        </a>
+        <form id="sidebar-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+            @csrf
+        </form>
+    </div>
+    <!--end::Sidebar Footer-->
 </aside>

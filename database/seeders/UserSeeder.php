@@ -39,7 +39,7 @@ class UserSeeder extends Seeder
         $employeeRoleSanctum = \Spatie\Permission\Models\Role::findByName('Employee', 'sanctum');
         $employeeRoleWeb = \Spatie\Permission\Models\Role::findByName('Employee', 'web');
 
-        $managers = User::factory(3)->create([
+        $managers = User::factory(5)->create([
             'location_id' => \App\Models\Location::first()->id ?? null,
         ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb) {
             $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
@@ -48,7 +48,7 @@ class UserSeeder extends Seeder
         // Create Supervisors
         $supervisors = collect();
         foreach ($managers as $manager) {
-            $createdSupervisors = User::factory(2)->create([
+            $createdSupervisors = User::factory(4)->create([
                 'immediate_manager_id' => $manager->id,
                 'location_id' => $manager->location_id,
             ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb) {
@@ -72,7 +72,7 @@ class UserSeeder extends Seeder
 
         // Create some random employees under supervisors
         foreach ($supervisors as $supervisor) {
-            User::factory(5)->create([
+            User::factory(15)->create([
                 'direct_supervisor_id' => $supervisor->id,
                 'immediate_manager_id' => $supervisor->immediate_manager_id,
                 'location_id' => $supervisor->location_id,

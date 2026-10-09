@@ -149,18 +149,51 @@
 
                     @if(!$startEvent)
                         <input type="hidden" name="event_type" value="START_SHIFT">
-                        <button type="button" onclick="document.getElementById('selfie_input').click()"
-                            class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                            Record Time
-                        </button>
+                        @php
+                            $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
+                            $isPastCutoff = false;
+                            $cutoffTime = null;
+                            if ($ruleEnabled && $shift->default_start_time) {
+                                $ruleMinutes = \App\Models\Setting::get('attendance_rule_minutes', 15);
+                                $shiftStartTime = \Carbon\Carbon::parse($shift->default_start_time);
+                                $cutoffTime = $shiftStartTime->copy()->subMinutes($ruleMinutes);
+                                if (now()->format('H:i:s') >= $cutoffTime->format('H:i:s')) {
+                                    $isPastCutoff = true;
+                                }
+                            }
+                        @endphp
+                        
+                        @if($isPastCutoff)
+                            <button type="button" disabled
+                                class="w-full bg-red-900/50 text-red-400 border border-red-500 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                <span>Record Time</span>
+                                <span class="text-[10px] font-normal mt-0.5">Batas waktu habis (sebelum {{ $cutoffTime->format('H:i') }})</span>
+                            </button>
+                        @else
+                            <button type="button" onclick="document.getElementById('selfie_input').click()"
+                                class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                                Record Time
+                            </button>
+                        @endif
                     @elseif(!$endEvent)
+                        @php
+                            $hasActiveBreak = $events->contains('event_type', 'START_BREAK') && !$events->contains('event_type', 'END_BREAK');
+                        @endphp
                         <input type="hidden" name="event_type" value="END_SHIFT">
-                        <button type="button" onclick="document.getElementById('selfie_input').click()"
-                            class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                            Record End Time
-                        </button>
+                        @if($hasActiveBreak)
+                            <button type="button" disabled
+                                class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                <span>Record End Time</span>
+                                <span class="text-[10px] font-normal mt-0.5">Selesaikan istirahat terlebih dahulu</span>
+                            </button>
+                        @else
+                            <button type="button" onclick="document.getElementById('selfie_input').click()"
+                                class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                                Record End Time
+                            </button>
+                        @endif
                     @else
-                        <button type="button" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg">
+                        <button type="button" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
                             Shift Completed
                         </button>
                     @endif
@@ -222,8 +255,9 @@
                 <div class="mb-4">
                     <p class="text-xs text-gray-400 mb-2">{{ now()->translatedFormat('D, d M Y') }}</p>
                     <div class="flex items-center">
-                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mr-3">Break Time 1 [12:00
-                            - 13:00]</p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mr-3">
+                            Break Time [{{ $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--' }} - {{ $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--' }}]
+                        </p>
                         <div class="flex-1 h-[1px] bg-gray-600"></div>
                     </div>
                 </div>
@@ -279,21 +313,49 @@
                         class="hidden" required>
 
                     <div class="flex space-x-3">
+                        @php
+                            $nowTime = now()->format('H:i:s');
+                            $breakStartTime = $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i:s') : null;
+                            $breakEndTime = $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i:s') : null;
+                            $shiftNotStarted = !$events->contains('event_type', 'START_SHIFT');
+                        @endphp
                         @if(!$startBreak)
                             <input type="hidden" name="event_type" value="START_BREAK">
-                            <button type="button" onclick="document.getElementById('break_selfie_input').click()"
-                                class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                Record Break Time
-                            </button>
+                            @if($shiftNotStarted)
+                                <button type="button" disabled
+                                    class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                    <span>Record Break Time</span>
+                                    <span class="text-[10px] font-normal mt-0.5">Mulai shift terlebih dahulu</span>
+                                </button>
+                            @elseif($breakStartTime && $nowTime < $breakStartTime)
+                                <button type="button" disabled
+                                    class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                    <span>Record Break Time</span>
+                                    <span class="text-[10px] font-normal mt-0.5">Belum waktunya istirahat</span>
+                                </button>
+                            @else
+                                <button type="button" onclick="document.getElementById('break_selfie_input').click()"
+                                    class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                                    Record Break Time
+                                </button>
+                            @endif
                         @elseif(!$endBreak)
                             <input type="hidden" name="event_type" value="END_BREAK">
-                            <button type="button" onclick="document.getElementById('break_selfie_input').click()"
-                                class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                Record End Break
-                            </button>
+                            @if($breakEndTime && $nowTime > $breakEndTime)
+                                <button type="button" disabled
+                                    class="flex-1 bg-red-900/50 text-red-400 border border-red-500 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                    <span>Record End Break</span>
+                                    <span class="text-[10px] font-normal mt-0.5">Waktu istirahat telah berakhir</span>
+                                </button>
+                            @else
+                                <button type="button" onclick="document.getElementById('break_selfie_input').click()"
+                                    class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                                    Record End Break
+                                </button>
+                            @endif
                         @else
                             <button type="button" disabled
-                                class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg">
+                                class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
                                 Break Completed
                             </button>
                         @endif

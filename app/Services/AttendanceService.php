@@ -12,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class AttendanceService extends BaseService
 {
+    /** @var AttendanceRepositoryInterface */
+    protected $repository;
     public function __construct(AttendanceRepositoryInterface $repository)
     {
         parent::__construct($repository);
@@ -50,7 +52,7 @@ class AttendanceService extends BaseService
                 'user_id' => $employee->id,
                 'shift_id' => $shift->id,
                 'date' => today(),
-                'status' => AttendanceStatus::PRESENT,
+                'status' => AttendanceStatus::EXACT,
             ]);
         }
 
@@ -75,12 +77,44 @@ class AttendanceService extends BaseService
                         'event_type' => 'Shift has already started.'
                     ]);
                 }
+
+                $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
+                if ($ruleEnabled) {
+                    $ruleMinutes = \App\Models\Setting::get('attendance_rule_minutes', 15);
+                    $shiftStartStr = $shift->default_start_time; // e.g. "08:00:00"
+                    
+                    if ($shiftStartStr) {
+                        $shiftStartTime = \Carbon\Carbon::parse($shiftStartStr);
+                        // Cutoff is exactly $ruleMinutes before the shift starts.
+                        $cutoffTime = $shiftStartTime->copy()->subMinutes($ruleMinutes);
+                        
+                        $now = now();
+                        // Format current time and cutoff time to compare only the time part, ignoring date
+                        $nowTime = $now->format('H:i:s');
+                        $cutoffTimeStr = $cutoffTime->format('H:i:s');
+
+                        if ($nowTime >= $cutoffTimeStr) {
+                            throw ValidationException::withMessages([
+                                'event_type' => "Batas waktu presensi telah lewat. Anda harus presensi sebelum {$cutoffTime->format('H:i')} (15 menit sebelum shift)."
+                            ]);
+                        }
+                    }
+                }
                 break;
             case EventType::START_BREAK:
                 if ($hasStartedBreak) {
                     throw ValidationException::withMessages([
                         'event_type' => 'Break has already started.'
                     ]);
+                }
+                if ($shift->break_start) {
+                    $breakStartTime = \Carbon\Carbon::parse($shift->break_start)->format('H:i:s');
+                    $currentTime = now()->format('H:i:s');
+                    if ($currentTime < $breakStartTime) {
+                        throw ValidationException::withMessages([
+                            'event_type' => 'Cannot start break before scheduled time ('.$breakStartTime.').'
+                        ]);
+                    }
                 }
                 break;
             case EventType::END_BREAK:
@@ -93,6 +127,15 @@ class AttendanceService extends BaseService
                     throw ValidationException::withMessages([
                         'event_type' => 'Break has already ended.'
                     ]);
+                }
+                if ($shift->break_end) {
+                    $breakEndTime = \Carbon\Carbon::parse($shift->break_end)->format('H:i:s');
+                    $currentTime = now()->format('H:i:s');
+                    if ($currentTime > $breakEndTime) {
+                        throw ValidationException::withMessages([
+                            'event_type' => 'Cannot end break after scheduled period ('.$breakEndTime.'). Please contact HR.'
+                        ]);
+                    }
                 }
                 break;
             case EventType::END_SHIFT:

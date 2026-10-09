@@ -28,6 +28,8 @@ class ShiftController extends Controller
             'shift_name' => 'required|string|max:255',
             'default_start_time' => 'required|date_format:H:i',
             'default_end_time' => 'required|date_format:H:i',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end' => 'nullable|date_format:H:i|after:break_start',
         ]);
 
         Shift::create($request->all());
@@ -46,6 +48,8 @@ class ShiftController extends Controller
             'shift_name' => 'required|string|max:255',
             'default_start_time' => 'required|date_format:H:i',
             'default_end_time' => 'required|date_format:H:i',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end' => 'nullable|date_format:H:i|after:break_start',
         ]);
 
         $shift->update($request->all());

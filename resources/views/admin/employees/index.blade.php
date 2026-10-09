@@ -17,7 +17,16 @@
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h3 class="card-title mb-0">Daftar Karyawan</h3>
                 <div class="d-flex align-items-center ms-auto gap-2">
-                    <form action="{{ route('admin.employees.index') }}" method="GET" class="d-flex">
+                    <form action="{{ route('admin.employees.index') }}" method="GET" class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center">
+                            <span class="text-nowrap me-2 fs-7 text-muted">Show</span>
+                            <select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 70px;">
+                                <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                                <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                                <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                                <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                            </select>
+                        </div>
                         <div class="input-group input-group-sm">
                             <input type="text" name="search" class="form-control" placeholder="Cari nama, email, NIK..." value="{{ request('search') }}">
                             <button type="submit" class="btn btn-default">
@@ -105,19 +114,7 @@
     </div>
 </div>
 
-<!-- Modal Lightbox -->
-<div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content bg-transparent border-0">
-            <div class="modal-header border-0 pb-0 justify-content-end">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center pt-0">
-                <img id="lightboxImage" src="" class="img-fluid rounded" alt="Avatar" style="max-height: 80vh;">
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <!-- Modal Import -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
@@ -148,11 +145,5 @@
     </div>
 </div>
 
-<script>
-    function showLightbox(imageUrl) {
-        document.getElementById('lightboxImage').src = imageUrl;
-        var lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
-        lightboxModal.show();
-    }
-</script>
+
 @endsection

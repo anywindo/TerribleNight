@@ -153,4 +153,46 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header text-bg-danger">
+                    <h3 class="card-title"><i class="bi bi-person-x-fill me-2"></i> Karyawan Absen Hari Ini</h3>
+                </div>
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap m-0">
+                        <thead>
+                            <tr>
+                                <th>Karyawan</th>
+                                <th>Lokasi Kerja</th>
+                                <th>Jadwal Masuk</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($absentEmployees as $user)
+                                <tr>
+                                    <td>
+                                        <div>{{ $user->name ?? '-' }}</div>
+                                        <div class="text-muted small">{{ $user->nik ?? '-' }}</div>
+                                    </td>
+                                    <td>{{ $user->location->name ?? '-' }}</td>
+                                    <td>
+                                        -
+                                    </td>
+                                    <td>
+                                        <span class="badge text-bg-danger">Belum Hadir</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Luar biasa! Semua karyawan hadir hari ini.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

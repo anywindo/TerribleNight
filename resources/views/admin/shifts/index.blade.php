@@ -28,6 +28,8 @@
                             <th>Nama Shift</th>
                             <th>Jam Masuk Default</th>
                             <th>Jam Keluar Default</th>
+                            <th>Mulai Istirahat</th>
+                            <th>Selesai Istirahat</th>
                             <th style="width: 150px">Aksi</th>
                         </tr>
                     </thead>
@@ -38,6 +40,8 @@
                             <td>{{ $shift->shift_name }}</td>
                             <td>{{ \Carbon\Carbon::parse($shift->default_start_time)->format('H:i') }}</td>
                             <td>{{ \Carbon\Carbon::parse($shift->default_end_time)->format('H:i') }}</td>
+                            <td>{{ $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '-' }}</td>
+                            <td>{{ $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '-' }}</td>
                             <td>
                                 <a href="{{ route('admin.shifts.edit', $shift) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
                                 <form action="{{ route('admin.shifts.destroy', $shift) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus shift ini?')">
@@ -49,7 +53,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center">Belum ada data shift.</td>
+                            <td colspan="7" class="text-center">Belum ada data shift.</td>
                         </tr>
                         @endforelse
                     </tbody>

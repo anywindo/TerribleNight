@@ -19,8 +19,14 @@ class DashboardController extends Controller
             ->whereDate('date', '=', $today)
             ->get();
             
+        $presentUserIds = $attendancesToday->pluck('user_id')->unique();
+        $absentEmployeesList = User::with(['location'])
+            ->whereNotIn('id', $presentUserIds)
+            ->get();
+            
         $presentToday = $attendancesToday->count();
-        $absentToday = max(0, $totalEmployees - $presentToday);
+        $absentToday = $absentEmployeesList->count();
+        $absentEmployees = $absentEmployeesList->take(10);
         
         $lateEmployees = $attendancesToday->filter(function ($attendance) {
             $checkIn = $attendance->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first();
@@ -75,7 +81,8 @@ class DashboardController extends Controller
             'presentToday',
             'absentToday',
             'lateEmployees',
-            'earlyEmployees'
+            'earlyEmployees',
+            'absentEmployees'
         ));
     }
 }

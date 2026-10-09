@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ShiftController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\BreakController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -51,5 +52,11 @@ Route::middleware('auth')->group(function () {
 
         Route::get('attendances/export', [AdminAttendanceController::class, 'export'])->name('attendances.export');
         Route::get('attendances', [AdminAttendanceController::class, 'index'])->name('attendances.index');
+        
+        Route::get('breaks', [BreakController::class, 'index'])->name('breaks.index');
+
+        // Settings
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
     });
 });

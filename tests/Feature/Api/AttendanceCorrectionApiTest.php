@@ -42,7 +42,7 @@ class AttendanceCorrectionApiTest extends TestCase
             'user_id' => $employee->id,
             'shift_id' => $shift->id,
             'date' => Carbon::today(),
-            'status' => AttendanceStatus::PRESENT,
+            'status' => AttendanceStatus::EXACT,
         ]);
     }
 
