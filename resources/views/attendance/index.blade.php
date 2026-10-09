@@ -447,31 +447,48 @@
         x-transition:enter-end="opacity-100 scale-100">
         <h1 class="text-2xl font-bold mb-4 text-gray-100">Attendance History</h1>
 
-        <form method="GET" action="{{ route('attendance.index') }}"
-            class="mb-6 card-bg p-3 rounded-xl border border-gray-700">
-            <div class="flex items-end space-x-2">
-                <div class="flex-1">
-                    <label class="block text-xs text-gray-400 mb-1">From</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}"
-                        class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
-                </div>
-                <div class="flex-1">
-                    <label class="block text-xs text-gray-400 mb-1">To</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}"
-                        class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
-                </div>
-                <button type="submit"
-                    class="bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition h-[34px]">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-                @if(request()->hasAny(['start_date', 'end_date']))
-                    <a href="{{ route('attendance.index') }}"
-                        class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition h-[34px] flex items-center justify-center">
-                        <i class="fa-solid fa-xmark"></i>
-                    </a>
-                @endif
+        <div x-data="{ showFilters: {{ request()->hasAny(['start_date', 'end_date']) ? 'true' : 'false' }} }" class="mb-6">
+            <button @click="showFilters = !showFilters" type="button" class="flex items-center space-x-2 text-sm text-gray-300 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-lg border border-gray-700 transition">
+                <i class="fa-solid fa-filter"></i>
+                <span>Filter History</span>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="showFilters ? 'rotate-180' : ''"></i>
+            </button>
+
+            <div x-show="showFilters" style="display: none;" 
+                 x-transition:enter="transition ease-out duration-200" 
+                 x-transition:enter-start="opacity-0 -translate-y-2" 
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150" 
+                 x-transition:leave-start="opacity-100 translate-y-0" 
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="mt-3">
+                <form method="GET" action="{{ route('attendance.index') }}" class="card-bg p-3 rounded-xl border border-gray-700 space-y-2.5 shadow-lg relative z-10">
+                    <div class="w-full overflow-hidden">
+                        <label class="block text-[11px] text-gray-400 mb-1">From</label>
+                        <input type="date" name="start_date" value="{{ request('start_date') }}"
+                            class="block w-full min-w-0 box-border bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2.5 py-1.5 focus:outline-none focus:border-[#f97316] appearance-none">
+                    </div>
+                    <div class="w-full overflow-hidden">
+                        <label class="block text-[11px] text-gray-400 mb-1">To</label>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}"
+                            class="block w-full min-w-0 box-border bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2.5 py-1.5 focus:outline-none focus:border-[#f97316] appearance-none">
+                    </div>
+                    <div class="flex items-center space-x-2 pt-1">
+                        <button type="submit"
+                            class="flex-1 bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-check text-xs"></i>
+                            <span>Apply</span>
+                        </button>
+                        @if(request()->hasAny(['start_date', 'end_date']))
+                            <a href="{{ route('attendance.index') }}"
+                                class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex items-center justify-center">
+                                Clear
+                            </a>
+                        @endif
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
 
         <div class="space-y-4">
             @forelse($attendancesHistory as $att)
