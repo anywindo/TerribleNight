@@ -60,6 +60,18 @@ Route::middleware('auth')->group(function () {
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
+        // Notifications
+        Route::post('notifications/clear', function() {
+            auth()->user()->notifications()->delete();
+            return back();
+        })->name('notifications.clear');
+
+        Route::get('notifications/{id}/read', function($id) {
+            $notification = auth()->user()->notifications()->findOrFail($id);
+            $notification->markAsRead();
+            return redirect(request('redirect_to', route('admin.dashboard')));
+        })->name('notifications.read');
+
         // Profile
         Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');

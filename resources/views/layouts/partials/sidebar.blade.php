@@ -2,7 +2,7 @@
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
         <a href="{{ route('admin.dashboard') }}" class="brand-link">
-            <img src="{{ asset('logoKirana.jpg') }}" alt="Kirana Logo" class="brand-image opacity-75 shadow">
+            <img src="{{ asset('logoKirana.png') }}" alt="Kirana Logo" class="brand-image opacity-75 shadow">
             <span class="brand-text fw-light fs-5"><b>Kirana</b> Group</span>
         </a>
     </div>
@@ -125,8 +125,7 @@
     <!--end::Sidebar Wrapper-->
 
     <!--begin::Sidebar Footer / Logout-->
-    <div class="sidebar-footer border-top border-secondary position-absolute bottom-0 w-100"
-        style="z-index: 10;">
+    <div class="sidebar-footer border-top border-secondary position-absolute bottom-0 w-100" style="z-index: 10;">
         <a href="#" class="btn btn-danger w-100 text-start text-white"
             onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">
             <i class="bi bi-box-arrow-right me-2"></i> Logout

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <title>Presensi | TerribleNight</title>
+    <title>Presensi | SIMSDM Garment</title>
     <!-- Tailwind CSS (CDN for rapid prototyping) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -24,7 +24,8 @@
     </style>
 </head>
 
-<body class="min-h-screen pb-24" x-data="{ activeTab: 'work', currentNav: '{{ request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home' }}' }">
+<body class="min-h-screen pb-24"
+    x-data="{ activeTab: 'work', currentNav: '{{ request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home' }}' }">
     <!-- Top Header -->
     <header class="px-5 pt-10 pb-4" x-show="currentNav === 'home'">
         <div class="flex justify-between items-center mb-6">
@@ -104,7 +105,8 @@
                             <img src="{{ asset('storage/' . $startEvent->selfie_path) }}"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
                         @else
-                            <div class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
+                            <div
+                                class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
                                 <i class="fa-solid fa-right-to-bracket text-sm"></i>
                             </div>
                         @endif
@@ -128,7 +130,8 @@
                             <img src="{{ asset('storage/' . $endEvent->selfie_path) }}"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
                         @else
-                            <div class="w-10 h-10 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold mr-3 border border-red-800/50">
+                            <div
+                                class="w-10 h-10 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold mr-3 border border-red-800/50">
                                 <i class="fa-solid fa-right-from-bracket text-sm"></i>
                             </div>
                         @endif
@@ -206,7 +209,7 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
+                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
                                         <i
                                             class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'fa-right-to-bracket' : 'fa-right-from-bracket' }}"></i>
                                     </div>
@@ -217,6 +220,11 @@
                                     </p>
                                     <p class="text-xs text-gray-400">
                                         {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
+                                        @if($event->latitude && $event->longitude)
+                                            | <a href="https://maps.google.com/?q={{ $event->latitude }},{{ $event->longitude }}"
+                                                target="_blank" class="text-blue-400 hover:text-blue-300 hover:underline"><i
+                                                    class="fa-solid fa-map-location-dot"></i> Maps</a>
+                                        @endif
                                     </p>
                                 </div>
                             </div>
@@ -275,7 +283,8 @@
                             <img src="{{ asset('storage/' . $startBreak->selfie_path) }}"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
                         @else
-                            <div class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
+                            <div
+                                class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
                                 <i class="fa-solid fa-mug-hot text-sm"></i>
                             </div>
                         @endif
@@ -297,7 +306,8 @@
                             <img src="{{ asset('storage/' . $endBreak->selfie_path) }}"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
                         @else
-                            <div class="w-10 h-10 rounded-full bg-blue-900/30 text-blue-500 flex items-center justify-center font-bold mr-3 border border-blue-800/50">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-900/30 text-blue-500 flex items-center justify-center font-bold mr-3 border border-blue-800/50">
                                 <i class="fa-solid fa-briefcase text-sm"></i>
                             </div>
                         @endif
@@ -327,7 +337,7 @@
                             $shiftNotStarted = !$events->contains('event_type', 'START_SHIFT');
                             $shiftEnded = $events->contains('event_type', 'END_SHIFT');
                         @endphp
-                        
+
                         @if($shiftEnded)
                             <button type="button" disabled
                                 class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
@@ -378,7 +388,7 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
+                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
                                         <i
                                             class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'fa-mug-hot' : 'fa-briefcase' }}"></i>
                                     </div>
@@ -389,6 +399,11 @@
                                     </p>
                                     <p class="text-xs text-gray-400">
                                         {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
+                                        @if($event->latitude && $event->longitude)
+                                            | <a href="https://maps.google.com/?q={{ $event->latitude }},{{ $event->longitude }}"
+                                                target="_blank" class="text-blue-400 hover:text-blue-300 hover:underline"><i
+                                                    class="fa-solid fa-map-location-dot"></i> Maps</a>
+                                        @endif
                                     </p>
                                 </div>
                             </div>
@@ -415,51 +430,63 @@
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
         x-transition:enter-end="opacity-100 scale-100">
         <h1 class="text-2xl font-bold mb-4 text-gray-100">Attendance History</h1>
-        
-        <form method="GET" action="{{ route('attendance.index') }}" class="mb-6 card-bg p-3 rounded-xl border border-gray-700">
+
+        <form method="GET" action="{{ route('attendance.index') }}"
+            class="mb-6 card-bg p-3 rounded-xl border border-gray-700">
             <div class="flex items-end space-x-2">
                 <div class="flex-1">
                     <label class="block text-xs text-gray-400 mb-1">From</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" 
+                    <input type="date" name="start_date" value="{{ request('start_date') }}"
                         class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
                 </div>
                 <div class="flex-1">
                     <label class="block text-xs text-gray-400 mb-1">To</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" 
+                    <input type="date" name="end_date" value="{{ request('end_date') }}"
                         class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
                 </div>
-                <button type="submit" class="bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition h-[34px]">
+                <button type="submit"
+                    class="bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition h-[34px]">
                     <i class="fa-solid fa-filter"></i>
                 </button>
                 @if(request()->hasAny(['start_date', 'end_date']))
-                    <a href="{{ route('attendance.index') }}" class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition h-[34px] flex items-center justify-center">
+                    <a href="{{ route('attendance.index') }}"
+                        class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition h-[34px] flex items-center justify-center">
                         <i class="fa-solid fa-xmark"></i>
                     </a>
                 @endif
             </div>
         </form>
-        
+
         <div class="space-y-4">
             @forelse($attendancesHistory as $att)
                 <div class="card-bg rounded-xl p-4 border border-gray-700">
                     <div class="flex justify-between items-center mb-3">
                         <div>
-                            <p class="font-bold text-gray-200">{{ \Carbon\Carbon::parse($att->date)->translatedFormat('l, d M Y') }}</p>
-                            <p class="text-xs text-gray-400 mt-1">Status: 
-                                <span class="{{ $att->status === 'PRESENT' ? 'text-green-500' : ($att->status === 'ABSENT' ? 'text-red-500' : 'text-orange-500') }} font-semibold">{{ $att->status }}</span>
+                            <p class="font-bold text-gray-200">
+                                {{ \Carbon\Carbon::parse($att->date)->translatedFormat('l, d M Y') }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Status:
+                                <span
+                                    class="{{ $att->status === 'PRESENT' ? 'text-green-500' : ($att->status === 'ABSENT' ? 'text-red-500' : 'text-orange-500') }} font-semibold">{{ $att->status }}</span>
                             </p>
                         </div>
                     </div>
-                    
+
                     <div class="space-y-2">
                         <!-- Shift Times -->
-                        <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div
+                            class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
                             <div class="text-center w-1/3">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check In</p>
                                 @php $inEvent = $att->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first() ?? $att->events->where('event_type', 'START_SHIFT')->first(); @endphp
                                 <p class="font-bold {{ $inEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $inEvent ? \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
+                                @if($inEvent && $inEvent->latitude && $inEvent->longitude)
+                                    <a href="https://maps.google.com/?q={{ $inEvent->latitude }},{{ $inEvent->longitude }}"
+                                        target="_blank"
+                                        class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline mt-1 block"><i
+                                            class="fa-solid fa-location-dot"></i> Maps</a>
+                                @endif
                             </div>
                             <div class="text-center text-gray-500">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -470,17 +497,30 @@
                                 <p class="font-bold {{ $outEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $outEvent ? \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
+                                @if($outEvent && $outEvent->latitude && $outEvent->longitude)
+                                    <a href="https://maps.google.com/?q={{ $outEvent->latitude }},{{ $outEvent->longitude }}"
+                                        target="_blank"
+                                        class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline mt-1 block"><i
+                                            class="fa-solid fa-location-dot"></i> Maps</a>
+                                @endif
                             </div>
                         </div>
 
                         <!-- Break Times -->
-                        <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <div
+                            class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
                             <div class="text-center w-1/3">
                                 <p class="text-[10px] text-orange-400 uppercase tracking-wider mb-1">Break Start</p>
                                 @php $breakInEvent = $att->events->where('event_type', \App\Enums\EventType::START_BREAK)->first() ?? $att->events->where('event_type', 'START_BREAK')->first(); @endphp
                                 <p class="font-bold {{ $breakInEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $breakInEvent ? \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
+                                @if($breakInEvent && $breakInEvent->latitude && $breakInEvent->longitude)
+                                    <a href="https://maps.google.com/?q={{ $breakInEvent->latitude }},{{ $breakInEvent->longitude }}"
+                                        target="_blank"
+                                        class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline mt-1 block"><i
+                                            class="fa-solid fa-location-dot"></i> Maps</a>
+                                @endif
                             </div>
                             <div class="text-center text-gray-500">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -491,6 +531,12 @@
                                 <p class="font-bold {{ $breakOutEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $breakOutEvent ? \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
+                                @if($breakOutEvent && $breakOutEvent->latitude && $breakOutEvent->longitude)
+                                    <a href="https://maps.google.com/?q={{ $breakOutEvent->latitude }},{{ $breakOutEvent->longitude }}"
+                                        target="_blank"
+                                        class="text-[10px] text-blue-400 hover:text-blue-300 hover:underline mt-1 block"><i
+                                            class="fa-solid fa-location-dot"></i> Maps</a>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -616,19 +662,71 @@
             }
         });
 
+        // Geofencing data
+        const officeLat = {{ $user->location->latitude ?? 'null' }};
+        const officeLng = {{ $user->location->longitude ?? 'null' }};
+        const officeRadius = {{ $user->location->radius ?? 'null' }};
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (lat1 === null || lon1 === null || lat2 === null || lon2 === null) return null;
+            const R = 6371e3; // metres
+            const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c; // in metres
+        }
+
+        function disableAttendanceButtons() {
+            const buttons = document.querySelectorAll('button[onclick*="selfie_input"]');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.onclick = null;
+            });
+            document.getElementById('selfie_input').disabled = true;
+            document.getElementById('break_selfie_input').disabled = true;
+        }
+
         // Geolocation
         document.addEventListener("DOMContentLoaded", function () {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(function (position) {
-                    document.getElementById('lat').value = position.coords.latitude;
-                    document.getElementById('lng').value = position.coords.longitude;
-                    document.getElementById('lat2').value = position.coords.latitude;
-                    document.getElementById('lng2').value = position.coords.longitude;
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
 
-                    document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-location-dot text-green-500 mr-1"></i> GPS Ready';
+                    document.getElementById('lat').value = currentLat;
+                    document.getElementById('lng').value = currentLng;
+                    document.getElementById('lat2').value = currentLat;
+                    document.getElementById('lng2').value = currentLng;
+
+                    if (officeLat === null || officeLng === null || officeRadius === null) {
+                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Anda tidak memiliki lokasi kerja';
+                        document.getElementById('locationStatus').classList.add('text-red-400');
+                        disableAttendanceButtons();
+                        return;
+                    }
+
+                    const distance = calculateDistance(currentLat, currentLng, officeLat, officeLng);
+
+                    if (distance > officeRadius) {
+                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Di Luar Radius (' + Math.round(distance) + 'm / Max ' + officeRadius + 'm)';
+                        document.getElementById('locationStatus').classList.add('text-red-400');
+                        disableAttendanceButtons();
+                    } else {
+                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-location-dot text-green-500 mr-1"></i> Dalam Radius (' + Math.round(distance) + 'm)';
+                        document.getElementById('locationStatus').classList.add('text-green-400');
+                    }
                 }, function (error) {
                     document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Error Getting GPS Location';
                     document.getElementById('locationStatus').classList.add('text-red-400');
+                    disableAttendanceButtons();
                 }, {
                     enableHighAccuracy: true,
                     timeout: 10000,
@@ -636,6 +734,7 @@
                 });
             } else {
                 document.getElementById('locationStatus').innerHTML = 'Browser does not support GPS';
+                disableAttendanceButtons();
             }
         });
     </script>

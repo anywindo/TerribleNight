@@ -73,24 +73,16 @@
                                     $checkIn = $attendance->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first();
                                     $checkOut = $attendance->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first();
                                 @endphp
-                                <tr>
-                                    <td>{{ $attendance->date ? $attendance->date->format('d M Y') : '-' }}</td>
-                                    <td>{{ $attendance->user->employee_id ?? '-' }}</td>
-                                    <td>
-                                        <div>{{ $attendance->user->name ?? '-' }}</div>
-                                        <div class="text-muted small">{{ $attendance->user->nik ?? '-' }}</div>
-                                    </td>
-                                    <td>{{ $attendance->user->location->name ?? '-' }}</td>
-                                    <td>{{ $attendance->shift->shift_name ?? '-' }}</td>
-
-                                    <td>
-                                        @if($checkIn)
                                             @php
                                                 $scheduledStart = $attendance->shift->default_start_time ? \Carbon\Carbon::parse($attendance->shift->default_start_time) : null;
-                                                $actualStart = $checkIn->timestamp;
+                                                $scheduledEnd = $attendance->shift->default_end_time ? \Carbon\Carbon::parse($attendance->shift->default_end_time) : null;
+                                                
+                                                $actualStart = $checkIn ? $checkIn->timestamp : null;
+                                                $actualEnd = $checkOut ? $checkOut->timestamp : null;
+                                                
                                                 $isLate = false;
                                                 $isWarning = false;
-                                                if ($scheduledStart) {
+                                                if ($checkIn && $scheduledStart) {
                                                     $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
                                                     if ($ruleEnabled) {
                                                         $ruleMinutes = \App\Models\Setting::get('attendance_rule_minutes', 15);
@@ -106,7 +98,60 @@
                                                         $isLate = $actualStart->format('H:i:s') > $scheduledStart->format('H:i:s');
                                                     }
                                                 }
+
+                                                $isEarly = $checkOut && $scheduledEnd && $actualEnd->format('H:i') < $scheduledEnd->format('H:i');
+
+                                                $inPhoto = $checkIn && $checkIn->selfie_path && Storage::disk('public')->exists($checkIn->selfie_path) ? Storage::url($checkIn->selfie_path) : asset('placeholder.svg');
+                                                $inLat = $checkIn ? $checkIn->latitude : '';
+                                                $inLng = $checkIn ? $checkIn->longitude : '';
+                                                $inTime = $checkIn ? $actualStart->format('H:i') : '-';
+                                                $inDate = $attendance->date ? $attendance->date->format('d M Y') : '-';
+                                                $inStatusLabel = $isWarning ? 'Hampir Terlambat' : ($isLate ? 'Terlambat' : 'Tepat Waktu');
+                                                $inStatusColor = $isWarning ? 'warning' : ($isLate ? 'danger' : 'success');
+
+                                                $outPhoto = $checkOut && $checkOut->selfie_path && Storage::disk('public')->exists($checkOut->selfie_path) ? Storage::url($checkOut->selfie_path) : asset('placeholder.svg');
+                                                $outLat = $checkOut ? $checkOut->latitude : '';
+                                                $outLng = $checkOut ? $checkOut->longitude : '';
+                                                $outTime = $checkOut ? $actualEnd->format('H:i') : '-';
+                                                $outDate = $attendance->date ? $attendance->date->format('d M Y') : '-';
+                                                $outStatusLabel = $isEarly ? 'Pulang Cepat' : 'Tepat Waktu';
+                                                $outStatusColor = $isEarly ? 'warning' : 'success';
+                                                
+                                                $detailData = [
+                                                    'employee' => $attendance->user->name ?? '-',
+                                                    'date' => $attendance->date ? $attendance->date->format('d M Y') : '-',
+                                                    'shiftStatusLabel' => $attendance->shift_status['label'],
+                                                    'shiftStatusColor' => $attendance->shift_status['color'],
+                                                    'in' => [
+                                                        'time' => $inTime,
+                                                        'statusLabel' => $inStatusLabel,
+                                                        'statusColor' => $inStatusColor,
+                                                        'photo' => $inPhoto,
+                                                        'lat' => $inLat,
+                                                        'lng' => $inLng
+                                                    ],
+                                                    'out' => [
+                                                        'time' => $outTime,
+                                                        'statusLabel' => $outStatusLabel,
+                                                        'statusColor' => $outStatusColor,
+                                                        'photo' => $outPhoto,
+                                                        'lat' => $outLat,
+                                                        'lng' => $outLng
+                                                    ]
+                                                ];
                                             @endphp
+                                <tr onclick='showAttendanceDetail(@json($detailData))' style="cursor: pointer;" class="hover-bg-light">
+                                    <td>{{ $attendance->date ? $attendance->date->format('d M Y') : '-' }}</td>
+                                    <td>{{ $attendance->user->employee_id ?? '-' }}</td>
+                                    <td>
+                                        <div>{{ $attendance->user->name ?? '-' }}</div>
+                                        <div class="text-muted small">{{ $attendance->user->nik ?? '-' }}</div>
+                                    </td>
+                                    <td>{{ $attendance->user->location->name ?? '-' }}</td>
+                                    <td>{{ $attendance->shift->shift_name ?? '-' }}</td>
+
+                                    <td>
+                                        @if($checkIn)
                                             <span class="{{ $isWarning ? 'text-warning fw-bold' : ($isLate ? 'text-danger fw-bold' : 'text-success') }}">{{ $actualStart->format('H:i') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
@@ -114,11 +159,6 @@
                                     </td>
                                     <td>
                                         @if($checkOut)
-                                            @php
-                                                $scheduledEnd = $attendance->shift->default_end_time ? \Carbon\Carbon::parse($attendance->shift->default_end_time) : null;
-                                                $actualEnd = $checkOut->timestamp;
-                                                $isEarly = $scheduledEnd && $actualEnd->format('H:i') < $scheduledEnd->format('H:i');
-                                            @endphp
                                             <span class="{{ $isEarly ? 'text-warning fw-bold' : 'text-success' }}">{{ $actualEnd->format('H:i') }}</span>
                                         @else
                                             <span class="text-muted">-</span>
@@ -126,23 +166,16 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            @if($checkIn && $checkIn->selfie_path && Storage::disk('public')->exists($checkIn->selfie_path))
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($checkIn->selfie_path) }}')" title="Foto Masuk">
-                                                    <img src="{{ Storage::url($checkIn->selfie_path) }}" alt="In" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                            @if($checkIn)
+                                                <img src="{{ $inPhoto }}" alt="In" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto masuk">
-                                                    <img src="{{ asset('placeholder.svg') }}" alt="In" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                                <img src="{{ $inPhoto }}" alt="In" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
-                                            @if($checkOut && $checkOut->selfie_path && Storage::disk('public')->exists($checkOut->selfie_path))
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($checkOut->selfie_path) }}')" title="Foto Keluar">
-                                                    <img src="{{ Storage::url($checkOut->selfie_path) }}" alt="Out" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+
+                                            @if($checkOut)
+                                                <img src="{{ $outPhoto }}" alt="Out" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto keluar">
-                                                    <img src="{{ asset('placeholder.svg') }}" alt="Out" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                                <img src="{{ $outPhoto }}" alt="Out" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
                                         </div>
                                     </td>
@@ -212,7 +245,170 @@
         </div>
     </div>
 
+    <!-- Modal Detail Presensi -->
+    <div class="modal fade" id="detailPresensiModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
+            <div class="modal-content overflow-hidden border-0 shadow-lg bg-body d-flex flex-column" style="height: 90vh;">
+                <div class="modal-header bg-body-tertiary border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-shrink-0">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="detailEmployeeName">-</h5>
+                        <div class="text-muted small" id="detailDate">-</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="detailShiftStatusBadge" class="badge text-bg-secondary px-3 py-2 rounded-pill fs-6">-</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0 flex-grow-1 overflow-hidden">
+                    <div class="row g-0 h-100">
+                        <!-- Check In Side -->
+                        <div class="col-lg-6 border-end border-secondary-subtle d-flex flex-column h-100">
+                            <div class="p-3 d-flex justify-content-between align-items-center bg-body flex-shrink-0">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Masuk Aktual</h6>
+                                    <div class="fw-bold fs-4" id="inTime">-</div>
+                                </div>
+                                <span id="inStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
+                            </div>
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
+                                <img id="inPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Masuk">
+                            </div>
+                            <div style="flex: 1 1 50%; position: relative;">
+                                <div id="inMap" class="w-100 h-100 position-absolute"></div>
+                            </div>
+                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                                <div>
+                                    <div class="text-muted small mb-1">Koordinat GPS</div>
+                                    <div class="font-monospace small" id="inCoordinates">-</div>
+                                </div>
+                                <a id="inMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-google"></i> Buka Maps
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Check Out Side -->
+                        <div class="col-lg-6 d-flex flex-column h-100">
+                            <div class="p-3 d-flex justify-content-between align-items-center bg-body flex-shrink-0">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Keluar Aktual</h6>
+                                    <div class="fw-bold fs-4" id="outTime">-</div>
+                                </div>
+                                <span id="outStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
+                            </div>
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
+                                <img id="outPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Keluar">
+                            </div>
+                            <div style="flex: 1 1 50%; position: relative;">
+                                <div id="outMap" class="w-100 h-100 position-absolute"></div>
+                            </div>
+                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                                <div>
+                                    <div class="text-muted small mb-1">Koordinat GPS</div>
+                                    <div class="font-monospace small" id="outCoordinates">-</div>
+                                </div>
+                                <a id="outMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-google"></i> Buka Maps
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let inMapInstance = null;
+        let inMapMarker = null;
+        let outMapInstance = null;
+        let outMapMarker = null;
+
+        function showAttendanceDetail(data) {
+            // Header
+            document.getElementById('detailEmployeeName').textContent = data.employee;
+            document.getElementById('detailDate').textContent = data.date;
+            
+            const shiftBadge = document.getElementById('detailShiftStatusBadge');
+            shiftBadge.className = `badge text-bg-${data.shiftStatusColor} px-3 py-2 rounded-pill fs-6`;
+            shiftBadge.textContent = data.shiftStatusLabel;
+
+            // In
+            document.getElementById('inTime').textContent = data.in.time;
+            document.getElementById('inCoordinates').textContent = data.in.lat && data.in.lng ? `${data.in.lat}, ${data.in.lng}` : 'Tidak ada data GPS';
+            document.getElementById('inPhoto').src = data.in.photo;
+            
+            const inBadge = document.getElementById('inStatusBadge');
+            inBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.in.statusColor}`;
+            inBadge.textContent = data.in.statusLabel;
+
+            const inMapsLink = document.getElementById('inMapsLink');
+            if (data.in.lat && data.in.lng) {
+                inMapsLink.href = `https://maps.google.com/?q=${data.in.lat},${data.in.lng}`;
+                inMapsLink.style.display = 'inline-block';
+            } else {
+                inMapsLink.style.display = 'none';
+            }
+
+            // Out
+            document.getElementById('outTime').textContent = data.out.time;
+            document.getElementById('outCoordinates').textContent = data.out.lat && data.out.lng ? `${data.out.lat}, ${data.out.lng}` : 'Tidak ada data GPS';
+            document.getElementById('outPhoto').src = data.out.photo;
+            
+            const outBadge = document.getElementById('outStatusBadge');
+            outBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.out.statusColor}`;
+            outBadge.textContent = data.out.statusLabel;
+
+            const outMapsLink = document.getElementById('outMapsLink');
+            if (data.out.lat && data.out.lng) {
+                outMapsLink.href = `https://maps.google.com/?q=${data.out.lat},${data.out.lng}`;
+                outMapsLink.style.display = 'inline-block';
+            } else {
+                outMapsLink.style.display = 'none';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('detailPresensiModal'));
+            modal.show();
+
+            document.getElementById('detailPresensiModal').addEventListener('shown.bs.modal', function () {
+                // In Map
+                if (data.in.lat && data.in.lng) {
+                    if (!inMapInstance) {
+                        inMapInstance = L.map('inMap').setView([data.in.lat, data.in.lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap'
+                        }).addTo(inMapInstance);
+                        inMapMarker = L.marker([data.in.lat, data.in.lng]).addTo(inMapInstance);
+                    } else {
+                        inMapInstance.setView([data.in.lat, data.in.lng], 16);
+                        inMapMarker.setLatLng([data.in.lat, data.in.lng]);
+                        inMapInstance.invalidateSize();
+                    }
+                } else {
+                    if (inMapInstance) { inMapInstance.remove(); inMapInstance = null; }
+                    document.getElementById('inMap').innerHTML = '<div class="d-flex h-100 w-100 align-items-center justify-content-center text-muted"><i class="bi bi-geo-slash fs-1 me-2"></i> Tidak ada data lokasi</div>';
+                }
+
+                // Out Map
+                if (data.out.lat && data.out.lng) {
+                    if (!outMapInstance) {
+                        outMapInstance = L.map('outMap').setView([data.out.lat, data.out.lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap'
+                        }).addTo(outMapInstance);
+                        outMapMarker = L.marker([data.out.lat, data.out.lng]).addTo(outMapInstance);
+                    } else {
+                        outMapInstance.setView([data.out.lat, data.out.lng], 16);
+                        outMapMarker.setLatLng([data.out.lat, data.out.lng]);
+                        outMapInstance.invalidateSize();
+                    }
+                } else {
+                    if (outMapInstance) { outMapInstance.remove(); outMapInstance = null; }
+                    document.getElementById('outMap').innerHTML = '<div class="d-flex h-100 w-100 align-items-center justify-content-center text-muted"><i class="bi bi-geo-slash fs-1 me-2"></i> Tidak ada data lokasi</div>';
+                }
+            }, { once: true });
+        }
+
         function toggleCustomDate() {
             var type = document.getElementById('export_type').value;
             var container = document.getElementById('custom_date_container');

@@ -121,8 +121,46 @@
                                             }
                                         }
                                     }
+
+                                    // Prepare data for detail modal
+                                    $inPhoto = $startBreak && $startBreak->selfie_path && Storage::disk('public')->exists($startBreak->selfie_path) 
+                                        ? Storage::url($startBreak->selfie_path) 
+                                        : asset('placeholder.svg');
+                                        
+                                    $outPhoto = $endBreak && $endBreak->selfie_path && Storage::disk('public')->exists($endBreak->selfie_path) 
+                                        ? Storage::url($endBreak->selfie_path) 
+                                        : asset('placeholder.svg');
+
+                                    $inStatusLabel = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'Awal' : 'Tepat') : '-';
+                                    $inStatusColor = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'danger' : 'success') : 'secondary';
+                                    
+                                    $outStatusLabel = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'Terlambat' : 'Tepat') : '-';
+                                    $outStatusColor = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'danger' : 'success') : 'secondary';
+
+                                    $detailData = [
+                                        'employee' => $attendance->user->name ?? '-',
+                                        'date' => \Carbon\Carbon::parse($attendance->date)->format('d M Y'),
+                                        'shiftStatusLabel' => $breakStatusLabel,
+                                        'shiftStatusColor' => $breakStatusColor,
+                                        'in' => [
+                                            'time' => $startBreak ? \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') : '-',
+                                            'statusLabel' => $inStatusLabel,
+                                            'statusColor' => $inStatusColor,
+                                            'photo' => $inPhoto,
+                                            'lat' => $startBreak->latitude ?? null,
+                                            'lng' => $startBreak->longitude ?? null
+                                        ],
+                                        'out' => [
+                                            'time' => $endBreak ? \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') : '-',
+                                            'statusLabel' => $outStatusLabel,
+                                            'statusColor' => $outStatusColor,
+                                            'photo' => $outPhoto,
+                                            'lat' => $endBreak->latitude ?? null,
+                                            'lng' => $endBreak->longitude ?? null
+                                        ]
+                                    ];
                                 @endphp
-                                <tr>
+                                <tr onclick='showBreakDetail(@json($detailData))' style="cursor: pointer;" class="hover-bg-light">
                                     <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
                                     <td>{{ $attendance->user->employee_id ?? '-' }}</td>
                                     <td>
@@ -154,23 +192,16 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            @if($startBreak && $startBreak->selfie_path && Storage::disk('public')->exists($startBreak->selfie_path))
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($startBreak->selfie_path) }}')" title="Foto Mulai Istirahat">
-                                                    <img src="{{ Storage::url($startBreak->selfie_path) }}" alt="Mulai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                            @if($startBreak)
+                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto">
-                                                    <img src="{{ asset('placeholder.svg') }}" alt="No Photo" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
-                                            @if($endBreak && $endBreak->selfie_path && Storage::disk('public')->exists($endBreak->selfie_path))
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($endBreak->selfie_path) }}')" title="Foto Selesai Istirahat">
-                                                    <img src="{{ Storage::url($endBreak->selfie_path) }}" alt="Selesai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+
+                                            @if($endBreak)
+                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
                                             @else
-                                                <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto">
-                                                    <img src="{{ asset('placeholder.svg') }}" alt="No Photo" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
-                                                </a>
+                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
                                         </div>
                                     </td>
@@ -241,7 +272,170 @@
         </div>
     </div>
 
+    <!-- Modal Detail Break -->
+    <div class="modal fade" id="detailBreakModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
+            <div class="modal-content overflow-hidden border-0 shadow-lg bg-body d-flex flex-column" style="height: 90vh;">
+                <div class="modal-header bg-body-tertiary border-bottom px-4 py-3 d-flex justify-content-between align-items-center flex-shrink-0">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="detailEmployeeName">-</h5>
+                        <div class="text-muted small" id="detailDate">-</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="detailShiftStatusBadge" class="badge text-bg-secondary px-3 py-2 rounded-pill fs-6">-</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0 flex-grow-1 overflow-hidden">
+                    <div class="row g-0 h-100">
+                        <!-- Mulai Istirahat Side -->
+                        <div class="col-lg-6 border-end border-secondary-subtle d-flex flex-column h-100">
+                            <div class="p-3 d-flex justify-content-between align-items-center bg-body flex-shrink-0">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Mulai Istirahat Aktual</h6>
+                                    <div class="fw-bold fs-4" id="inTime">-</div>
+                                </div>
+                                <span id="inStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
+                            </div>
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
+                                <img id="inPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Mulai Istirahat">
+                            </div>
+                            <div style="flex: 1 1 50%; position: relative;">
+                                <div id="inMap" class="w-100 h-100 position-absolute"></div>
+                            </div>
+                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                                <div>
+                                    <div class="text-muted small mb-1">Koordinat GPS</div>
+                                    <div class="font-monospace small" id="inCoordinates">-</div>
+                                </div>
+                                <a id="inMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-google"></i> Buka Maps
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Selesai Istirahat Side -->
+                        <div class="col-lg-6 d-flex flex-column h-100">
+                            <div class="p-3 d-flex justify-content-between align-items-center bg-body flex-shrink-0">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Selesai Istirahat Aktual</h6>
+                                    <div class="fw-bold fs-4" id="outTime">-</div>
+                                </div>
+                                <span id="outStatusBadge" class="badge rounded-pill px-3 py-2">-</span>
+                            </div>
+                            <div class="d-flex justify-content-center align-items-center overflow-hidden bg-light border-bottom border-secondary-subtle" style="flex: 1 1 50%; position: relative;">
+                                <img id="outPhoto" src="" class="h-100 object-fit-contain w-100 position-absolute" alt="Foto Selesai Istirahat">
+                            </div>
+                            <div style="flex: 1 1 50%; position: relative;">
+                                <div id="outMap" class="w-100 h-100 position-absolute"></div>
+                            </div>
+                            <div class="p-3 bg-body-tertiary border-top border-secondary-subtle d-flex justify-content-between align-items-center flex-shrink-0">
+                                <div>
+                                    <div class="text-muted small mb-1">Koordinat GPS</div>
+                                    <div class="font-monospace small" id="outCoordinates">-</div>
+                                </div>
+                                <a id="outMapsLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-google"></i> Buka Maps
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let inMapInstance = null;
+        let inMapMarker = null;
+        let outMapInstance = null;
+        let outMapMarker = null;
+
+        function showBreakDetail(data) {
+            // Header
+            document.getElementById('detailEmployeeName').textContent = data.employee;
+            document.getElementById('detailDate').textContent = data.date;
+            
+            const shiftBadge = document.getElementById('detailShiftStatusBadge');
+            shiftBadge.className = `badge text-bg-${data.shiftStatusColor} px-3 py-2 rounded-pill fs-6`;
+            shiftBadge.textContent = data.shiftStatusLabel;
+
+            // In
+            document.getElementById('inTime').textContent = data.in.time;
+            document.getElementById('inCoordinates').textContent = data.in.lat && data.in.lng ? `${data.in.lat}, ${data.in.lng}` : 'Tidak ada data GPS';
+            document.getElementById('inPhoto').src = data.in.photo;
+            
+            const inBadge = document.getElementById('inStatusBadge');
+            inBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.in.statusColor}`;
+            inBadge.textContent = data.in.statusLabel;
+
+            const inMapsLink = document.getElementById('inMapsLink');
+            if (data.in.lat && data.in.lng) {
+                inMapsLink.href = `https://maps.google.com/?q=${data.in.lat},${data.in.lng}`;
+                inMapsLink.style.display = 'inline-block';
+            } else {
+                inMapsLink.style.display = 'none';
+            }
+
+            // Out
+            document.getElementById('outTime').textContent = data.out.time;
+            document.getElementById('outCoordinates').textContent = data.out.lat && data.out.lng ? `${data.out.lat}, ${data.out.lng}` : 'Tidak ada data GPS';
+            document.getElementById('outPhoto').src = data.out.photo;
+            
+            const outBadge = document.getElementById('outStatusBadge');
+            outBadge.className = `badge rounded-pill px-3 py-2 text-bg-${data.out.statusColor}`;
+            outBadge.textContent = data.out.statusLabel;
+
+            const outMapsLink = document.getElementById('outMapsLink');
+            if (data.out.lat && data.out.lng) {
+                outMapsLink.href = `https://maps.google.com/?q=${data.out.lat},${data.out.lng}`;
+                outMapsLink.style.display = 'inline-block';
+            } else {
+                outMapsLink.style.display = 'none';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('detailBreakModal'));
+            modal.show();
+
+            document.getElementById('detailBreakModal').addEventListener('shown.bs.modal', function () {
+                // In Map
+                if (data.in.lat && data.in.lng) {
+                    if (!inMapInstance) {
+                        inMapInstance = L.map('inMap').setView([data.in.lat, data.in.lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap'
+                        }).addTo(inMapInstance);
+                        inMapMarker = L.marker([data.in.lat, data.in.lng]).addTo(inMapInstance);
+                    } else {
+                        inMapInstance.setView([data.in.lat, data.in.lng], 16);
+                        inMapMarker.setLatLng([data.in.lat, data.in.lng]);
+                        inMapInstance.invalidateSize();
+                    }
+                } else {
+                    if (inMapInstance) { inMapInstance.remove(); inMapInstance = null; }
+                    document.getElementById('inMap').innerHTML = '<div class="d-flex h-100 w-100 align-items-center justify-content-center text-muted"><i class="bi bi-geo-slash fs-1 me-2"></i> Tidak ada data lokasi</div>';
+                }
+
+                // Out Map
+                if (data.out.lat && data.out.lng) {
+                    if (!outMapInstance) {
+                        outMapInstance = L.map('outMap').setView([data.out.lat, data.out.lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap'
+                        }).addTo(outMapInstance);
+                        outMapMarker = L.marker([data.out.lat, data.out.lng]).addTo(outMapInstance);
+                    } else {
+                        outMapInstance.setView([data.out.lat, data.out.lng], 16);
+                        outMapMarker.setLatLng([data.out.lat, data.out.lng]);
+                        outMapInstance.invalidateSize();
+                    }
+                } else {
+                    if (outMapInstance) { outMapInstance.remove(); outMapInstance = null; }
+                    document.getElementById('outMap').innerHTML = '<div class="d-flex h-100 w-100 align-items-center justify-content-center text-muted"><i class="bi bi-geo-slash fs-1 me-2"></i> Tidak ada data lokasi</div>';
+                }
+            }, { once: true });
+        }
+
         function toggleCustomDate() {
             var type = document.getElementById('export_type').value;
             var container = document.getElementById('custom_date_container');

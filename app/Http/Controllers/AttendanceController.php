@@ -72,6 +72,32 @@ class AttendanceController extends Controller
         ]);
         
         $user = Auth::user();
+        
+        // --- GEOFENCING VALIDATION ---
+        if (!$user->location_id || !$user->location) {
+            return back()->with('error', 'Anda belum memiliki lokasi kerja yang diatur oleh HR. Silakan hubungi admin.');
+        }
+
+        $location = $user->location;
+        $earthRadius = 6371000; // Radius of the earth in meters
+        $latFrom = deg2rad($request->latitude);
+        $lonFrom = deg2rad($request->longitude);
+        $latTo = deg2rad($location->latitude);
+        $lonTo = deg2rad($location->longitude);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+          cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+          
+        $distance = $angle * $earthRadius;
+
+        if ($distance > $location->radius) {
+            return back()->with('error', 'Jarak Anda ' . round($distance) . ' meter. Melebihi radius maksimal ' . $location->radius . ' meter dari lokasi kerja.');
+        }
+        // --- END GEOFENCING VALIDATION ---
+        
         $today = Carbon::today();
         
         // Check for lateness if START_SHIFT
