@@ -1,4 +1,4 @@
-<aside class="app-sidebar bg-dark shadow" data-bs-theme="dark">
+<aside class="app-sidebar shadow" data-bs-theme="dark" style="background-color: #2c3338;">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
         <a href="{{ route('admin.dashboard') }}" class="brand-link">
@@ -103,7 +103,7 @@
                     <a href="{{ route('admin.settings.index') }}"
                         class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-gear-fill"></i>
-                        <p>Pengaturan Waktu</p>
+                        <p>Pengaturan</p>
                     </a>
                 </li>
 
@@ -125,7 +125,7 @@
     <!--end::Sidebar Wrapper-->
 
     <!--begin::Sidebar Footer / Logout-->
-    <div class="sidebar-footer border-top border-secondary position-absolute bottom-0 w-100 bg-dark"
+    <div class="sidebar-footer border-top border-secondary position-absolute bottom-0 w-100"
         style="z-index: 10;">
         <a href="#" class="btn btn-danger w-100 text-start text-white"
             onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">

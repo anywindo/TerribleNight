@@ -124,6 +124,37 @@
             color: rgba(255, 255, 255, 0.8) !important;
         }
 
+        /* Dropdown Dark Mode */
+        [data-bs-theme="dark"] .dropdown-menu {
+            background-color: rgba(33, 37, 41, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5) !important;
+        }
+        [data-bs-theme="dark"] .dropdown-item {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        [data-bs-theme="dark"] .dropdown-item:hover,
+        [data-bs-theme="dark"] .dropdown-item:focus {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+        [data-bs-theme="dark"] .dropdown-header {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        [data-bs-theme="dark"] .dropdown-divider {
+            border-top-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Table Dark Mode Overrides */
+        [data-bs-theme="dark"] .table thead th {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        [data-bs-theme="dark"] .table tbody td {
+            border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
         .header-title {
             color: rgba(15, 23, 42, 0.85);
             text-shadow: 0 1px 2px rgba(255,255,255,0.8);
@@ -343,9 +374,16 @@
                             <span class="dropdown-item dropdown-header">{{ auth()->user()->unreadNotifications->count() }} Notifications</span>
                             <div class="dropdown-divider"></div>
                             @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
-                                <a href="#" class="dropdown-item">
-                                    <i class="bi bi-exclamation-circle text-warning me-2"></i> {{ Str::limit($notification->data['message'] ?? 'Notifikasi baru', 30) }}
-                                    <span class="float-end text-secondary fs-7">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
+                                @php
+                                    $notifMessage = $notification->data['message'] ?? 'Notifikasi baru';
+                                    $employeeName = explode(' terlambat ', $notifMessage)[0];
+                                @endphp
+                                <a href="{{ route('admin.attendances.index', ['search' => $employeeName, 'date' => $notification->created_at->format('Y-m-d')]) }}" class="dropdown-item d-flex justify-content-between align-items-start">
+                                    <div class="pe-3" style="white-space: normal;">
+                                        <i class="bi bi-exclamation-circle text-warning me-1"></i> 
+                                        {{ $notifMessage }}
+                                    </div>
+                                    <span class="text-secondary fs-7 flex-shrink-0 mt-1">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
                                 </a>
                                 <div class="dropdown-divider"></div>
                             @empty

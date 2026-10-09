@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('page_title', 'Pengaturan')
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -39,9 +41,39 @@
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
                     </div>
-                </form>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pengecualian Presensi</h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Pilih Role yang Dikecualikan</label>
+                            <div class="row mt-2">
+                                @foreach($roles as $role)
+                                    <div class="col-md-6 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="role_{{ $role->id }}" name="exclude_roles[]" value="{{ $role->name }}" {{ is_array($excludedRoles) && in_array($role->name, $excludedRoles) ? 'checked' : '' }}>
+                                            <label class="custom-control-label" for="role_{{ $role->id }}">{{ ucfirst($role->name) }}</label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <small class="form-text text-muted mt-3">
+                                Role yang dipilih tidak akan diminta presensi dan tidak akan mendapatkan notifikasi atau masuk dalam daftar "belum absen".
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 @endsection

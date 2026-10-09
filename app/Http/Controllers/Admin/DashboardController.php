@@ -14,15 +14,28 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         
-        $totalEmployees = User::count();
+        $excludedRoles = json_decode(\App\Models\Setting::get('exclude_roles_from_attendance', '[]'), true) ?? [];
+        
+        $totalEmployeesQuery = User::query();
+        if (!empty($excludedRoles)) {
+            $totalEmployeesQuery->whereDoesntHave('roles', function($q) use ($excludedRoles) {
+                $q->whereIn('name', $excludedRoles);
+            });
+        }
+        $totalEmployees = $totalEmployeesQuery->count();
         $attendancesToday = Attendance::with(['user.location', 'shift', 'events'])
             ->whereDate('date', '=', $today)
             ->get();
             
         $presentUserIds = $attendancesToday->pluck('user_id')->unique();
-        $absentEmployeesList = User::with(['location'])
-            ->whereNotIn('id', $presentUserIds)
-            ->get();
+        
+        $absentQuery = User::with(['location'])->whereNotIn('id', $presentUserIds);
+        if (!empty($excludedRoles)) {
+            $absentQuery->whereDoesntHave('roles', function($q) use ($excludedRoles) {
+                $q->whereIn('name', $excludedRoles);
+            });
+        }
+        $absentEmployeesList = $absentQuery->get();
             
         $presentToday = $attendancesToday->count();
         $absentToday = $absentEmployeesList->count();
