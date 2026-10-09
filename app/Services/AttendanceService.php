@@ -12,8 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class AttendanceService extends BaseService
 {
-    /** @var AttendanceRepositoryInterface */
-    protected $repository;
+
     public function __construct(AttendanceRepositoryInterface $repository)
     {
         parent::__construct($repository);

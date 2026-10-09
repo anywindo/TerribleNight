@@ -5,10 +5,11 @@ use App\Models\Shift;
 use App\Models\Attendance;
 use App\Models\AttendanceEvent;
 use App\Enums\EventType;
+use App\Enums\AttendanceStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-uses(TestCase::class, RefreshDatabase::class);
+
 
 it('can create an attendance flow with events', function () {
     $manager = User::factory()->create();
@@ -27,7 +28,7 @@ it('can create an attendance flow with events', function () {
         'user_id' => $user->id,
         'shift_id' => $shift->id,
         'date' => now()->toDateString(),
-        'status' => 'PRESENT',
+        'status' => AttendanceStatus::EXACT,
     ]);
 
     $event = AttendanceEvent::create([

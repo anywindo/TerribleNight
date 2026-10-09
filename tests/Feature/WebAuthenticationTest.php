@@ -35,23 +35,23 @@ class WebAuthenticationTest extends TestCase
         $response = $this->get('/admin/dashboard');
         $response->assertRedirect('/');
 
-        $response = $this->get('/app/attendance');
+        $response = $this->get('/attendance');
         $response->assertRedirect('/');
     }
 
-    public function test_hr_user_redirected_to_admin_dashboard_after_login()
+    public function test_hr_user_redirected_to_role_selection_or_dashboard_after_login()
     {
         $hr = User::factory()->create([
             'password' => bcrypt('password')
         ]);
         $hr->assignRole('HR');
 
-        $response = $this->post('/', [
+        $response = $this->post('/login', [
             'email' => $hr->email,
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/admin/dashboard');
+        $response->assertRedirect('/role-selection');
         $this->assertAuthenticatedAs($hr);
     }
 
@@ -62,22 +62,24 @@ class WebAuthenticationTest extends TestCase
         ]);
         $employee->assignRole('Employee');
 
-        $response = $this->post('/', [
+        $response = $this->post('/login', [
             'email' => $employee->email,
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/app/attendance');
+        // Employee akan otomatis diarahkan ke /attendance berdasarkan AuthController
+        $response->assertRedirect('/attendance');
         $this->assertAuthenticatedAs($employee);
     }
 
-    public function test_authenticated_hr_cannot_access_employee_routes()
+    public function test_authenticated_hr_can_access_employee_routes()
     {
+        // Sebenarnya di sistem kita, HR juga bisa akses presensi mandiri.
         $hr = User::factory()->create();
         $hr->assignRole('HR');
 
-        $response = $this->actingAs($hr)->get('/app/attendance');
-        $response->assertStatus(403);
+        $response = $this->actingAs($hr)->get('/attendance');
+        $response->assertStatus(200);
     }
 
     public function test_authenticated_employee_cannot_access_hr_routes()

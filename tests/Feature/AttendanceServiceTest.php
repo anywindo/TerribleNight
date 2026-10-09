@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
-uses(TestCase::class, RefreshDatabase::class);
+
 
 function setupAttendanceServiceTest()
 {
