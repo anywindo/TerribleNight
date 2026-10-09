@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $today = Carbon::today();
@@ -44,9 +44,22 @@ class AttendanceController extends Controller
             $query->where('user_id', $user->id);
         })->orderBy('timestamp', 'desc')->take(20)->get();
         
+        $historyQuery = \App\Models\Attendance::where('user_id', $user->id);
+        
+        if ($request->filled('start_date')) {
+            $historyQuery->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $historyQuery->whereDate('date', '<=', $request->end_date);
+        }
+
+        $attendancesHistory = $historyQuery->orderBy('date', 'desc')
+            ->take(30)
+            ->get();
+            
         $shift = $attendance ? $attendance->shift : \App\Models\Shift::first();
         
-        return view('attendance.index', compact('user', 'events', 'historyEvents', 'nextAction', 'activeBreak', 'shift'));
+        return view('attendance.index', compact('user', 'events', 'historyEvents', 'attendancesHistory', 'nextAction', 'activeBreak', 'shift'));
     }
 
     public function store(Request $request, \App\Services\FileUploadService $fileUploadService)
@@ -61,11 +74,39 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $today = Carbon::today();
         
+        // Check for lateness if START_SHIFT
+        $status = 'EXACT';
+        $latenessMinutes = 0;
+        
+        if ($request->event_type === 'START_SHIFT') {
+            $shift = \App\Models\Shift::find(1); // Default shift
+            if ($shift && $shift->default_start_time) {
+                $scheduledStart = \Carbon\Carbon::parse($today->format('Y-m-d') . ' ' . $shift->default_start_time);
+                $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
+                $cutoffMinutes = $ruleEnabled ? \App\Models\Setting::get('attendance_rule_minutes', 15) : 0;
+                
+                $lateThreshold = $scheduledStart->copy()->addMinutes($cutoffMinutes);
+                $now = now();
+                
+                if ($now->greaterThan($lateThreshold)) {
+                    $latenessMinutes = (int) abs($now->diffInMinutes($scheduledStart));
+                    $status = 'LATE';
+                } elseif ($now->lessThan($scheduledStart)) {
+                    $status = 'EARLY';
+                }
+            }
+        }
+
         // Find or create today's attendance record
         $attendance = Attendance::firstOrCreate(
             ['user_id' => $user->id, 'date' => $today],
-            ['status' => 'PRESENT', 'shift_id' => 1] // Assuming default status and shift
+            ['status' => $status, 'shift_id' => 1] // Using dynamic valid status
         );
+        
+        // If it's START_SHIFT and attendance was just created or we need to update status
+        if ($request->event_type === 'START_SHIFT') {
+            $attendance->update(['status' => $status]);
+        }
         
         $selfiePath = $fileUploadService->uploadImage($request->file('selfie'), 'attendance-selfies');
         
@@ -78,6 +119,16 @@ class AttendanceController extends Controller
             'selfie_path' => $selfiePath,
         ]);
         
-        return redirect()->route('attendance.index')->with('success', 'Kehadiran berhasil dicatat!');
+        $message = 'Kehadiran berhasil dicatat!';
+
+        // Notification for late check-in
+        if ($request->event_type === 'START_SHIFT' && $status === 'LATE') {
+            $admins = \App\Models\User::role(['super-admin', 'HR'])->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\EmployeeLateNotification($user, $latenessMinutes));
+            
+            $message .= ' Anda terlambat ' . $latenessMinutes . ' menit.';
+        }
+        
+        return redirect()->route('attendance.index')->with('success', $message);
     }
 }

@@ -24,7 +24,7 @@
     </style>
 </head>
 
-<body class="min-h-screen pb-24" x-data="{ activeTab: 'work', currentNav: 'home' }">
+<body class="min-h-screen pb-24" x-data="{ activeTab: 'work', currentNav: '{{ request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home' }}' }">
     <!-- Top Header -->
     <header class="px-5 pt-10 pb-4" x-show="currentNav === 'home'">
         <div class="flex justify-between items-center mb-6">
@@ -40,8 +40,8 @@
 
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=e2e8f0&color=475569"
-                    class="w-12 h-12 rounded-full border-2 border-gray-600 bg-white">
+                <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
+                    class="w-12 h-12 rounded-full border-2 border-gray-600 bg-white object-cover">
                 <div>
                     <h2 class="font-bold text-base">{{ $user->name }}</h2>
                     <p class="text-sm text-gray-400">{{ $user->email }}</p>
@@ -100,8 +100,14 @@
 
                     <!-- Start Time -->
                     <div class="flex-1 flex items-center">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random"
-                            class="w-10 h-10 rounded-full mr-3 border border-gray-600">
+                        @if($startEvent && $startEvent->selfie_path && $startEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ asset('storage/' . $startEvent->selfie_path) }}"
+                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
+                                <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                            </div>
+                        @endif
                         <div>
                             <p class="text-xs text-gray-400 mb-0.5">Start Time</p>
                             @if($startEvent)
@@ -118,10 +124,14 @@
 
                     <!-- End Time -->
                     <div class="flex-1 flex items-center pl-4">
-                        <div
-                            class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold mr-3">
-                            {{ strtoupper(substr($user->name, 0, 2)) }}
-                        </div>
+                        @if($endEvent && $endEvent->selfie_path && $endEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ asset('storage/' . $endEvent->selfie_path) }}"
+                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold mr-3 border border-red-800/50">
+                                <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                            </div>
+                        @endif
                         <div>
                             <p class="text-xs text-gray-400 mb-0.5">End Time</p>
                             @if($endEvent)
@@ -149,32 +159,10 @@
 
                     @if(!$startEvent)
                         <input type="hidden" name="event_type" value="START_SHIFT">
-                        @php
-                            $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
-                            $isPastCutoff = false;
-                            $cutoffTime = null;
-                            if ($ruleEnabled && $shift->default_start_time) {
-                                $ruleMinutes = \App\Models\Setting::get('attendance_rule_minutes', 15);
-                                $shiftStartTime = \Carbon\Carbon::parse($shift->default_start_time);
-                                $cutoffTime = $shiftStartTime->copy()->subMinutes($ruleMinutes);
-                                if (now()->format('H:i:s') >= $cutoffTime->format('H:i:s')) {
-                                    $isPastCutoff = true;
-                                }
-                            }
-                        @endphp
-                        
-                        @if($isPastCutoff)
-                            <button type="button" disabled
-                                class="w-full bg-red-900/50 text-red-400 border border-red-500 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                <span>Record Time</span>
-                                <span class="text-[10px] font-normal mt-0.5">Batas waktu habis (sebelum {{ $cutoffTime->format('H:i') }})</span>
-                            </button>
-                        @else
-                            <button type="button" onclick="document.getElementById('selfie_input').click()"
-                                class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                Record Time
-                            </button>
-                        @endif
+                        <button type="button" onclick="document.getElementById('selfie_input').click()"
+                            class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                            Record Time
+                        </button>
                     @elseif(!$endEvent)
                         @php
                             $hasActiveBreak = $events->contains('event_type', 'START_BREAK') && !$events->contains('event_type', 'END_BREAK');
@@ -193,7 +181,8 @@
                             </button>
                         @endif
                     @else
-                        <button type="button" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
+                        <button type="button" disabled
+                            class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
                             Shift Completed
                         </button>
                     @endif
@@ -217,14 +206,14 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                    {{ $event->event_type === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
+                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
                                         <i
-                                            class="fa-solid {{ $event->event_type === 'START_SHIFT' ? 'fa-right-to-bracket' : 'fa-right-from-bracket' }}"></i>
+                                            class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'fa-right-to-bracket' : 'fa-right-from-bracket' }}"></i>
                                     </div>
                                 @endif
                                 <div>
                                     <p class="text-sm font-bold text-gray-200">
-                                        {{ $event->event_type === 'START_SHIFT' ? 'Start Shift' : 'End Shift' }}
+                                        {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift' : 'End Shift' }}
                                     </p>
                                     <p class="text-xs text-gray-400">
                                         {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
@@ -254,9 +243,18 @@
             <div class="card-bg rounded-xl p-4 mb-6">
                 <div class="mb-4">
                     <p class="text-xs text-gray-400 mb-2">{{ now()->translatedFormat('D, d M Y') }}</p>
+                    @php
+                        $displayBreakStart = ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--';
+                        $displayBreakEnd = ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--';
+                        if (now()->isFriday() && $shift && $shift->break_start) {
+                            $displayBreakStart = '11:30';
+                            $displayBreakEnd = '13:00';
+                        }
+                    @endphp
                     <div class="flex items-center">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mr-3">
-                            Break Time [{{ ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--' }} - {{ ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--' }}]
+                            Break Time
+                            [{{ $displayBreakStart }} - {{ $displayBreakEnd }}]
                         </p>
                         <div class="flex-1 h-[1px] bg-gray-600"></div>
                     </div>
@@ -273,8 +271,14 @@
 
                     <!-- Start Break -->
                     <div class="flex-1 flex items-center">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random"
-                            class="w-10 h-10 rounded-full mr-3 border border-gray-600">
+                        @if($startBreak && $startBreak->selfie_path && $startBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ asset('storage/' . $startBreak->selfie_path) }}"
+                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
+                                <i class="fa-solid fa-mug-hot text-sm"></i>
+                            </div>
+                        @endif
                         <div>
                             <p class="text-xs text-gray-400 mb-0.5">Start Break</p>
                             @if($startBreak)
@@ -289,8 +293,14 @@
 
                     <!-- End Break -->
                     <div class="flex-1 flex items-center pl-4">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random"
-                            class="w-10 h-10 rounded-full mr-3 border border-gray-600">
+                        @if($endBreak && $endBreak->selfie_path && $endBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ asset('storage/' . $endBreak->selfie_path) }}"
+                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-blue-900/30 text-blue-500 flex items-center justify-center font-bold mr-3 border border-blue-800/50">
+                                <i class="fa-solid fa-briefcase text-sm"></i>
+                            </div>
+                        @endif
                         <div>
                             <p class="text-xs text-gray-400 mb-0.5">End Break</p>
                             @if($endBreak)
@@ -314,24 +324,23 @@
 
                     <div class="flex space-x-3">
                         @php
-                            $nowTime = now()->format('H:i:s');
-                            $breakStartTime = $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i:s') : null;
-                            $breakEndTime = $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i:s') : null;
                             $shiftNotStarted = !$events->contains('event_type', 'START_SHIFT');
+                            $shiftEnded = $events->contains('event_type', 'END_SHIFT');
                         @endphp
-                        @if(!$startBreak)
+                        
+                        @if($shiftEnded)
+                            <button type="button" disabled
+                                class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
+                                <span>Record Break Time</span>
+                                <span class="text-[10px] font-normal mt-0.5">Shift telah selesai</span>
+                            </button>
+                        @elseif(!$startBreak)
                             <input type="hidden" name="event_type" value="START_BREAK">
                             @if($shiftNotStarted)
                                 <button type="button" disabled
                                     class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
                                     <span>Record Break Time</span>
                                     <span class="text-[10px] font-normal mt-0.5">Mulai shift terlebih dahulu</span>
-                                </button>
-                            @elseif($breakStartTime && $nowTime < $breakStartTime)
-                                <button type="button" disabled
-                                    class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                    <span>Record Break Time</span>
-                                    <span class="text-[10px] font-normal mt-0.5">Belum waktunya istirahat</span>
                                 </button>
                             @else
                                 <button type="button" onclick="document.getElementById('break_selfie_input').click()"
@@ -341,18 +350,10 @@
                             @endif
                         @elseif(!$endBreak)
                             <input type="hidden" name="event_type" value="END_BREAK">
-                            @if($breakEndTime && $nowTime > $breakEndTime)
-                                <button type="button" disabled
-                                    class="flex-1 bg-red-900/50 text-red-400 border border-red-500 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                    <span>Record End Break</span>
-                                    <span class="text-[10px] font-normal mt-0.5">Waktu istirahat telah berakhir</span>
-                                </button>
-                            @else
-                                <button type="button" onclick="document.getElementById('break_selfie_input').click()"
-                                    class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                    Record End Break
-                                </button>
-                            @endif
+                            <button type="button" onclick="document.getElementById('break_selfie_input').click()"
+                                class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
+                                Record End Break
+                            </button>
                         @else
                             <button type="button" disabled
                                 class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
@@ -377,14 +378,14 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                    {{ $event->event_type === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
+                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
                                         <i
-                                            class="fa-solid {{ $event->event_type === 'START_BREAK' ? 'fa-mug-hot' : 'fa-briefcase' }}"></i>
+                                            class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'fa-mug-hot' : 'fa-briefcase' }}"></i>
                                     </div>
                                 @endif
                                 <div>
                                     <p class="text-sm font-bold text-gray-200">
-                                        {{ $event->event_type === 'START_BREAK' ? 'Start Break' : 'End Break' }}
+                                        {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break' : 'End Break' }}
                                     </p>
                                     <p class="text-xs text-gray-400">
                                         {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
@@ -409,6 +410,100 @@
         </div>
     </main>
 
+    <!-- History Content -->
+    <main class="px-5 pt-12 mt-4 pb-24" x-show="currentNav === 'history'" style="display: none;"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100">
+        <h1 class="text-2xl font-bold mb-4 text-gray-100">Attendance History</h1>
+        
+        <form method="GET" action="{{ route('attendance.index') }}" class="mb-6 card-bg p-3 rounded-xl border border-gray-700">
+            <div class="flex items-end space-x-2">
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-1">From</label>
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" 
+                        class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-400 mb-1">To</label>
+                    <input type="date" name="end_date" value="{{ request('end_date') }}" 
+                        class="w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2 py-1.5 focus:outline-none focus:border-[#f97316]">
+                </div>
+                <button type="submit" class="bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition h-[34px]">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                @if(request()->hasAny(['start_date', 'end_date']))
+                    <a href="{{ route('attendance.index') }}" class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition h-[34px] flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </a>
+                @endif
+            </div>
+        </form>
+        
+        <div class="space-y-4">
+            @forelse($attendancesHistory as $att)
+                <div class="card-bg rounded-xl p-4 border border-gray-700">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <p class="font-bold text-gray-200">{{ \Carbon\Carbon::parse($att->date)->translatedFormat('l, d M Y') }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Status: 
+                                <span class="{{ $att->status === 'PRESENT' ? 'text-green-500' : ($att->status === 'ABSENT' ? 'text-red-500' : 'text-orange-500') }} font-semibold">{{ $att->status }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <!-- Shift Times -->
+                        <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                            <div class="text-center w-1/3">
+                                <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check In</p>
+                                @php $inEvent = $att->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first() ?? $att->events->where('event_type', 'START_SHIFT')->first(); @endphp
+                                <p class="font-bold {{ $inEvent ? 'text-white' : 'text-gray-500' }}">
+                                    {{ $inEvent ? \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') : '--:--' }}
+                                </p>
+                            </div>
+                            <div class="text-center text-gray-500">
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </div>
+                            <div class="text-center w-1/3">
+                                <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check Out</p>
+                                @php $outEvent = $att->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first() ?? $att->events->where('event_type', 'END_SHIFT')->first(); @endphp
+                                <p class="font-bold {{ $outEvent ? 'text-white' : 'text-gray-500' }}">
+                                    {{ $outEvent ? \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') : '--:--' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Break Times -->
+                        <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                            <div class="text-center w-1/3">
+                                <p class="text-[10px] text-orange-400 uppercase tracking-wider mb-1">Break Start</p>
+                                @php $breakInEvent = $att->events->where('event_type', \App\Enums\EventType::START_BREAK)->first() ?? $att->events->where('event_type', 'START_BREAK')->first(); @endphp
+                                <p class="font-bold {{ $breakInEvent ? 'text-white' : 'text-gray-500' }}">
+                                    {{ $breakInEvent ? \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') : '--:--' }}
+                                </p>
+                            </div>
+                            <div class="text-center text-gray-500">
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </div>
+                            <div class="text-center w-1/3">
+                                <p class="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Break End</p>
+                                @php $breakOutEvent = $att->events->where('event_type', \App\Enums\EventType::END_BREAK)->first() ?? $att->events->where('event_type', 'END_BREAK')->first(); @endphp
+                                <p class="font-bold {{ $breakOutEvent ? 'text-white' : 'text-gray-500' }}">
+                                    {{ $breakOutEvent ? \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') : '--:--' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-10 text-gray-500 border border-dashed border-gray-700 rounded-xl">
+                    <i class="fa-solid fa-calendar-xmark text-3xl mb-3 opacity-50"></i>
+                    <p class="text-sm font-medium">Belum ada riwayat kehadiran.</p>
+                </div>
+            @endforelse
+        </div>
+    </main>
+
     <!-- Profile Content -->
     <main class="px-5 pt-12 mt-4" x-show="currentNav === 'profile'" style="display: none;"
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
@@ -416,8 +511,8 @@
         <h1 class="text-2xl font-bold mb-6">Profile</h1>
 
         <div class="card-bg rounded-xl p-6 text-center mb-6">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=e2e8f0&color=475569&size=128"
-                class="w-24 h-24 rounded-full border-4 border-gray-600 bg-white mx-auto mb-4">
+            <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
+                class="w-24 h-24 rounded-full border-4 border-gray-600 bg-white mx-auto mb-4 object-cover">
             <h2 class="text-xl font-bold text-gray-100">{{ $user->name }}</h2>
 
             <div class="mt-4 flex justify-center space-x-2">
@@ -477,12 +572,18 @@
             <i class="fa-solid fa-house text-xl mb-1"></i>
             <span class="text-[10px] font-semibold">Home</span>
         </div>
+        <div @click="currentNav = 'history'"
+            :class="currentNav === 'history' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-200'"
+            class="flex flex-col items-center cursor-pointer w-16 transition">
+            <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">History</span>
+        </div>
         <div @click="currentNav = 'profile'"
             :class="currentNav === 'profile' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-200'"
             class="flex flex-col items-center cursor-pointer transition w-16">
             <div class="w-6 h-6 rounded-full overflow-hidden border mb-1 transition-colors"
                 :class="currentNav === 'profile' ? 'border-orange-500' : 'border-gray-500'">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random"
+                <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
                     class="w-full h-full object-cover">
             </div>
             <span class="text-[10px] font-medium">Profile</span>

@@ -330,6 +330,32 @@
 
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
+                    <!--begin::Notifications Dropdown Menu-->
+                    @if(auth()->user()->hasRole(['super-admin', 'HR']))
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" data-bs-toggle="dropdown" href="#">
+                            <i class="bi bi-bell"></i>
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                                <span class="navbar-badge badge text-bg-warning">{{ auth()->user()->unreadNotifications->count() }}</span>
+                            @endif
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                            <span class="dropdown-item dropdown-header">{{ auth()->user()->unreadNotifications->count() }} Notifications</span>
+                            <div class="dropdown-divider"></div>
+                            @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
+                                <a href="#" class="dropdown-item">
+                                    <i class="bi bi-exclamation-circle text-warning me-2"></i> {{ Str::limit($notification->data['message'] ?? 'Notifikasi baru', 30) }}
+                                    <span class="float-end text-secondary fs-7">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                            @empty
+                                <a href="#" class="dropdown-item text-center text-muted">Belum ada notifikasi</a>
+                                <div class="dropdown-divider"></div>
+                            @endforelse
+                        </div>
+                    </li>
+                    @endif
+                    <!--end::Notifications Dropdown Menu-->
                     <!--begin::Dark Mode Toggle-->
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="darkModeToggle" role="button">
