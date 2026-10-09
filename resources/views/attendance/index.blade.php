@@ -442,7 +442,12 @@
             </div>
             <div class="h-[1px] bg-gray-700"></div>
             <div>
-                <p class="text-xs text-gray-500 mb-1">Employee ID (NIK)</p>
+                <p class="text-xs text-gray-500 mb-1">Employee ID</p>
+                <p class="font-medium text-gray-200">{{ $user->employee_id ?? 'Not set' }}</p>
+            </div>
+            <div class="h-[1px] bg-gray-700"></div>
+            <div>
+                <p class="text-xs text-gray-500 mb-1">NIK (KTP)</p>
                 <p class="font-medium text-gray-200">{{ $user->nik ?? 'Not set' }}</p>
             </div>
             <div class="h-[1px] bg-gray-700"></div>

@@ -38,6 +38,9 @@
         }
         
         .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -133,6 +136,13 @@
         }
 
         .app-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 1030;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 0, 0, 0.15);
             justify-content: space-between;
         }
 
@@ -219,7 +229,7 @@
                             </li>
                             <li class="user-footer bg-light p-3">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <a href="#" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold flex-fill me-1">
+                                    <a href="{{ route('admin.profile.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold flex-fill me-1">
                                         <i class="bi bi-person-circle me-1"></i> Profil Saya
                                     </a>
                                     <a href="{{ route('role.selection') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold flex-fill ms-1">

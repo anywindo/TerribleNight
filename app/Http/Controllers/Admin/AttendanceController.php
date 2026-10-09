@@ -30,16 +30,33 @@ class AttendanceController extends Controller
             $query->whereDate('date', $request->date);
         }
 
+        if ($request->filled('shift_id')) {
+            $query->where('shift_id', $request->shift_id);
+        }
+
+        if ($request->filled('location_id')) {
+            $location_id = $request->location_id;
+            $query->whereHas('user', function($q) use ($location_id) {
+                $q->where('location_id', $location_id);
+            });
+        }
+
         $perPage = $request->input('per_page', 10);
         $attendances = $query->paginate($perPage)->appends($request->all());
 
-        return view('admin.attendances.index', compact('attendances'));
+        $shifts = \App\Models\Shift::all();
+        $locations = \App\Models\Location::all();
+
+        return view('admin.attendances.index', compact('attendances', 'shifts', 'locations'));
     }
 
     public function export(Request $request)
     {
         $startDate = null;
         $endDate = null;
+        $search = null;
+        $shift_id = null;
+        $location_id = null;
 
         if ($request->export_type === 'today') {
             $startDate = now()->toDateString();
@@ -47,8 +64,16 @@ class AttendanceController extends Controller
         } elseif ($request->export_type === 'custom') {
             $startDate = $request->start_date;
             $endDate = $request->end_date;
-        } // 'all' will leave them as null
+        } elseif ($request->export_type === 'filter') {
+            if ($request->filled('date')) {
+                $startDate = $request->date;
+                $endDate = $request->date;
+            }
+            $search = $request->search;
+            $shift_id = $request->shift_id;
+            $location_id = $request->location_id;
+        }
 
-        return Excel::download(new AttendanceExport($startDate, $endDate), 'attendance_'.date('Y-m-d_H-i-s').'.xlsx');
+        return Excel::download(new AttendanceExport($startDate, $endDate, $search, $shift_id, $location_id), 'attendance_'.date('Y-m-d_H-i-s').'.xlsx');
     }
 }

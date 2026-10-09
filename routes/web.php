@@ -53,10 +53,15 @@ Route::middleware('auth')->group(function () {
         Route::get('attendances/export', [AdminAttendanceController::class, 'export'])->name('attendances.export');
         Route::get('attendances', [AdminAttendanceController::class, 'index'])->name('attendances.index');
         
+        Route::get('breaks/export', [BreakController::class, 'export'])->name('breaks.export');
         Route::get('breaks', [BreakController::class, 'index'])->name('breaks.index');
 
         // Settings
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+
+        // Profile
+        Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
+        Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     });
 });

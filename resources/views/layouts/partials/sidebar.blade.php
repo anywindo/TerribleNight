@@ -54,13 +54,6 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.settings.index') }}"
-                        class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-                        <i class="nav-icon bi bi-gear-fill"></i>
-                        <p>Pengaturan HR</p>
-                    </a>
-                </li>
 
                 <li class="nav-header">MANAJEMEN KEHADIRAN</li>
 
@@ -95,6 +88,24 @@
                         <p>Lembur & Dinas</p>
                     </a>
                 </li> --}}
+
+                <li class="nav-header">PENGATURAN</li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.profile.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.profile.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-person-fill"></i>
+                        <p>Profil Saya</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.settings.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-gear-fill"></i>
+                        <p>Pengaturan Waktu</p>
+                    </a>
+                </li>
 
                 @can('manage-rbac')
                     <li class="nav-header">SISTEM</li>

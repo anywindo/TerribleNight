@@ -8,8 +8,9 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
-class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class BreakExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
     protected $rowNumber = 0;
     protected $startDate;
@@ -29,7 +30,12 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
 
     public function query(): Builder|\Illuminate\Database\Query\Builder
     {
-        $query = Attendance::with(['user.location', 'shift', 'events'])->orderBy('date', 'desc');
+        // Get attendances that have any break events
+        $query = Attendance::with(['user.location', 'shift', 'events'])
+            ->whereHas('events', function($q) {
+                $q->whereIn('event_type', ['START_BREAK', 'END_BREAK']);
+            })
+            ->orderBy('date', 'desc');
 
         if ($this->startDate) {
             $query->whereDate('date', '>=', $this->startDate);
@@ -71,8 +77,9 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             'Nama Lokasi Kerja',
             'Tanggal',
             'Shift',
-            'Masuk Aktual',
-            'Keluar Aktual',
+            'Mulai Istirahat',
+            'Selesai Istirahat',
+            'Durasi Istirahat',
             'Status',
         ];
     }
@@ -81,10 +88,16 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
     {
         $this->rowNumber++;
 
-        $checkInEvent = $attendance->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first();
-        $checkOutEvent = $attendance->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first();
+        $startBreak = $attendance->events->where('event_type', 'START_BREAK')->first();
+        $endBreak = $attendance->events->where('event_type', 'END_BREAK')->first();
 
-        $status = is_array($attendance->shift_status) ? ($attendance->shift_status['label'] ?? '-') : ($attendance->shift_status ?? '-');
+        $duration = '-';
+        if ($startBreak && $endBreak) {
+            $diff = Carbon::parse($endBreak->timestamp)->diff(Carbon::parse($startBreak->timestamp));
+            $duration = sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
+        }
+
+        $status = is_array($attendance->break_status) ? ($attendance->break_status['label'] ?? '-') : ($attendance->break_status ?? '-');
 
         return [
             $this->rowNumber,
@@ -94,8 +107,9 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             $attendance->user->location->name ?? '-',
             $attendance->date ? $attendance->date->format('Y-m-d') : '-',
             $attendance->shift ? $attendance->shift->shift_name : '-',
-            $checkInEvent ? $checkInEvent->timestamp->format('H:i:s') : '-',
-            $checkOutEvent ? $checkOutEvent->timestamp->format('H:i:s') : '-',
+            $startBreak ? $startBreak->timestamp->format('H:i:s') : '-',
+            $endBreak ? $endBreak->timestamp->format('H:i:s') : '-',
+            $duration,
             $status,
         ];
     }

@@ -20,7 +20,22 @@
                                     <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
                                 </select>
                             </div>
+                            
                             <div class="input-group input-group-sm">
+                                <select name="location_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">Semua Lokasi</option>
+                                    @foreach($locations ?? [] as $loc)
+                                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                                    @endforeach
+                                </select>
+                                
+                                <select name="shift_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">Semua Shift</option>
+                                    @foreach($shifts ?? [] as $shift)
+                                        <option value="{{ $shift->id }}" {{ request('shift_id') == $shift->id ? 'selected' : '' }}>{{ $shift->shift_name }}</option>
+                                    @endforeach
+                                </select>
+
                                 <input type="date" name="date" class="form-control" title="Filter berdasarkan tanggal"
                                     value="{{ request('date') }}">
                                 <input type="text" name="search" class="form-control" placeholder="Cari nama, NIK..."
@@ -164,10 +179,17 @@
                             <label class="form-label">Pilih Rentang Waktu</label>
                             <select class="form-select" name="export_type" id="export_type" onchange="toggleCustomDate()">
                                 <option value="today">Hari Ini</option>
+                                <option value="filter">Sesuai Filter Saat Ini</option>
                                 <option value="all">Semua Hari</option>
                                 <option value="custom">Ditentukan (Custom)</option>
                             </select>
                         </div>
+                        
+                        <!-- Hidden inputs for filter -->
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="date" value="{{ request('date') }}">
+                        <input type="hidden" name="shift_id" value="{{ request('shift_id') }}">
+                        <input type="hidden" name="location_id" value="{{ request('location_id') }}">
                         <div class="row" id="custom_date_container" style="display: none;">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Mulai Tanggal</label>
