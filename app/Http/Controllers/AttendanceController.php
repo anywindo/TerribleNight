@@ -44,7 +44,9 @@ class AttendanceController extends Controller
             $query->where('user_id', $user->id);
         })->orderBy('timestamp', 'desc')->take(20)->get();
         
-        return view('attendance.index', compact('user', 'events', 'historyEvents', 'nextAction', 'activeBreak'));
+        $shift = $attendance ? $attendance->shift : \App\Models\Shift::first();
+        
+        return view('attendance.index', compact('user', 'events', 'historyEvents', 'nextAction', 'activeBreak', 'shift'));
     }
 
     public function store(Request $request, \App\Services\FileUploadService $fileUploadService)

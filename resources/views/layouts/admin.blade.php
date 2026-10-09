@@ -213,32 +213,35 @@
                                 class="user-image rounded-circle shadow" alt="User Image">
                             <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow-lg" style="border-radius: 1rem; overflow: hidden; border: 1px solid rgba(0,0,0,0.1);">
-                            <li class="user-header text-bg-primary" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;">
-                                <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
-                                    class="rounded-circle shadow-sm border border-2 border-white mb-2" alt="User Image">
-                                <p class="mb-0 fw-bold fs-5">
-                                    {{ auth()->user()->name }}
-                                </p>
-                                <div class="mt-1">
-                                    <span class="badge bg-light text-primary fw-bold px-2 py-1">{{ auth()->user()->roles->pluck('name')->join(', ') }}</span>
+                        <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow-sm" style="border-radius: 0.5rem; overflow: hidden; border: 1px solid rgba(0,0,0,0.1);">
+                            <li class="user-header position-relative border-bottom-0" style="background: url('{{ asset('loginpage2.webp') }}') center/cover no-repeat !important; color: white; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 0;"></div>
+                                <div style="position: relative; z-index: 1;">
+                                    <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
+                                        class="rounded-circle shadow-sm border border-2 border-white mb-2" alt="User Image">
+                                    <p class="mb-0 fw-bold fs-5">
+                                        {{ auth()->user()->name }}
+                                    </p>
+                                    <div class="mt-1">
+                                        <span class="badge bg-light text-primary fw-bold px-2 py-1">{{ auth()->user()->roles->pluck('name')->unique()->join(', ') }}</span>
+                                    </div>
+                                    <small class="d-block mt-2 opacity-75">
+                                        <i class="bi bi-person-badge"></i> {{ auth()->user()->employee_id ?? 'N/A' }} &bull; {{ auth()->user()->email }}
+                                    </small>
                                 </div>
-                                <small class="d-block mt-2 opacity-75">
-                                    <i class="bi bi-person-badge"></i> {{ auth()->user()->employee_id ?? 'N/A' }} &bull; {{ auth()->user()->email }}
-                                </small>
                             </li>
                             <li class="user-footer bg-light p-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <a href="{{ route('admin.profile.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold flex-fill me-1">
+                                <div class="d-flex justify-content-between mb-2 gap-2">
+                                    <a href="{{ route('admin.profile.index') }}" class="btn btn-outline-secondary btn-sm px-3 fw-bold flex-fill">
                                         <i class="bi bi-person-circle me-1"></i> Profil Saya
                                     </a>
-                                    <a href="{{ route('role.selection') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold flex-fill ms-1">
+                                    <a href="{{ route('role.selection') }}" class="btn btn-outline-primary btn-sm px-3 fw-bold flex-fill">
                                         <i class="bi bi-arrow-left-right me-1"></i> Ganti Portal
                                     </a>
                                 </div>
                                 <form method="POST" action="{{ route('logout') }}" class="d-block w-100">
                                     @csrf
-                                    <button type="submit" class="btn btn-danger btn-sm rounded-pill fw-bold w-100">
+                                    <button type="submit" class="btn btn-danger btn-sm fw-bold w-100">
                                         <i class="bi bi-box-arrow-right me-1"></i> Logout
                                     </button>
                                 </form>

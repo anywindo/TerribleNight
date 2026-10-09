@@ -56,6 +56,7 @@
                         <thead>
                             <tr>
                                 <th>Tanggal</th>
+                                <th>ID Karyawan</th>
                                 <th>Karyawan</th>
                                 <th>Lokasi Kerja</th>
                                 <th>Shift</th>
@@ -123,6 +124,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d/m/Y') }}</td>
+                                    <td>{{ $attendance->user->employee_id ?? '-' }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div>

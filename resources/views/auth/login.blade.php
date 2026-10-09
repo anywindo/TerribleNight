@@ -13,6 +13,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" crossorigin="anonymous">
     <!--begin::Required Plugin(AdminLTE)-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/css/adminlte.min.css">
+    <style>
+        .login-page {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ asset('loginpage2.webp') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        /* Optional: Add a slight backdrop filter to the login card for better readability */
+        .login-box .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .login-logo a {
+            color: #fff !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
 </head>
 <!--end::Head-->
 <!--begin::Body-->

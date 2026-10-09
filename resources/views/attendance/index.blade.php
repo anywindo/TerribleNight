@@ -256,7 +256,7 @@
                     <p class="text-xs text-gray-400 mb-2">{{ now()->translatedFormat('D, d M Y') }}</p>
                     <div class="flex items-center">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mr-3">
-                            Break Time [{{ $shift->break_start ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--' }} - {{ $shift->break_end ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--' }}]
+                            Break Time [{{ ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--' }} - {{ ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--' }}]
                         </p>
                         <div class="flex-1 h-[1px] bg-gray-600"></div>
                     </div>

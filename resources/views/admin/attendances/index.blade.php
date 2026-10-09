@@ -56,6 +56,7 @@
                         <thead>
                             <tr>
                                 <th>Tanggal</th>
+                                <th>ID Karyawan</th>
                                 <th>Karyawan</th>
                                 <th>Lokasi Kerja</th>
                                 <th>Shift</th>
@@ -74,6 +75,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $attendance->date ? $attendance->date->format('d M Y') : '-' }}</td>
+                                    <td>{{ $attendance->user->employee_id ?? '-' }}</td>
                                     <td>
                                         <div>{{ $attendance->user->name ?? '-' }}</div>
                                         <div class="text-muted small">{{ $attendance->user->nik ?? '-' }}</div>
