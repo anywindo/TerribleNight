@@ -22,9 +22,9 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 

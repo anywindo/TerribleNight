@@ -33,10 +33,134 @@
             --bs-body-bg: #f8fafc;
         }
         body {
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            background-color: var(--bs-body-bg);
             background-attachment: fixed;
+            transition: background-color 0.3s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url('{{ asset('loginpage2.webp') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.2;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+            z-index: -1;
+            pointer-events: none;
+            transition: background 0.3s ease;
         }
         
+        /* Dark Mode Overrides */
+        [data-bs-theme="dark"] body::after {
+            background: linear-gradient(to top, rgba(33,37,41,1) 0%, rgba(33,37,41,0) 100%);
+        }
+        
+        [data-bs-theme="dark"] .app-header {
+            background: rgba(33, 37, 41, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .app-footer {
+            background: rgba(33, 37, 41, 0.8) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .card {
+            background: rgba(33, 37, 41, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 8px 12px -3px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+
+        [data-bs-theme="dark"] .card-header {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .small-box {
+            background: rgba(33, 37, 41, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .small-box::before {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        /* Pagination Dark Mode */
+        [data-bs-theme="dark"] .page-link {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #f8f9fa;
+        }
+        [data-bs-theme="dark"] .page-item.active .page-link {
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
+        [data-bs-theme="dark"] .page-item.disabled .page-link {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Text Overrides Dark Mode */
+        [data-bs-theme="dark"] .app-footer,
+        [data-bs-theme="dark"] .app-footer a {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .header-title {
+            color: rgba(15, 23, 42, 0.85);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+        
+        [data-bs-theme="dark"] .header-title {
+            color: rgba(255, 255, 255, 0.9) !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+        }
+
+        /* Form Inputs Dark Mode Overrides */
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select,
+        [data-bs-theme="dark"] .input-group-text {
+            background-color: rgba(33, 37, 41, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: #f8f9fa !important;
+        }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: rgba(33, 37, 41, 1) !important;
+            color: #f8f9fa !important;
+            border-color: var(--bs-primary) !important;
+        }
+
+        [data-bs-theme="dark"] .btn-default {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #f8f9fa;
+        }
+
+        [data-bs-theme="dark"] .btn-default:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
         .app-header {
             position: sticky;
             top: 0;
@@ -197,7 +321,7 @@
                         </a>
                     </li>
                     <li class="nav-item d-none d-md-flex align-items-center ms-2">
-                        <span class="fw-bold fs-5" style="color: rgba(15, 23, 42, 0.85); text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
+                        <span class="fw-bold fs-5 header-title d-none d-sm-inline">
                             Sistem Informasi Manajemen SDM Garment
                         </span>
                     </li>
@@ -206,11 +330,19 @@
 
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
+                    <!--begin::Dark Mode Toggle-->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="darkModeToggle" role="button">
+                            <i class="bi bi-moon-stars" id="darkModeIcon"></i>
+                        </a>
+                    </li>
+                    <!--end::Dark Mode Toggle-->
+                    
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                             <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
-                                class="user-image rounded-circle shadow" alt="User Image">
+                                class="user-image rounded-circle shadow" style="object-fit: cover; width: 2.1rem; height: 2.1rem;" alt="User Image">
                             <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow-sm" style="border-radius: 0.5rem; overflow: hidden; border: 1px solid rgba(0,0,0,0.1);">
@@ -218,13 +350,10 @@
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 0;"></div>
                                 <div style="position: relative; z-index: 1;">
                                     <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
-                                        class="rounded-circle shadow-sm border border-2 border-white mb-2" alt="User Image">
+                                        class="rounded-circle shadow-sm border border-2 border-white mb-2" style="width: 90px; height: 90px; object-fit: cover;" alt="User Image">
                                     <p class="mb-0 fw-bold fs-5">
                                         {{ auth()->user()->name }}
                                     </p>
-                                    <div class="mt-1">
-                                        <span class="badge bg-light text-primary fw-bold px-2 py-1">{{ auth()->user()->roles->pluck('name')->unique()->join(', ') }}</span>
-                                    </div>
                                     <small class="d-block mt-2 opacity-75">
                                         <i class="bi bi-person-badge"></i> {{ auth()->user()->employee_id ?? 'N/A' }} &bull; {{ auth()->user()->email }}
                                     </small>
@@ -355,6 +484,44 @@
             });
         @endif
     </script>
+
+    <!-- Dark Mode Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const htmlTag = document.documentElement;
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            
+            // Check local storage for preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlTag.setAttribute('data-bs-theme', 'dark');
+                if (darkModeIcon) {
+                    darkModeIcon.classList.remove('bi-moon-stars');
+                    darkModeIcon.classList.add('bi-sun');
+                }
+            }
+
+            // Toggle function
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (htmlTag.getAttribute('data-bs-theme') === 'dark') {
+                        htmlTag.removeAttribute('data-bs-theme');
+                        localStorage.setItem('theme', 'light');
+                        darkModeIcon.classList.remove('bi-sun');
+                        darkModeIcon.classList.add('bi-moon-stars');
+                    } else {
+                        htmlTag.setAttribute('data-bs-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                        darkModeIcon.classList.remove('bi-moon-stars');
+                        darkModeIcon.classList.add('bi-sun');
+                    }
+                });
+            }
+        });
+    </script>
+
     @stack('scripts')
 </body>
 
