@@ -5,10 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>Presensi | SIMSDM Garment</title>
-    <!-- Tailwind CSS (CDN for rapid prototyping) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -21,11 +22,28 @@
         .card-bg {
             background-color: #313340;
         }
+        .leaflet-bottom, .leaflet-top {
+            z-index: 40 !important;
+        }
     </style>
 </head>
 
 <body class="min-h-screen pb-24"
-    x-data="{ activeTab: 'work', currentNav: '{{ request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home' }}' }">
+    x-data="{ 
+        activeTab: 'work', 
+        currentNav: '{{ request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home' }}',
+        showPreview: false,
+        showCamera: false,
+        previewImage: null,
+        currentFormId: null,
+        locationData: { lat: null, lng: null, accuracy: null, distance: null },
+        locationStatusText: 'Getting location...',
+        locationValid: false,
+        showNotes: false,
+        isSubmitting: false
+    }"
+    x-init="window.alpineApp = $data"
+    @preview-ready.window="previewImage = $event.detail.image; currentFormId = $event.detail.formId; showPreview = true; setTimeout(() => getLocationAndInitMap(), 50)">
     <!-- Top Header -->
     <header class="px-5 pt-10 pb-4" x-show="currentNav === 'home'">
         <div class="flex justify-between items-center mb-6">
@@ -162,7 +180,7 @@
 
                     @if(!$startEvent)
                         <input type="hidden" name="event_type" value="START_SHIFT">
-                        <button type="button" onclick="document.getElementById('selfie_input').click()"
+                        <button type="button" onclick="openCameraUI('attendanceForm')"
                             class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
                             Record Time
                         </button>
@@ -178,7 +196,7 @@
                                 <span class="text-[10px] font-normal mt-0.5">Selesaikan istirahat terlebih dahulu</span>
                             </button>
                         @else
-                            <button type="button" onclick="document.getElementById('selfie_input').click()"
+                            <button type="button" onclick="openCameraUI('attendanceForm')"
                                 class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
                                 Record End Time
                             </button>
@@ -190,9 +208,7 @@
                         </button>
                     @endif
                 </form>
-                <div id="locationStatus" class="text-xs text-center mt-3 text-gray-400">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Getting GPS Location...
-                </div>
+
             </div>
 
             <!-- Attendance History -->
@@ -353,14 +369,14 @@
                                     <span class="text-[10px] font-normal mt-0.5">Mulai shift terlebih dahulu</span>
                                 </button>
                             @else
-                                <button type="button" onclick="document.getElementById('break_selfie_input').click()"
+                                <button type="button" onclick="openCameraUI('breakForm')"
                                     class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
                                     Record Break Time
                                 </button>
                             @endif
                         @elseif(!$endBreak)
                             <input type="hidden" name="event_type" value="END_BREAK">
-                            <button type="button" onclick="document.getElementById('break_selfie_input').click()"
+                            <button type="button" onclick="openCameraUI('breakForm')"
                                 class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
                                 Record End Break
                             </button>
@@ -636,31 +652,164 @@
         </div>
     </nav>
 
-    <!-- Trigger form submit when file is selected -->
+    <!-- Camera Modal -->
+    <div x-show="showCamera" style="display: none;" class="fixed inset-0 bg-black z-[110] flex flex-col justify-between">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-5 bg-black w-full z-10">
+            <h2 class="text-white font-semibold text-lg">Ambil Foto</h2>
+            <button @click="closeCameraUI()" class="text-white p-2">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Video Stream -->
+        <div class="relative w-full aspect-[3/4] bg-black flex-shrink-0">
+            <video id="cameraStream" autoplay playsinline class="absolute inset-0 w-full h-full object-cover transform -scale-x-100"></video>
+            <!-- Headroom Overlay Guide -->
+            <img src="{{ asset('Headroom.png') }}" class="absolute inset-0 w-full h-full object-contain pointer-events-none z-10 opacity-70">
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+        </div>
+
+        <!-- Capture Button -->
+        <div class="flex-1 flex justify-center items-center bg-black w-full pb-8">
+            <button @click="capturePhoto()" class="w-20 h-20 bg-white/20 rounded-full border-[6px] border-white flex items-center justify-center active:scale-90 transition">
+                <div class="w-16 h-16 bg-white rounded-full"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div x-show="showPreview" style="display: none;" class="fixed inset-0 bg-[#272933] z-[100] flex flex-col overflow-y-auto">
+        <!-- Header -->
+        <div class="flex items-center px-4 py-4 bg-[#313340]">
+            <button @click="showPreview = false; previewImage = null" class="text-white mr-4">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="text-white font-semibold text-lg">Preview</h2>
+        </div>
+        
+        <!-- Map -->
+        <div class="relative w-full h-72 bg-gray-800">
+            <div id="previewMap" class="w-full h-full z-0 relative"></div>
+            <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900/80 text-white text-xs px-3 py-1.5 rounded-md z-[40]" x-text="'Location accuracy ' + (locationData.accuracy ? Math.round(locationData.accuracy) + ' meters' : '...')">
+            </div>
+        </div>
+
+        <div class="flex-1 px-5 py-4 flex flex-col items-center text-center">
+            <h3 class="text-lg font-semibold text-white">{{ $user->name }}</h3>
+            <p class="text-sm text-gray-400 mb-4">{{ now()->translatedFormat('M, d Y, H:i') }}</p>
+            
+            <img :src="previewImage" class="w-64 h-80 object-cover rounded-xl mb-2 border border-gray-600">
+            <p class="text-xs text-gray-400 mb-6">Attendance Photo</p>
+
+            
+            <div class="flex items-center justify-center space-x-3 mb-3">
+                <p class="text-sm font-medium" :class="locationValid ? 'text-green-500' : 'text-red-500'" x-text="locationStatusText"></p>
+                <button type="button" @click="getLocationAndInitMap()" class="text-gray-400 hover:text-white transition bg-gray-800 w-8 h-8 flex items-center justify-center rounded-full border border-gray-600 active:scale-95">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+            
+            <button @click="submitAttendance()" :disabled="!locationValid" class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3.5 rounded-xl transition active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                <span x-show="!isSubmitting">Save Attendance</span>
+                <span x-show="isSubmitting" style="display: none;"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Trigger preview when file is selected -->
     <script>
-        document.getElementById('selfie_input').addEventListener('change', function () {
-            if (this.files && this.files.length > 0) {
-                // Show loading state
-                const btn = this.closest('form').querySelector('button[type="button"]');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...';
-                btn.disabled = true;
+        let videoStream = null;
+        let currentTargetFormId = null;
 
-                document.getElementById('attendanceForm').submit();
+        function openCameraUI(formId) {
+            currentTargetFormId = formId;
+            const alpineData = window.alpineApp;
+            alpineData.showCamera = true;
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", aspectRatio: { ideal: 0.75 } } })
+                .then(function(stream) {
+                    videoStream = stream;
+                    const video = document.getElementById('cameraStream');
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    alert("Unable to access camera: " + err.message);
+                    alpineData.showCamera = false;
+                });
+        }
+
+        function closeCameraUI() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
             }
-        });
+            window.alpineApp.showCamera = false;
+        }
 
-        document.getElementById('break_selfie_input').addEventListener('change', function () {
-            if (this.files && this.files.length > 0) {
-                // Show loading state
-                const btn = this.closest('form').querySelector('button[type="button"]');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...';
-                btn.disabled = true;
-
-                document.getElementById('breakForm').submit();
+        function capturePhoto() {
+            const video = document.getElementById('cameraStream');
+            const canvas = document.getElementById('cameraCanvas');
+            const context = canvas.getContext('2d');
+            
+            const targetRatio = 3 / 4;
+            const videoRatio = video.videoWidth / video.videoHeight;
+            
+            let sourceWidth = video.videoWidth;
+            let sourceHeight = video.videoHeight;
+            let offsetX = 0;
+            let offsetY = 0;
+            
+            if (videoRatio > targetRatio) {
+                // Video is wider than 3:4. Crop sides.
+                sourceWidth = video.videoHeight * targetRatio;
+                offsetX = (video.videoWidth - sourceWidth) / 2;
+            } else {
+                // Video is taller than 3:4. Crop top/bottom.
+                sourceHeight = video.videoWidth / targetRatio;
+                offsetY = (video.videoHeight - sourceHeight) / 2;
             }
-        });
+            
+            canvas.width = sourceWidth;
+            canvas.height = sourceHeight;
+            
+            // Mirror the canvas context since we mirrored the video visually
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            
+            // Draw video frame to canvas with crop to match the 3:4 UI container
+            context.drawImage(video, offsetX, offsetY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(function(blob) {
+                const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                
+                let fileInput = null;
+                if (currentTargetFormId === 'attendanceForm') {
+                    fileInput = document.getElementById('selfie_input');
+                } else {
+                    fileInput = document.getElementById('break_selfie_input');
+                }
+                fileInput.files = dataTransfer.files;
+                
+                // Dispatch preview-ready event
+                const url = URL.createObjectURL(file);
+                window.dispatchEvent(new CustomEvent('preview-ready', {
+                    detail: { image: url, formId: currentTargetFormId }
+                }));
+                
+                closeCameraUI();
+            }, 'image/jpeg', 0.8);
+        }
+
+        function submitAttendance() {
+            const alpineData = window.alpineApp;
+            alpineData.isSubmitting = true;
+            const form = document.getElementById(alpineData.currentFormId);
+            form.submit();
+        }
 
         // Geofencing data
         const officeLat = {{ $user->location->latitude ?? 'null' }};
@@ -683,60 +832,91 @@
             return R * c; // in metres
         }
 
-        function disableAttendanceButtons() {
-            const buttons = document.querySelectorAll('button[onclick*="selfie_input"]');
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.onclick = null;
-            });
-            document.getElementById('selfie_input').disabled = true;
-            document.getElementById('break_selfie_input').disabled = true;
-        }
+        let leafletMap = null;
+        let mapMarker = null;
+        let mapCircle = null;
 
-        // Geolocation
-        document.addEventListener("DOMContentLoaded", function () {
+        function getLocationAndInitMap() {
+            const alpineData = window.alpineApp;
+            alpineData.locationStatusText = 'Getting GPS Location...';
+            alpineData.locationValid = false;
+
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(function (position) {
                     const currentLat = position.coords.latitude;
                     const currentLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    alpineData.locationData = {
+                        lat: currentLat,
+                        lng: currentLng,
+                        accuracy: accuracy,
+                        distance: null
+                    };
 
                     document.getElementById('lat').value = currentLat;
                     document.getElementById('lng').value = currentLng;
                     document.getElementById('lat2').value = currentLat;
                     document.getElementById('lng2').value = currentLng;
 
-                    if (officeLat === null || officeLng === null || officeRadius === null) {
-                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Anda tidak memiliki lokasi kerja';
-                        document.getElementById('locationStatus').classList.add('text-red-400');
-                        disableAttendanceButtons();
-                        return;
-                    }
+                    setTimeout(() => {
+                        if (!leafletMap) {
+                            leafletMap = L.map('previewMap').setView([currentLat, currentLng], 15);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '&copy; OpenStreetMap'
+                            }).addTo(leafletMap);
+                            
+                            mapMarker = L.marker([currentLat, currentLng]).addTo(leafletMap).bindPopup("Lokasi Anda").openPopup();
+                        } else {
+                            leafletMap.setView([currentLat, currentLng], 15);
+                            mapMarker.setLatLng([currentLat, currentLng]);
+                            leafletMap.invalidateSize();
+                        }
 
-                    const distance = calculateDistance(currentLat, currentLng, officeLat, officeLng);
+                        if (officeLat !== null && officeLng !== null) {
+                            const distance = calculateDistance(currentLat, currentLng, officeLat, officeLng);
+                            alpineData.locationData.distance = distance;
 
-                    if (distance > officeRadius) {
-                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Di Luar Radius (' + Math.round(distance) + 'm / Max ' + officeRadius + 'm)';
-                        document.getElementById('locationStatus').classList.add('text-red-400');
-                        disableAttendanceButtons();
-                    } else {
-                        document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-location-dot text-green-500 mr-1"></i> Dalam Radius (' + Math.round(distance) + 'm)';
-                        document.getElementById('locationStatus').classList.add('text-green-400');
-                    }
+                            if (mapCircle) {
+                                mapCircle.remove();
+                            }
+
+                            const isValid = distance <= officeRadius;
+                            alpineData.locationValid = isValid;
+
+                            if (isValid) {
+                                alpineData.locationStatusText = 'Dalam Radius (' + Math.round(distance) + 'm)';
+                            } else {
+                                alpineData.locationStatusText = 'Di Luar Radius (' + Math.round(distance) + 'm / Max ' + officeRadius + 'm)';
+                            }
+
+                            mapCircle = L.circle([officeLat, officeLng], {
+                                color: isValid ? 'green' : 'red',
+                                fillColor: isValid ? '#3f0' : '#f03',
+                                fillOpacity: 0.2,
+                                radius: officeRadius
+                            }).addTo(leafletMap);
+                            
+                            L.marker([officeLat, officeLng]).addTo(leafletMap).bindPopup("Lokasi Kantor");
+                            
+                            var bounds = L.latLngBounds([[currentLat, currentLng], [officeLat, officeLng]]);
+                            leafletMap.fitBounds(bounds, {padding: [20, 20]});
+                        } else {
+                            alpineData.locationStatusText = 'Anda tidak memiliki lokasi kerja';
+                        }
+                    }, 100);
+
                 }, function (error) {
-                    document.getElementById('locationStatus').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Error Getting GPS Location';
-                    document.getElementById('locationStatus').classList.add('text-red-400');
-                    disableAttendanceButtons();
+                    alpineData.locationStatusText = 'Error Getting GPS Location';
                 }, {
                     enableHighAccuracy: true,
                     timeout: 10000,
                     maximumAge: 0
                 });
             } else {
-                document.getElementById('locationStatus').innerHTML = 'Browser does not support GPS';
-                disableAttendanceButtons();
+                alpineData.locationStatusText = 'Browser does not support GPS';
             }
-        });
+        }
     </script>
 </body>
 
