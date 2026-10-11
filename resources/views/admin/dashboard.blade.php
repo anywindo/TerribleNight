@@ -48,7 +48,7 @@
                 <div class="small-box-icon">
                     <i class="bi bi-person-dash-fill"></i>
                 </div>
-                <a href="#" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                <a href="{{ route('admin.absences.index') }}" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
                     Selengkapnya <i class="bi bi-link-45deg"></i>
                 </a>
             </div>

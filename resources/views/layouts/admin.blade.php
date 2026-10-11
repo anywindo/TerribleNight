@@ -208,6 +208,25 @@
             color: #fff;
         }
 
+        /* Modal Dark Mode Overrides */
+        [data-bs-theme="dark"] .modal-content {
+            background-color: var(--bs-dark);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+        }
+        [data-bs-theme="dark"] .modal-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .modal-footer {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        [data-bs-theme="dark"] .modal-title {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
         .app-header {
             position: sticky;
             top: 0;
@@ -594,7 +613,9 @@
                 <strong>Copyright &copy; {{ date('Y') }} <a href="https://kiranadesainindonesia.com"
                         target="_blank">Kirana Group</a>.</strong> All rights reserved.
             </div>
-            <div class="d-none d-sm-inline">SIMSDM Garment System</div>
+            <div class="d-none d-sm-inline">
+                <a href="javascript:void(0)" onclick="showEasterEgg()" class="text-decoration-none link-secondary" style="cursor: pointer;">SIMSDM Garment</a>
+            </div>
         </footer>
         <!--end::Footer-->
     </div>
@@ -685,6 +706,22 @@
                 });
             }
         });
+
+        function showEasterEgg() {
+            Swal.fire({
+                title: 'SIMSDM Garment',
+                html: '<div class="text-start"><p>Sistem Informasi Manajemen Sumber Daya Manusia (SIMSDM) khusus dirancang untuk kebutuhan industri garmen.</p><p>Dikembangkan dengan ❤️ untuk <b>Kirana Group</b>.</p><p class="text-muted small mt-3 mb-0">Versi 1.0.0</p></div>',
+                icon: 'info',
+                confirmButtonText: 'Keren!',
+                confirmButtonColor: '#3085d6',
+                backdrop: `
+                    rgba(0,0,123,0.4)
+                    url("https://sweetalert2.github.io/images/nyan-cat.gif")
+                    left top
+                    no-repeat
+                `
+            });
+        }
     </script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>

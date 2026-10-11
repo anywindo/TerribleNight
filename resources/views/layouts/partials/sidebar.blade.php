@@ -1,4 +1,4 @@
-<aside class="app-sidebar shadow" data-bs-theme="dark" style="background-color: #2c3338;">
+<aside class="app-sidebar shadow" data-bs-theme="dark" style="background-color: #1A1D20;">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
         <a href="{{ route('admin.dashboard') }}" class="brand-link">
@@ -62,6 +62,14 @@
                         class="nav-link {{ request()->routeIs('admin.attendances.*') ? 'active' : '' }}">
                         <i class="nav-icon bi bi-calendar-check-fill"></i>
                         <p>Riwayat Presensi</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.absences.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.absences.*') ? 'active' : '' }}">
+                        <i class="nav-icon bi bi-person-x-fill"></i>
+                        <p>Karyawan Absen</p>
                     </a>
                 </li>
 

@@ -56,6 +56,9 @@ Route::middleware('auth')->group(function () {
         Route::get('breaks/export', [BreakController::class, 'export'])->name('breaks.export');
         Route::get('breaks', [BreakController::class, 'index'])->name('breaks.index');
 
+        // Absences
+        Route::get('absences', [\App\Http\Controllers\Admin\AbsenceController::class, 'index'])->name('absences.index');
+
         // Settings
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');

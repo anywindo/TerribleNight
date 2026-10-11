@@ -4,15 +4,14 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Pengaturan Rule Presensi</h3>
-                </div>
-                
-                <form action="{{ route('admin.settings.update') }}" method="POST">
-                    @csrf
+    <form action="{{ route('admin.settings.update') }}" method="POST">
+        @csrf
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Pengaturan Rule Presensi</h3>
+                    </div>
                     <div class="card-body">
                         @if (session('success'))
                             <div class="alert alert-success">
@@ -45,7 +44,7 @@
             </div>
             
             <div class="col-md-6">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-header">
                         <h3 class="card-title">Pengecualian Presensi</h3>
                     </div>
@@ -75,5 +74,33 @@
             </div>
         </div>
     </form>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Import Data Karyawan</h3>
+                </div>
+                <form action="{{ route('admin.employees.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload File Excel (.xlsx, .xls, .csv)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                            <div class="form-text mt-2">
+                                Pastikan format file sesuai dengan template standar agar data karyawan masuk dengan benar ke dalam sistem.
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.employees.template') }}" class="btn btn-warning btn-sm fw-bold shadow-sm">
+                            <i class="bi bi-download"></i> Download Template Excel
+                        </a>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Mulai Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
