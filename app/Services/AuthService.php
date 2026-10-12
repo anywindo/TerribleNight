@@ -48,8 +48,14 @@ class AuthService extends BaseService
      */
     public function login(array $credentials): array
     {
+        $login = $credentials['login'] 
+            ?? $credentials['email'] 
+            ?? $credentials['employee_id'] 
+            ?? $credentials['username'] 
+            ?? null;
+
         /** @var User|null $user */
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::findByLogin($login);
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([

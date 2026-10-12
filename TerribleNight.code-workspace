@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../TerribleNightGit/TerribleNight-iOS"
 		}
 	],
 	"settings": {

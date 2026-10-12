@@ -4,12 +4,11 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TeamController;
 use Illuminate\Support\Facades\Route;
 
-/*
 Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
 
 Route::prefix('v1')->group(function () {
 
-    // Auth (Rate limited to 5/min)
+    // Auth (Rate limited to 10/min)
     Route::prefix('auth')->middleware('throttle:auth')->group(function () {
         Route::post('login', [AuthController::class, 'login']);
         Route::post('register', [AuthController::class, 'register']);
@@ -46,13 +45,6 @@ Route::prefix('v1')->group(function () {
         Route::post('teams/{team}/members', [TeamController::class, 'addMember']);
         Route::delete('teams/{team}/members/{user}', [TeamController::class, 'removeMember']);
         Route::apiResource('teams', TeamController::class);
-
-
-
-        // Time Entries
-
-        // Reports
-
     });
 });
-*/
+

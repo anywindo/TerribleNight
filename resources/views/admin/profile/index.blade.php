@@ -20,7 +20,13 @@
                 <!-- Content -->
                 <div class="position-relative p-4 text-start text-white w-100" style="z-index: 2;">
                     <h3 class="fw-bold mb-1 text-white text-shadow-sm">{{ $user->name }}</h3>
-                    <p class="text-light mb-3 opacity-75">{{ $user->email }}</p>
+                    <p class="text-light mb-1 opacity-75">{{ $user->email }}</p>
+                    @if($user->dob || ($user->nik && \App\Models\User::parseDobDateFromNik($user->nik)))
+                        <p class="text-light mb-2 opacity-75 small">
+                            <i class="bi bi-cake2 me-1"></i>
+                            {{ $user->dob ? $user->dob->translatedFormat('d F Y') : \Illuminate\Support\Carbon::parse(\App\Models\User::parseDobDateFromNik($user->nik))->translatedFormat('d F Y') }}
+                        </p>
+                    @endif
                     <div class="d-flex align-items-start mb-4">
                         <span class="text-light fw-semibold fs-6">
                             {{ $user->roles->pluck('name')->unique()->join(', ') }}
@@ -81,8 +87,29 @@
                                 <input type="text" class="form-control text-muted" value="{{ $user->nik ?? '-' }}" readonly disabled>
                             </div>
                         </div>
-                        <div class="col-12 mt-1">
-                            <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Hubungi administrator jika ada kesalahan pada data ini.</small>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="form-label fw-bold">Tanggal Lahir (DOB)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob', $user->dob ? $user->dob->format('Y-m-d') : ($user->nik ? (\App\Models\User::parseDobDateFromNik($user->nik) ?? '') : '')) }}">
+                            </div>
+                            @error('dob')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Lokasi Kerja</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                <input type="text" class="form-control text-muted" value="{{ $user->location->name ?? '-' }}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Employee ID, NIK, dan Lokasi Kerja dikelola oleh administrator.</small>
                         </div>
                     </div>
                     

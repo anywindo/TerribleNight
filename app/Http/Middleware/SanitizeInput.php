@@ -16,7 +16,7 @@ class SanitizeInput
     /**
      * Keys to never sanitize (e.g., passwords must remain untouched).
      */
-    private array $skipKeys = ['password', 'password_confirmation', 'current_password'];
+    private array $skipKeys = ['password', 'password_confirmation', 'current_password', '_token'];
 
     public function handle(Request $request, Closure $next): Response
     {

@@ -26,14 +26,28 @@
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Employee ID</label>
+                            <input type="text" name="employee_id" class="form-control @error('employee_id') is-invalid @enderror" value="{{ old('employee_id', $employee->employee_id) }}" placeholder="EMP-00001">
+                            @error('employee_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">NIK (Nomor Induk Karyawan)</label>
                             <input type="text" name="nik" class="form-control @error('nik') is-invalid @enderror" value="{{ old('nik', $employee->nik) }}">
                             @error('nik')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Lokasi Kerja</label>
-                            <select name="location_id" class="form-select @error('location_id') is-invalid @enderror">
-                                <option value="">-- Tidak Ditentukan --</option>
+                            <label class="form-label">Tanggal Lahir (DOB)</label>
+                            <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob', $employee->dob ? $employee->dob->format('Y-m-d') : ($employee->nik ? (\App\Models\User::parseDobDateFromNik($employee->nik) ?? '') : '')) }}">
+                            <div class="form-text">Bila diubah, password tidak otomatis berubah kecuali diubah manual di bawah.</div>
+                            @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Lokasi Kerja <span class="text-danger">*</span></label>
+                            <select name="location_id" class="form-select @error('location_id') is-invalid @enderror" required>
+                                <option value="" disabled {{ old('location_id', $employee->location_id) ? '' : 'selected' }}>-- Pilih Lokasi Kerja --</option>
                                 @foreach($locations as $location)
                                     <option value="{{ $location->id }}" {{ old('location_id', $employee->location_id) == $location->id ? 'selected' : '' }}>{{ $location->name }}</option>
                                 @endforeach

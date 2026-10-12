@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RoleController;
@@ -12,13 +13,35 @@ use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController
 use App\Http\Controllers\Admin\BreakController;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        if (auth()->user()->mustChangePassword()) {
+            return redirect()->route('onboarding.password');
+        }
+        return redirect()->intended(auth()->user()->isAdmin() ? '/role-selection' : '/attendance');
+    }
+    return view('auth.login');
+});
+
+Route::get('/login', function () {
+    if (auth()->check()) {
+        if (auth()->user()->mustChangePassword()) {
+            return redirect()->route('onboarding.password');
+        }
+        return redirect()->intended(auth()->user()->isAdmin() ? '/role-selection' : '/attendance');
+    }
     return view('auth.login');
 })->name('login');
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::any('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Onboarding Routes
 Route::middleware('auth')->group(function () {
+    Route::get('/onboarding/password', [OnboardingController::class, 'showPasswordForm'])->name('onboarding.password');
+    Route::post('/onboarding/password', [OnboardingController::class, 'updatePassword'])->name('onboarding.password.update');
+});
+
+Route::middleware(['auth', 'password.changed'])->group(function () {
     // Role Selection
     Route::get('/role-selection', function () {
         if (!auth()->user()->isAdmin()) {
@@ -34,6 +57,8 @@ Route::middleware('auth')->group(function () {
 
     // Employee Routes
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
+    Route::get('/attendance/profile', [AttendanceController::class, 'profile'])->name('attendance.profile');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     
     // HR / Admin Routes

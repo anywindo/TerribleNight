@@ -12,6 +12,21 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
+        return $this->renderAttendanceView($request, 'home');
+    }
+
+    public function history(Request $request)
+    {
+        return $this->renderAttendanceView($request, 'history');
+    }
+
+    public function profile(Request $request)
+    {
+        return $this->renderAttendanceView($request, 'profile');
+    }
+
+    private function renderAttendanceView(Request $request, string $activeNav = 'home')
+    {
         $user = Auth::user();
         $today = Carbon::today();
         
@@ -59,7 +74,7 @@ class AttendanceController extends Controller
             
         $shift = $attendance ? $attendance->shift : \App\Models\Shift::first();
         
-        return view('attendance.index', compact('user', 'events', 'historyEvents', 'attendancesHistory', 'nextAction', 'activeBreak', 'shift'));
+        return view('attendance.index', compact('user', 'events', 'historyEvents', 'attendancesHistory', 'nextAction', 'activeBreak', 'shift', 'activeNav'));
     }
 
     public function store(Request $request, \App\Services\FileUploadService $fileUploadService)

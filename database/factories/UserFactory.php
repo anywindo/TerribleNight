@@ -29,13 +29,24 @@ class UserFactory extends Factory
             'employee_id' => fake('id_ID')->unique()->numerify('EMP-#####'),
             'nik' => fake('id_ID')->unique()->numerify('################'),
             'phone' => fake('id_ID')->phoneNumber(),
-            'location_id' => \App\Models\Location::inRandomOrder()->first()?->id,
+            'location_id' => \App\Models\Location::inRandomOrder()->first()?->id ?? \App\Models\Location::factory(),
             'avatar' => null, // Factory won't generate real image files, we'll leave it null
             'is_active' => true,
             'email_verified_at' => now(),
+            'password_changed_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Indicate that the user has not changed their default password.
+     */
+    public function needsPasswordChange(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'password_changed_at' => null,
+        ]);
     }
 
     /**

@@ -67,9 +67,9 @@
                 <form action="/login" method="post">
                     @csrf
                     <div class="input-group mb-3">
-                        <input type="email" name="email" class="form-control" placeholder="Email" required autofocus>
+                        <input type="text" name="email" class="form-control" placeholder="Email / ID Karyawan / NIK" value="{{ old('email', old('login')) }}" required autofocus>
                         <div class="input-group-text">
-                            <span class="bi bi-envelope"></span>
+                            <span class="bi bi-person"></span>
                         </div>
                     </div>
                     <div class="input-group mb-3">

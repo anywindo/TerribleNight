@@ -15,7 +15,7 @@ class EmployeeTemplateExport implements FromArray, WithHeadings, WithEvents
     {
         $location = Location::first();
         return [
-            ['EMP-00123', '1234567890123456', 'John Doe', 'john@example.com', '08123456789', 'password123', $location ? $location->name : '']
+            ['EMP-00123', '1234567890123456', '1995-07-12', 'John Doe', 'john@example.com', '08123456789', '', $location ? $location->name : '']
         ];
     }
 
@@ -24,6 +24,7 @@ class EmployeeTemplateExport implements FromArray, WithHeadings, WithEvents
         return [
             'Employee ID',
             'NIK',
+            'DOB (YYYY-MM-DD)',
             'Name',
             'Email',
             'Phone',
@@ -47,7 +48,7 @@ class EmployeeTemplateExport implements FromArray, WithHeadings, WithEvents
                     $sheet->getColumnDimension('Z')->setVisible(false);
 
                     for ($i = 2; $i <= 1000; $i++) {
-                        $validation = $sheet->getCell("G{$i}")->getDataValidation();
+                        $validation = $sheet->getCell("H{$i}")->getDataValidation();
                         $validation->setType(DataValidation::TYPE_LIST);
                         $validation->setErrorStyle(DataValidation::STYLE_STOP);
                         $validation->setAllowBlank(true);
