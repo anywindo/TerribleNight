@@ -15,15 +15,16 @@ class AttendanceSeeder extends Seeder
 {
     public function run(): void
     {
-        $employees = User::role('Employee')->get();
+        // Limit to 5 employees to keep seeding fast on remote cloud databases
+        $employees = User::role('Employee')->take(5)->get();
         $shifts = Shift::all();
 
         if ($employees->isEmpty() || $shifts->isEmpty()) {
             return;
         }
 
-        // Generate data for the past 14 days up to today
-        $startDate = Carbon::today()->subDays(14);
+        // Generate data for the past 3 days up to today
+        $startDate = Carbon::today()->subDays(3);
         $endDate = Carbon::today();
 
         for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
