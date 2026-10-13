@@ -131,7 +131,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })->create();
 
-if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL')) {
+if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL') || isset($_SERVER['LAMBDA_TASK_ROOT']) || isset($_SERVER['VERCEL_URL']) || isset($_SERVER['VERCEL_ENV'])) {
     $app->useStoragePath('/tmp/storage');
 }
 

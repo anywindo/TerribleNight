@@ -34,6 +34,17 @@ class FileUploadService
         // Compress and encode to webp
         $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
 
+        // Ensure destination directory exists on disk (handles /tmp in serverless)
+        try {
+            $root = Storage::disk('public')->path('');
+            $targetDir = rtrim($root, '/') . '/' . trim($directory, '/');
+            if (!is_dir($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+        } catch (\Throwable $e) {
+            // Ignore path resolution issues
+        }
+
         // Store to local disk (public)
         Storage::disk('public')->put($path, (string) $encodedImage);
 
