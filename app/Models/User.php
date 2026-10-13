@@ -51,6 +51,14 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     * @var list<string>
+     */
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    /**
      * Type casts.
      */
     protected function casts(): array
@@ -355,4 +363,24 @@ class User extends Authenticatable
         }
         return $candidate;
     }
+
+    /**
+     * Get computed avatar URL with UI-Avatars initials fallback, bypassing disk checks.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if (!empty($this->avatar) && !str_contains($this->avatar, 'userdefault')) {
+            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+                return $this->avatar;
+            }
+            $clean = ltrim($this->avatar, '/');
+            $fullPath = str_starts_with($clean, 'storage/') ? $clean : 'storage/' . $clean;
+            return asset($fullPath) . '?v=3';
+        }
+
+        $cleanName = trim($this->name ?: 'User');
+        $encoded = urlencode($cleanName);
+        return "https://ui-avatars.com/api/?name={$encoded}&background=4F46E5&color=fff&size=256&bold=true";
+    }
 }
+

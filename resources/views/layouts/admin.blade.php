@@ -514,7 +514,7 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
+                            <img src="{{ auth()->user()->avatar_url }}"
                                 class="user-image rounded-circle shadow"
                                 style="object-fit: cover; width: 2.1rem; height: 2.1rem;" alt="User Image">
                             <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
@@ -527,7 +527,7 @@
                                     style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 0;">
                                 </div>
                                 <div style="position: relative; z-index: 1;">
-                                    <img src="{{ auth()->user()->avatar && Storage::disk('public')->exists(auth()->user()->avatar) ? Storage::url(auth()->user()->avatar) : asset('userdefault-160x160.jpg') }}"
+                                    <img src="{{ auth()->user()->avatar_url }}"
                                         class="rounded-circle shadow-sm border border-2 border-white mb-2"
                                         style="width: 90px; height: 90px; object-fit: cover;" alt="User Image">
                                     <p class="mb-0 fw-bold fs-5">

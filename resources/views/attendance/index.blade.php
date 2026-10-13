@@ -106,8 +106,8 @@
 
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
-                    @click="openLightbox('{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}', '{{ addslashes($user->name) }}', 'Foto Profil')"
+                <img src="{{ $user->avatar_url }}"
+                    @click="openLightbox('{{ $user->avatar_url }}', '{{ addslashes($user->name) }}', 'Foto Profil')"
                     class="w-12 h-12 rounded-full border-2 border-gray-600 bg-white object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
                     title="Klik untuk memperbesar">
                 <div>
@@ -719,7 +719,7 @@
         <h1 class="text-2xl font-bold mb-6">Profile</h1>
 
         <div class="card-bg rounded-xl p-6 text-center mb-6">
-            <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
+            <img src="{{ $user->avatar_url }}"
                 class="w-24 h-24 rounded-full border-4 border-gray-600 bg-white mx-auto mb-4 object-cover">
             <h2 class="text-xl font-bold text-gray-100">{{ $user->name }}</h2>
 
@@ -810,7 +810,7 @@
             class="flex flex-col items-center cursor-pointer transition w-16">
             <div class="w-6 h-6 rounded-full overflow-hidden border mb-1 transition-colors"
                 :class="currentNav === 'profile' ? 'border-orange-500' : 'border-gray-500'">
-                <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
+                <img src="{{ $user->avatar_url }}"
                     class="w-full h-full object-cover">
             </div>
             <span class="text-[10px] font-medium">Profile</span>

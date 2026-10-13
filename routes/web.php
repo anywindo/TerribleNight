@@ -162,6 +162,7 @@ Route::get('/storage/{path}', function ($path) {
             @file_put_contents($tmpPath, $binary);
             return $respondImage($binary, $defaultMime);
         }
+        abort(404);
     }
 
     // 5. Check database for selfie base64
@@ -173,14 +174,6 @@ Route::get('/storage/{path}', function ($path) {
             @file_put_contents($tmpPath, $binary);
             return $respondImage($binary, 'image/webp');
         }
-    }
-
-    // 5. Safe Fallback: serve default placeholder image so client AsyncImage never fails
-    $fallbackFile = public_path('userdefault-160x160.jpg');
-    if (file_exists($fallbackFile) && is_file($fallbackFile)) {
-        return response(file_get_contents($fallbackFile), 200)
-            ->header('Content-Type', 'image/jpeg')
-            ->header('Cache-Control', 'public, max-age=3600');
     }
 
     abort(404);

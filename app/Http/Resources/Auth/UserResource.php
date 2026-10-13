@@ -28,6 +28,7 @@ class UserResource extends JsonResource
                 'radius'    => (float) $this->location->radius,
             ] : null,
             'avatar'               => $this->avatar,
+            'avatar_url'           => $this->avatar_url,
             'is_active'            => $this->is_active,
             'roles'                => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'permissions'          => $this->whenLoaded('permissions', fn () => $this->getAllPermissions()->pluck('name')),

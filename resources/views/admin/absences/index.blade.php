@@ -60,7 +60,7 @@
                                     <td>{{ $user->employee_id ?? '-' }}</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}"
+                                            <img src="{{ $user->avatar_url }}"
                                                 alt="Avatar" class="rounded-circle object-fit-cover"
                                                 style="width: 30px; height: 30px;">
                                             <div>

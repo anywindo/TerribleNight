@@ -9,7 +9,7 @@
         <div class="card shadow-sm h-100 overflow-hidden border-0" style="min-height: 450px;">
             <div class="position-relative h-100 d-flex flex-column justify-content-end">
                 <!-- Background Image -->
-                <img src="{{ $user->avatar && Storage::disk('public')->exists($user->avatar) ? Storage::url($user->avatar) : asset('userdefault-160x160.jpg') }}" 
+                <img src="{{ $user->avatar_url }}" 
                      class="position-absolute top-0 start-0 w-100 h-100" 
                      style="object-fit: cover; z-index: 0;" id="avatarPreview" alt="Profile Photo">
                 
