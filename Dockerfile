@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:1-php8.2-bookworm
+FROM dunglas/frankenphp:1-php8.4-bookworm
 
 # Install required PHP extensions for Laravel, PostgreSQL, Excel, and Image manipulation
 RUN install-php-extensions \
