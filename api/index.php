@@ -19,6 +19,16 @@ if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL')) {
             mkdir($directory, 0755, true);
         }
     }
+
+    // Fix: Vercel serverless functions strip `/api` from REQUEST_URI
+    if (isset($_SERVER['REQUEST_URI'])) {
+        $uri = $_SERVER['REQUEST_URI'];
+        if (str_starts_with($uri, '/v1') || str_starts_with($uri, '/health') || $uri === '' || $uri === '/') {
+            if ($uri !== '' && $uri !== '/') {
+                $_SERVER['REQUEST_URI'] = '/api' . $uri;
+            }
+        }
+    }
 }
 
 // Forward the request to Laravel's standard entry point

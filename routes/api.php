@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TeamController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', fn () => response()->json(['name' => config('app.name'), 'version' => '1.0.0', 'status' => 'healthy']));
 Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
 
 Route::prefix('v1')->group(function () {
+    Route::get('/', fn () => response()->json(['name' => config('app.name'), 'api' => 'v1', 'status' => 'healthy']));
 
     // Auth (Rate limited to 10/min)
     Route::prefix('auth')->middleware('throttle:auth')->group(function () {
