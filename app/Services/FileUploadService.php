@@ -25,14 +25,20 @@ class FileUploadService
         $path = $directory . '/' . $filename;
 
         // Process image with Intervention Image
-        $manager = new ImageManager(new Driver());
-        $image = $manager->decode($file->getRealPath());
-        
-        // Resize to a max dimension to save space while keeping aspect ratio
-        $image->scaleDown(width: 800, height: 800);
+        try {
+            $manager = new ImageManager(new Driver());
+            $image = $manager->decodePath($file->getRealPath());
+            
+            // Resize to a max dimension to save space while keeping aspect ratio
+            $image->scaleDown(width: 800, height: 800);
 
-        // Compress and encode to webp
-        $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
+            // Compress and encode to webp
+            $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
+            $binary = (string) $encodedImage;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Intervention image processing fallback: ' . $e->getMessage());
+            $binary = file_get_contents($file->getRealPath());
+        }
 
         // Ensure destination directory exists on disk (handles /tmp in serverless)
         try {
@@ -47,7 +53,7 @@ class FileUploadService
 
         // Store to Cloudflare R2
         try {
-            Storage::disk('r2')->put($path, (string) $encodedImage, [
+            Storage::disk('r2')->put($path, $binary, [
                 'visibility' => 'public',
                 'ContentType' => 'image/webp',
             ]);
@@ -57,7 +63,7 @@ class FileUploadService
 
         // Store to local disk (/tmp or storage/app/public) as cache
         try {
-            Storage::disk('public')->put($path, (string) $encodedImage);
+            Storage::disk('public')->put($path, $binary);
         } catch (\Throwable $e) {}
 
         return $path;
@@ -77,11 +83,16 @@ class FileUploadService
         $filename = uniqid() . '_' . time() . '.webp';
         $path = $directory . '/' . $filename;
 
-        $manager = new ImageManager(new Driver());
-        $image = $manager->decode($file->getRealPath());
-        $image->scaleDown(width: 800, height: 800);
-        $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
-        $binary = (string) $encodedImage;
+        try {
+            $manager = new ImageManager(new Driver());
+            $image = $manager->decodePath($file->getRealPath());
+            $image->scaleDown(width: 800, height: 800);
+            $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
+            $binary = (string) $encodedImage;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Intervention image processing fallback in uploadImageWithBase64: ' . $e->getMessage());
+            $binary = file_get_contents($file->getRealPath());
+        }
 
         // Store directly to Cloudflare R2
         try {

@@ -119,8 +119,10 @@ class AttendanceController extends Controller
         $status = 'EXACT';
         $latenessMinutes = 0;
         
+        $shift = $user->shift ?? \App\Models\Shift::first();
+        $shiftId = $shift ? $shift->id : 1;
+
         if ($request->event_type === 'START_SHIFT') {
-            $shift = \App\Models\Shift::find(1); // Default shift
             if ($shift && $shift->default_start_time) {
                 $scheduledStart = \Carbon\Carbon::parse($today->format('Y-m-d') . ' ' . $shift->default_start_time);
                 $ruleEnabled = \App\Models\Setting::get('attendance_rule_enabled', false);
@@ -141,7 +143,7 @@ class AttendanceController extends Controller
         // Find or create today's attendance record
         $attendance = Attendance::firstOrCreate(
             ['user_id' => $user->id, 'date' => $today],
-            ['status' => $status, 'shift_id' => 1] // Using dynamic valid status
+            ['status' => $status, 'shift_id' => $shiftId] // Using dynamic valid status
         );
         
         // If it's START_SHIFT and attendance was just created or we need to update status
@@ -167,8 +169,14 @@ class AttendanceController extends Controller
 
         // Notification for late check-in
         if ($request->event_type === 'START_SHIFT' && $status === 'LATE') {
-            $admins = \App\Models\User::role(['super-admin', 'HR'])->get();
-            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\EmployeeLateNotification($user, $latenessMinutes));
+            try {
+                $admins = \App\Models\User::role(['super-admin', 'HR'], 'web')->get();
+                if ($admins->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\EmployeeLateNotification($user, $latenessMinutes));
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Late notification warning: ' . $e->getMessage());
+            }
             
             $message .= ' Anda terlambat ' . $latenessMinutes . ' menit.';
         }

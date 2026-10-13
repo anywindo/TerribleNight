@@ -4,8 +4,8 @@ set -e
 # Run package discovery with runtime environment
 php artisan package:discover --ansi || true
 
-# Run database migrations if RUN_MIGRATIONS=true
-if [ "${RUN_MIGRATIONS}" = "true" ]; then
+# Run database migrations by default (unless explicitly disabled)
+if [ "${RUN_MIGRATIONS}" != "false" ] && [ "${SKIP_MIGRATIONS}" != "true" ]; then
     echo "Running database migrations..."
     php artisan migrate --force || true
 fi
