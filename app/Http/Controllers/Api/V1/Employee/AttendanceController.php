@@ -169,7 +169,7 @@ class AttendanceController extends Controller
         $selfiePath = null;
         $selfieBase64 = null;
         if ($request->hasFile('selfie')) {
-            $uploaded = $this->fileUploadService->uploadImageWithBase64($request->file('selfie'));
+            $uploaded = $this->fileUploadService->uploadImageWithBase64($request->file('selfie'), 'attendance-selfies');
             $selfiePath = $uploaded['path'];
             $selfieBase64 = $uploaded['base64'];
         }

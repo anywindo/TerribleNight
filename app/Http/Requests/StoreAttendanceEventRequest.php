@@ -26,7 +26,7 @@ class StoreAttendanceEventRequest extends FormRequest
             'event_type' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\EventType::class)],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'selfie' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:10240'], // Max 10MB
+            'selfie' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // Max 10MB
         ];
     }
 }

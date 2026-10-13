@@ -1099,8 +1099,9 @@
             // Draw video frame to canvas with crop to match the 3:4 UI container
             context.drawImage(video, offsetX, offsetY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(function (blob) {
-                const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+            function handleBlob(blob) {
+                const ext = (blob && blob.type === 'image/webp') ? 'webp' : 'jpg';
+                const file = new File([blob], `selfie.${ext}`, { type: blob ? blob.type : 'image/jpeg' });
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
 
@@ -1119,7 +1120,16 @@
                 }));
 
                 closeCameraUI();
-            }, 'image/jpeg', 0.8);
+            }
+
+            // Export to WebP format with fallback
+            canvas.toBlob(function (blob) {
+                if (blob) {
+                    handleBlob(blob);
+                } else {
+                    canvas.toBlob(handleBlob, 'image/jpeg', 0.8);
+                }
+            }, 'image/webp', 0.8);
         }
 
         async function submitAttendance() {
