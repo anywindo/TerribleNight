@@ -136,6 +136,10 @@ class EmployeeController extends Controller
         $data['is_active'] = $request->has('is_active');
         
         if ($request->hasFile('avatar')) {
+            if ($employee->avatar) {
+                try { Storage::disk('r2')->delete($employee->avatar); } catch (\Throwable $e) {}
+                try { Storage::disk('public')->delete($employee->avatar); } catch (\Throwable $e) {}
+            }
             $fileUploadService = new FileUploadService();
             $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
             $data['avatar'] = $uploaded['path'];

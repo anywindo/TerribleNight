@@ -45,15 +45,27 @@ class FileUploadService
             // Ignore path resolution issues
         }
 
-        // Store to local disk (public)
-        Storage::disk('public')->put($path, (string) $encodedImage);
+        // Store to Cloudflare R2
+        try {
+            Storage::disk('r2')->put($path, (string) $encodedImage, [
+                'visibility' => 'public',
+                'ContentType' => 'image/webp',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('R2 upload failed: ' . $e->getMessage());
+        }
+
+        // Store to local disk (/tmp or storage/app/public) as cache
+        try {
+            Storage::disk('public')->put($path, (string) $encodedImage);
+        } catch (\Throwable $e) {}
 
         return $path;
     }
 
     /**
-     * Upload and compress an image, returning both storage path and base64 string
-     * for persistence across ephemeral serverless containers.
+     * Upload and compress an image, storing to Cloudflare R2 and returning
+     * both storage path and base64 string for backward compatibility.
      *
      * @param UploadedFile $file
      * @param string $directory
@@ -67,19 +79,24 @@ class FileUploadService
 
         $manager = new ImageManager(new Driver());
         $image = $manager->decode($file->getRealPath());
-        $image->scaleDown(width: 600, height: 600);
+        $image->scaleDown(width: 800, height: 800);
         $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
         $binary = (string) $encodedImage;
 
+        // Store directly to Cloudflare R2
         try {
-            $root = Storage::disk('public')->path('');
-            $targetDir = rtrim($root, '/') . '/' . trim($directory, '/');
-            if (!is_dir($targetDir)) {
-                @mkdir($targetDir, 0777, true);
-            }
-        } catch (\Throwable $e) {}
+            Storage::disk('r2')->put($path, $binary, [
+                'visibility' => 'public',
+                'ContentType' => 'image/webp',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('R2 upload failed: ' . $e->getMessage());
+        }
 
-        Storage::disk('public')->put($path, $binary);
+        // Also cache locally
+        try {
+            Storage::disk('public')->put($path, $binary);
+        } catch (\Throwable $e) {}
 
         return [
             'path' => $path,

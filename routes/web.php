@@ -131,19 +131,29 @@ Route::get('/storage/{path}', function ($path) {
             ->header('Cache-Control', 'public, max-age=86400');
     };
     
-    // 1. Check in /tmp/storage/app/public/
+    // 1. Check in /tmp/storage/app/public/ (local lambda container cache)
     $tmpPath = '/tmp/storage/app/public/' . $path;
     if (file_exists($tmpPath) && is_file($tmpPath)) {
         return $respondImage(file_get_contents($tmpPath), $defaultMime);
     }
 
-    // 2. Check in public/
+    // 2. Fetch directly from Cloudflare R2 bucket (fast object storage)
+    try {
+        if (Storage::disk('r2')->exists($path)) {
+            $content = Storage::disk('r2')->get($path);
+            @mkdir(dirname($tmpPath), 0777, true);
+            @file_put_contents($tmpPath, $content);
+            return $respondImage($content, $defaultMime);
+        }
+    } catch (\Throwable $e) {}
+
+    // 3. Check in public/
     $publicFile = public_path($path);
     if (file_exists($publicFile) && is_file($publicFile)) {
         return $respondImage(file_get_contents($publicFile), $defaultMime);
     }
 
-    // 3. Check in public/selfies/ or public/avatars/
+    // 4. Check in public/selfies/ or public/avatars/
     $publicSelfie = public_path('selfies/' . $filename);
     if (file_exists($publicSelfie) && is_file($publicSelfie)) {
         return $respondImage(file_get_contents($publicSelfie), $defaultMime);
@@ -153,25 +163,27 @@ Route::get('/storage/{path}', function ($path) {
         return $respondImage(file_get_contents($publicAvatar), $defaultMime);
     }
 
-    // 4. Check database for avatar base64
+    // 5. Check database for avatar base64 (fallback & sync to R2)
     if (str_contains($path, 'avatar') || str_starts_with($path, 'avatars')) {
         $user = \App\Models\User::where('avatar', 'like', "%{$filename}%")->first();
         if ($user && !empty($user->avatar_base64)) {
             $binary = base64_decode($user->avatar_base64);
             @mkdir(dirname($tmpPath), 0777, true);
             @file_put_contents($tmpPath, $binary);
+            try { Storage::disk('r2')->put($path, $binary, ['visibility' => 'public', 'ContentType' => $defaultMime]); } catch (\Throwable $e) {}
             return $respondImage($binary, $defaultMime);
         }
         abort(404);
     }
 
-    // 5. Check database for selfie base64
+    // 6. Check database for selfie base64 (fallback & sync to R2)
     if (str_contains($path, 'selfie') || str_contains($path, '.webp')) {
         $event = \App\Models\AttendanceEvent::where('selfie_path', 'like', "%{$filename}%")->first();
         if ($event && !empty($event->selfie_base64)) {
             $binary = base64_decode($event->selfie_base64);
             @mkdir(dirname($tmpPath), 0777, true);
             @file_put_contents($tmpPath, $binary);
+            try { Storage::disk('r2')->put($path, $binary, ['visibility' => 'public', 'ContentType' => 'image/webp']); } catch (\Throwable $e) {}
             return $respondImage($binary, 'image/webp');
         }
     }

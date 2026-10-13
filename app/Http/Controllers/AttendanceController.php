@@ -149,7 +149,9 @@ class AttendanceController extends Controller
             $attendance->update(['status' => $status]);
         }
         
-        $selfiePath = $fileUploadService->uploadImage($request->file('selfie'), 'attendance-selfies');
+        $uploaded = $fileUploadService->uploadImageWithBase64($request->file('selfie'), 'attendance-selfies');
+        $selfiePath = $uploaded['path'];
+        $selfieBase64 = $uploaded['base64'];
         
         AttendanceEvent::create([
             'attendance_id' => $attendance->id,
@@ -158,6 +160,7 @@ class AttendanceController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'selfie_path' => $selfiePath,
+            'selfie_base64' => $selfieBase64,
         ]);
         
         $message = 'Kehadiran berhasil dicatat!';

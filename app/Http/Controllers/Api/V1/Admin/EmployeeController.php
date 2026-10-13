@@ -102,6 +102,10 @@ class EmployeeController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
+            if ($employee->avatar) {
+                try { Storage::disk('r2')->delete($employee->avatar); } catch (\Throwable $e) {}
+                try { Storage::disk('public')->delete($employee->avatar); } catch (\Throwable $e) {}
+            }
             $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
             $validated['avatar'] = $uploaded['path'];
             $validated['avatar_base64'] = $uploaded['base64'];

@@ -30,8 +30,9 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            if ($user->avatar) {
+                try { Storage::disk('r2')->delete($user->avatar); } catch (\Throwable $e) {}
+                try { Storage::disk('public')->delete($user->avatar); } catch (\Throwable $e) {}
             }
             $fileUploadService = new \App\Services\FileUploadService();
             $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
