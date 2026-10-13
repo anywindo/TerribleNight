@@ -117,13 +117,12 @@ return Application::configure(basePath: dirname(__DIR__))
                     ], $e->getStatusCode());
                 }
 
+                $message = app()->environment('production')
+                    ? ($e->getMessage() ?: 'Internal server error')
+                    : $e->getMessage();
+
                 return response()->json([
-                    'meta' => [
-                        'success' => false,
-                        'message' => $e->getMessage(),
-                        'exception' => get_class($e),
-                        'file' => $e->getFile() . ':' . $e->getLine(),
-                    ],
+                    'meta' => ['success' => false, 'message' => $message],
                 ], 500);
             }
 

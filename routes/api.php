@@ -4,16 +4,8 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TeamController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('health', fn () => response()->json([
-    'status' => 'ok',
-    'timestamp' => now(),
-    'storage_path' => storage_path(),
-    'public_disk_root' => config('filesystems.disks.public.root'),
-    'flysystem_public_path' => \Illuminate\Support\Facades\Storage::disk('public')->path(''),
-    'env_VERCEL' => getenv('VERCEL'),
-    'server_VERCEL' => $_SERVER['VERCEL'] ?? null,
-    'server_LAMBDA_TASK_ROOT' => $_SERVER['LAMBDA_TASK_ROOT'] ?? null,
-]));
+Route::get('/', fn () => response()->json(['name' => config('app.name'), 'version' => '1.0.0', 'status' => 'healthy']));
+Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
 
 Route::prefix('v1')->group(function () {
     Route::get('/', fn () => response()->json(['name' => config('app.name'), 'api' => 'v1', 'status' => 'healthy']));
