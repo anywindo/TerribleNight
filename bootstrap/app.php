@@ -117,13 +117,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ], $e->getStatusCode());
                 }
 
-                // Catch-all: hide details in production
-                $message = app()->environment('production')
-                    ? 'Internal server error'
-                    : $e->getMessage();
-
                 return response()->json([
-                    'meta' => ['success' => false, 'message' => $message],
+                    'meta' => [
+                        'success' => false,
+                        'message' => $e->getMessage(),
+                        'exception' => get_class($e),
+                        'file' => $e->getFile() . ':' . $e->getLine(),
+                    ],
                 ], 500);
             }
 
