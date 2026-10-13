@@ -1,0 +1,12 @@
+.git
+.github
+.vercel
+node_modules
+vendor
+tests
+.env
+.env.*
+.dockerignore
+Dockerfile
+README.md
+build.sh
