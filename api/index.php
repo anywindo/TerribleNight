@@ -5,24 +5,16 @@ putenv('VERCEL=1');
 $_ENV['VERCEL'] = '1';
 $_SERVER['VERCEL'] = '1';
 
-// Prepare writable storage directory structure in /tmp for Vercel Serverless
-$directories = [
-    '/tmp/storage',
-    '/tmp/storage/app',
-    '/tmp/storage/app/public',
-    '/tmp/storage/app/public/selfies',
-    '/tmp/storage/app/public/avatars',
-    '/tmp/storage/app/public/attendance-selfies',
-    '/tmp/storage/framework',
-    '/tmp/storage/framework/cache',
-    '/tmp/storage/framework/cache/data',
-    '/tmp/storage/framework/sessions',
-    '/tmp/storage/framework/views',
-    '/tmp/storage/logs',
-];
-
-foreach ($directories as $directory) {
-    if (!is_dir($directory)) {
+// Optimize storage directory creation: only create once per lambda container cold start
+if (!is_dir('/tmp/storage/framework/views')) {
+    foreach ([
+        '/tmp/storage/app/public/selfies',
+        '/tmp/storage/app/public/avatars',
+        '/tmp/storage/framework/cache/data',
+        '/tmp/storage/framework/sessions',
+        '/tmp/storage/framework/views',
+        '/tmp/storage/logs',
+    ] as $directory) {
         @mkdir($directory, 0777, true);
     }
 }
