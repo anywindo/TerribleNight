@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Presensi | SIMSDM Garment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -952,8 +953,47 @@
         let videoStream = null;
         let currentTargetFormId = null;
 
+        async function refreshCsrfToken() {
+            try {
+                const response = await fetch('{{ route('csrf.token') }}', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.token) {
+                        const meta = document.querySelector('meta[name="csrf-token"]');
+                        if (meta) meta.setAttribute('content', data.token);
+                        document.querySelectorAll('input[name="_token"]').forEach(input => {
+                            input.value = data.token;
+                        });
+                        return { success: true, authenticated: data.authenticated, token: data.token };
+                    }
+                }
+            } catch (err) {
+                console.warn('Unable to refresh CSRF token:', err);
+            }
+            return { success: false };
+        }
+
+        // Keep session alive and refresh token on tab focus & periodically
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                refreshCsrfToken();
+            }
+        });
+        window.addEventListener('focus', () => {
+            refreshCsrfToken();
+        });
+        setInterval(refreshCsrfToken, 10 * 60 * 1000); // Refresh/heartbeat every 10 mins
+
         function openCameraUI(formId) {
             currentTargetFormId = formId;
+            // Pre-emptively refresh CSRF token when camera UI is opened
+            refreshCsrfToken();
+
             const alpineData = window.alpineApp;
             alpineData.showCamera = true;
 
@@ -1034,10 +1074,30 @@
             }, 'image/jpeg', 0.8);
         }
 
-        function submitAttendance() {
+        async function submitAttendance() {
             const alpineData = window.alpineApp;
+            if (alpineData.isSubmitting) return;
             alpineData.isSubmitting = true;
+
             const form = document.getElementById(alpineData.currentFormId);
+            if (!form) {
+                alert('Formulir presensi tidak ditemukan.');
+                alpineData.isSubmitting = false;
+                return;
+            }
+
+            // Always ensure CSRF token is fresh and session is alive right before submitting
+            try {
+                const status = await refreshCsrfToken();
+                if (status.success && status.authenticated === false) {
+                    alert('Sesi Anda telah kedaluwarsa. Silakan login kembali.');
+                    window.location.href = '{{ route('login') }}';
+                    return;
+                }
+            } catch (err) {
+                console.warn('Pre-submit CSRF refresh warning:', err);
+            }
+
             form.submit();
         }
 

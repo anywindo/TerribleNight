@@ -50,6 +50,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Always render exceptions as JSON for API context
         $exceptions->render(function (\Throwable $e, Request $request) {
+            // CSRF Token Mismatch / Page Expired (419)
+            $is419 = ($e instanceof \Illuminate\Session\TokenMismatchException)
+                || ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException && $e->getStatusCode() === 419);
+
+            if ($is419) {
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'meta' => ['success' => false, 'message' => 'Sesi telah kedaluwarsa. Silakan muat ulang halaman.'],
+                        'code' => 419,
+                    ], 419);
+                }
+
+                return redirect()->route('login')->with('error', 'Sesi Anda telah kedaluwarsa. Silakan masuk kembali.');
+            }
 
             if ($request->expectsJson() || $request->is('api/*')) {
 

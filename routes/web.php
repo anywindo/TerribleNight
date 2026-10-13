@@ -35,6 +35,13 @@ Route::get('/login', function () {
 Route::post('/login', [AuthController::class, 'login']);
 Route::any('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/csrf-token', function () {
+    return response()->json([
+        'token' => csrf_token(),
+        'authenticated' => auth()->check(),
+    ]);
+})->name('csrf.token');
+
 // Onboarding Routes
 Route::middleware('auth')->group(function () {
     Route::get('/onboarding/password', [OnboardingController::class, 'showPasswordForm'])->name('onboarding.password');
