@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/storage/avatars/(.*)",
-      "dest": "/public/avatars/$1"
+      "dest": "/avatars/$1"
     },
     {
       "src": "/(build|css|js|images|avatars|vendor|favicon.ico|robots.txt)(.*)",
