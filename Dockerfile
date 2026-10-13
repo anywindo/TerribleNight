@@ -1,5 +1,8 @@
 FROM dunglas/frankenphp:1-php8.4-bookworm
 
+# Strip elevated Linux capabilities so frankenphp can execute in unprivileged cloud containers (Render)
+RUN setcap -r /usr/local/bin/frankenphp
+
 # Install required PHP extensions for Laravel, PostgreSQL, Excel, and Image manipulation
 RUN install-php-extensions \
     pdo_pgsql \
@@ -41,9 +44,9 @@ RUN mkdir -p /app/storage/framework/cache/data \
     && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
 
-# Render injects the PORT env var; fallback to 80 locally
-ENV PORT=80
-EXPOSE 80
+# Render injects the PORT env var (e.g. 10000); fallback to unprivileged 8080
+ENV PORT=8080
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
