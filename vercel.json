@@ -17,20 +17,6 @@
       }
     },
     {
-      "src": "/storage/selfies/(.*)",
-      "dest": "/public/selfies/$1",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
-    },
-    {
-      "src": "/storage/avatars/(.*)",
-      "dest": "/public/avatars/$1",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
-    },
-    {
       "src": "/(.*)",
       "dest": "/api/index.php"
     }

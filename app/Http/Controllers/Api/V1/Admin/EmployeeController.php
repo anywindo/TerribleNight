@@ -42,8 +42,11 @@ class EmployeeController extends Controller
             : User::computeDefaultPassword($dob, $validated['nik'] ?? null);
 
         $avatarPath = null;
+        $avatarBase64 = null;
         if ($request->hasFile('avatar')) {
-            $avatarPath = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+            $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
+            $avatarPath = $uploaded['path'];
+            $avatarBase64 = $uploaded['base64'];
         }
 
         $userData = [
@@ -54,6 +57,7 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'location_id' => $validated['location_id'],
             'avatar' => $avatarPath,
+            'avatar_base64' => $avatarBase64,
             'password' => \Illuminate\Support\Facades\Hash::make($passwordString),
         ];
 
@@ -98,7 +102,9 @@ class EmployeeController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            $validated['avatar'] = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+            $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
+            $validated['avatar'] = $uploaded['path'];
+            $validated['avatar_base64'] = $uploaded['base64'];
         } else {
             unset($validated['avatar']);
         }

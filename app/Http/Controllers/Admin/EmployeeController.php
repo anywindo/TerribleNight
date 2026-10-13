@@ -86,7 +86,9 @@ class EmployeeController extends Controller
 
         if ($request->hasFile('avatar')) {
             $fileUploadService = new FileUploadService();
-            $data['avatar'] = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+            $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
+            $data['avatar'] = $uploaded['path'];
+            $data['avatar_base64'] = $uploaded['base64'];
         }
 
         $employee = User::create($data);
@@ -135,7 +137,9 @@ class EmployeeController extends Controller
         
         if ($request->hasFile('avatar')) {
             $fileUploadService = new FileUploadService();
-            $data['avatar'] = $fileUploadService->uploadImage($request->file('avatar'), 'avatars');
+            $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
+            $data['avatar'] = $uploaded['path'];
+            $data['avatar_base64'] = $uploaded['base64'];
         }
         
         if ($request->filled('password')) {

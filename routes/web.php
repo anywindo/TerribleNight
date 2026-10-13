@@ -153,7 +153,18 @@ Route::get('/storage/{path}', function ($path) {
         return $respondImage(file_get_contents($publicAvatar), $defaultMime);
     }
 
-    // 4. Check database for selfie base64
+    // 4. Check database for avatar base64
+    if (str_contains($path, 'avatar') || str_starts_with($path, 'avatars')) {
+        $user = \App\Models\User::where('avatar', 'like', "%{$filename}%")->first();
+        if ($user && !empty($user->avatar_base64)) {
+            $binary = base64_decode($user->avatar_base64);
+            @mkdir(dirname($tmpPath), 0777, true);
+            @file_put_contents($tmpPath, $binary);
+            return $respondImage($binary, $defaultMime);
+        }
+    }
+
+    // 5. Check database for selfie base64
     if (str_contains($path, 'selfie') || str_contains($path, '.webp')) {
         $event = \App\Models\AttendanceEvent::where('selfie_path', 'like', "%{$filename}%")->first();
         if ($event && !empty($event->selfie_base64)) {

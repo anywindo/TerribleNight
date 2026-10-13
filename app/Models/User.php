@@ -35,6 +35,7 @@ class User extends Authenticatable
         'direct_supervisor_id',
         'immediate_manager_id',
         'avatar',
+        'avatar_base64',
         'is_active',
         'password_changed_at',
     ];
@@ -46,6 +47,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'avatar_base64',
     ];
 
     /**
