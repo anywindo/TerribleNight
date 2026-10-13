@@ -115,6 +115,63 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
 // Serve storage files (supports serverless /tmp, static files, database cache, and fallbacks)
 Route::get('/storage/{path}', function ($path) {
-    return response("MATCHED STORAGE: " . $path, 200);
+    $filename = basename($path);
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $defaultMime = match($ext) {
+        'webp' => 'image/webp',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+        default => 'image/jpeg',
+    };
+
+    $respondImage = function ($content, $mime) {
+        return response($content, 200)
+            ->header('Content-Type', $mime)
+            ->header('Cache-Control', 'public, max-age=86400');
+    };
+    
+    // 1. Check in /tmp/storage/app/public/
+    $tmpPath = '/tmp/storage/app/public/' . $path;
+    if (file_exists($tmpPath) && is_file($tmpPath)) {
+        return $respondImage(file_get_contents($tmpPath), $defaultMime);
+    }
+
+    // 2. Check in public/
+    $publicFile = public_path($path);
+    if (file_exists($publicFile) && is_file($publicFile)) {
+        return $respondImage(file_get_contents($publicFile), $defaultMime);
+    }
+
+    // 3. Check in public/selfies/ or public/avatars/
+    $publicSelfie = public_path('selfies/' . $filename);
+    if (file_exists($publicSelfie) && is_file($publicSelfie)) {
+        return $respondImage(file_get_contents($publicSelfie), $defaultMime);
+    }
+    $publicAvatar = public_path('avatars/' . $filename);
+    if (file_exists($publicAvatar) && is_file($publicAvatar)) {
+        return $respondImage(file_get_contents($publicAvatar), $defaultMime);
+    }
+
+    // 4. Check database for selfie base64
+    if (str_contains($path, 'selfie') || str_contains($path, '.webp')) {
+        $event = \App\Models\AttendanceEvent::where('selfie_path', 'like', "%{$filename}%")->first();
+        if ($event && !empty($event->selfie_base64)) {
+            $binary = base64_decode($event->selfie_base64);
+            @mkdir(dirname($tmpPath), 0777, true);
+            @file_put_contents($tmpPath, $binary);
+            return $respondImage($binary, 'image/webp');
+        }
+    }
+
+    // 5. Safe Fallback: serve default placeholder image so client AsyncImage never fails
+    $fallbackFile = public_path('userdefault-160x160.jpg');
+    if (file_exists($fallbackFile) && is_file($fallbackFile)) {
+        return response(file_get_contents($fallbackFile), 200)
+            ->header('Content-Type', 'image/jpeg')
+            ->header('Cache-Control', 'public, max-age=3600');
+    }
+
+    abort(404);
 })->where('path', '.*');
 
