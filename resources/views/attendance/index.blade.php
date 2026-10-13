@@ -584,6 +584,18 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check In</p>
                                 @php $inEvent = $att->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first() ?? $att->events->where('event_type', 'START_SHIFT')->first(); @endphp
+                                @if($inEvent && $inEvent->selfie_path && $inEvent->selfie_path !== 'dummy/path.jpg')
+                                    <div class="relative group my-1.5 cursor-pointer"
+                                        @click="openLightbox('{{ asset('storage/' . $inEvent->selfie_path) }}', 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
+                                        title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $inEvent->selfie_path) }}"
+                                            alt="Foto Check In"
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-green-500/50 shadow-md group-hover:border-green-400 group-hover:scale-105 transition-all active:scale-95">
+                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-green-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </span>
+                                    </div>
+                                @endif
                                 <p class="font-bold {{ $inEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $inEvent ? \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
@@ -602,6 +614,18 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check Out</p>
                                 @php $outEvent = $att->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first() ?? $att->events->where('event_type', 'END_SHIFT')->first(); @endphp
+                                @if($outEvent && $outEvent->selfie_path && $outEvent->selfie_path !== 'dummy/path.jpg')
+                                    <div class="relative group my-1.5 cursor-pointer"
+                                        @click="openLightbox('{{ asset('storage/' . $outEvent->selfie_path) }}', 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
+                                        title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $outEvent->selfie_path) }}"
+                                            alt="Foto Check Out"
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-red-500/50 shadow-md group-hover:border-red-400 group-hover:scale-105 transition-all active:scale-95">
+                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-red-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </span>
+                                    </div>
+                                @endif
                                 <p class="font-bold {{ $outEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $outEvent ? \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
@@ -622,6 +646,18 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-orange-400 uppercase tracking-wider mb-1">Break Start</p>
                                 @php $breakInEvent = $att->events->where('event_type', \App\Enums\EventType::START_BREAK)->first() ?? $att->events->where('event_type', 'START_BREAK')->first(); @endphp
+                                @if($breakInEvent && $breakInEvent->selfie_path && $breakInEvent->selfie_path !== 'dummy/path.jpg')
+                                    <div class="relative group my-1.5 cursor-pointer"
+                                        @click="openLightbox('{{ asset('storage/' . $breakInEvent->selfie_path) }}', 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
+                                        title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $breakInEvent->selfie_path) }}"
+                                            alt="Foto Break Start"
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-orange-500/50 shadow-md group-hover:border-orange-400 group-hover:scale-105 transition-all active:scale-95">
+                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-orange-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </span>
+                                    </div>
+                                @endif
                                 <p class="font-bold {{ $breakInEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $breakInEvent ? \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
@@ -640,6 +676,18 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Break End</p>
                                 @php $breakOutEvent = $att->events->where('event_type', \App\Enums\EventType::END_BREAK)->first() ?? $att->events->where('event_type', 'END_BREAK')->first(); @endphp
+                                @if($breakOutEvent && $breakOutEvent->selfie_path && $breakOutEvent->selfie_path !== 'dummy/path.jpg')
+                                    <div class="relative group my-1.5 cursor-pointer"
+                                        @click="openLightbox('{{ asset('storage/' . $breakOutEvent->selfie_path) }}', 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
+                                        title="Klik untuk memperbesar">
+                                        <img src="{{ asset('storage/' . $breakOutEvent->selfie_path) }}"
+                                            alt="Foto Break End"
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 shadow-md group-hover:border-blue-400 group-hover:scale-105 transition-all active:scale-95">
+                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-blue-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </span>
+                                    </div>
+                                @endif
                                 <p class="font-bold {{ $breakOutEvent ? 'text-white' : 'text-gray-500' }}">
                                     {{ $breakOutEvent ? \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
