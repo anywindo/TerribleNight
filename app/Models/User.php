@@ -179,7 +179,7 @@ class User extends Authenticatable
         return Shift::query();
     }
 
-    public function shift()
+    public function getShiftAttribute()
     {
         return $this->attendances()->latest('date')->first()?->shift ?? Shift::first();
     }
