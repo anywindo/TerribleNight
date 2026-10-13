@@ -8,7 +8,11 @@
   },
   "routes": [
     {
-      "src": "/(build|css|js|images|vendor|favicon.ico|robots.txt)(.*)",
+      "src": "/storage/avatars/(.*)",
+      "dest": "/public/avatars/$1"
+    },
+    {
+      "src": "/(build|css|js|images|avatars|vendor|favicon.ico|robots.txt)(.*)",
       "dest": "/public/$1$2"
     },
     {
