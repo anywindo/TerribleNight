@@ -18,7 +18,7 @@ class AttendanceResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'shift_id' => $this->shift_id,
-            'date' => $this->date,
+            'date' => $this->getRawOriginal('date') ?? ($this->date instanceof \Carbon\Carbon ? $this->date->format('Y-m-d') : substr((string)$this->date, 0, 10)),
             'status' => $this->status,
             'events' => AttendanceEventResource::collection($this->whenLoaded('events')),
         ];

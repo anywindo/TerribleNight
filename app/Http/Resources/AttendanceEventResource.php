@@ -18,9 +18,10 @@ class AttendanceEventResource extends JsonResource
             'id' => $this->id,
             'event_type' => $this->event_type,
             'timestamp' => $this->timestamp,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
+            'latitude' => $this->latitude !== null ? (float) $this->latitude : null,
+            'longitude' => $this->longitude !== null ? (float) $this->longitude : null,
             'selfie_path' => $this->selfie_path,
+            'selfie_url' => $this->selfie_path ? \Illuminate\Support\Facades\Storage::url($this->selfie_path) : null,
         ];
     }
 }

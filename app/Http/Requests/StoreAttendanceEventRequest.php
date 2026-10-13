@@ -22,11 +22,11 @@ class StoreAttendanceEventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shift_id' => ['required', 'exists:shifts,id'],
+            'shift_id' => ['nullable', 'exists:shifts,id'],
             'event_type' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\EventType::class)],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'selfie' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:5120'], // Max 5MB
+            'selfie' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:10240'], // Max 10MB
         ];
     }
 }

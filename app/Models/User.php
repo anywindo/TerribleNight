@@ -164,6 +164,16 @@ class User extends Authenticatable
         return $this->belongsToMany(Team::class, 'team_user');
     }
 
+    public function shifts()
+    {
+        return Shift::query();
+    }
+
+    public function shift()
+    {
+        return $this->attendances()->latest('date')->first()?->shift ?? Shift::first();
+    }
+
     // =========================================================================
     // Scopes
     // =========================================================================
