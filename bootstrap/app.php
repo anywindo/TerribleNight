@@ -130,3 +130,9 @@ return Application::configure(basePath: dirname(__DIR__))
             return null; // Let Laravel handle non-API contexts
         });
     })->create();
+
+if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL')) {
+    $app->useStoragePath('/tmp/storage');
+}
+
+return $app;
