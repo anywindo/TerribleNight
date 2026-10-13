@@ -46,5 +46,6 @@ try {
         'error' => $e->getMessage(),
         'file' => $e->getFile(),
         'line' => $e->getLine(),
+        'trace' => explode("\n", $e->getTraceAsString()),
     ]);
 }
