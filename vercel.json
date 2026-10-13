@@ -12,7 +12,11 @@
       "dest": "/avatars/$1"
     },
     {
-      "src": "/(build|css|js|images|avatars|vendor|favicon.ico|robots.txt)(.*)",
+      "src": "/storage/selfies/(.*)",
+      "dest": "/selfies/$1"
+    },
+    {
+      "src": "/(build|css|js|images|avatars|selfies|vendor|favicon.ico|robots.txt)(.*)",
       "dest": "/public/$1$2"
     },
     {

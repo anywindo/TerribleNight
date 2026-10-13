@@ -112,3 +112,24 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     });
 });
+
+// Serve storage files (supports serverless /tmp and static fallbacks)
+Route::get('/storage/{path}', function ($path) {
+    $tmpPath = '/tmp/storage/app/public/' . $path;
+    if (file_exists($tmpPath)) {
+        return response()->file($tmpPath);
+    }
+    $publicPath = public_path($path);
+    if (file_exists($publicPath)) {
+        return response()->file($publicPath);
+    }
+    $storagePath = storage_path('app/public/' . $path);
+    if (file_exists($storagePath)) {
+        return response()->file($storagePath);
+    }
+    if (str_contains($path, 'dummy') || str_contains($path, 'selfie') || str_contains($path, 'avatar')) {
+        return response()->file(public_path('userdefault-160x160.jpg'));
+    }
+    abort(404);
+})->where('path', '.*');
+
