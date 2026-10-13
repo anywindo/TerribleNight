@@ -50,4 +50,40 @@ class FileUploadService
 
         return $path;
     }
+
+    /**
+     * Upload and compress an image, returning both storage path and base64 string
+     * for persistence across ephemeral serverless containers.
+     *
+     * @param UploadedFile $file
+     * @param string $directory
+     * @param int $quality
+     * @return array{path: string, base64: string}
+     */
+    public function uploadImageWithBase64(UploadedFile $file, string $directory = 'selfies', int $quality = 65): array
+    {
+        $filename = uniqid() . '_' . time() . '.webp';
+        $path = $directory . '/' . $filename;
+
+        $manager = new ImageManager(new Driver());
+        $image = $manager->decode($file->getRealPath());
+        $image->scaleDown(width: 600, height: 600);
+        $encodedImage = $image->encode(new WebpEncoder(quality: $quality));
+        $binary = (string) $encodedImage;
+
+        try {
+            $root = Storage::disk('public')->path('');
+            $targetDir = rtrim($root, '/') . '/' . trim($directory, '/');
+            if (!is_dir($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+        } catch (\Throwable $e) {}
+
+        Storage::disk('public')->put($path, $binary);
+
+        return [
+            'path' => $path,
+            'base64' => base64_encode($binary),
+        ];
+    }
 }

@@ -168,6 +168,7 @@ class AttendanceService extends BaseService
             'latitude' => $data['latitude'],
             'longitude' => $data['longitude'],
             'selfie_path' => $data['selfie_path'],
+            'selfie_base64' => $data['selfie_base64'] ?? null,
         ]);
 
         return $attendance->load('events');

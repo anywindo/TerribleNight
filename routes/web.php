@@ -113,7 +113,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     });
 });
 
-// Serve storage files (supports serverless /tmp and static fallbacks)
+// Serve storage files (supports serverless /tmp, static files, database cache, and fallbacks)
 Route::get('/storage/{path}', function ($path) {
     $tmpPath = '/tmp/storage/app/public/' . $path;
     if (file_exists($tmpPath)) {
@@ -127,8 +127,28 @@ Route::get('/storage/{path}', function ($path) {
     if (file_exists($storagePath)) {
         return response()->file($storagePath);
     }
+    $filename = basename($path);
+    if (file_exists(public_path('selfies/' . $filename))) {
+        return response()->file(public_path('selfies/' . $filename));
+    }
+    if (file_exists(public_path('avatars/' . $filename))) {
+        return response()->file(public_path('avatars/' . $filename));
+    }
+    if (str_contains($path, 'selfie') || str_contains($path, '.webp')) {
+        $event = \App\Models\AttendanceEvent::where('selfie_path', 'like', "%{$filename}%")->first();
+        if ($event && !empty($event->selfie_base64)) {
+            $binary = base64_decode($event->selfie_base64);
+            @file_put_contents($tmpPath, $binary);
+            return response($binary)
+                ->header('Content-Type', 'image/webp')
+                ->header('Cache-Control', 'public, max-age=86400');
+        }
+    }
     if (str_contains($path, 'dummy') || str_contains($path, 'selfie') || str_contains($path, 'avatar')) {
-        return response()->file(public_path('userdefault-160x160.jpg'));
+        return response()->file(public_path('userdefault-160x160.jpg'), [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
     }
     abort(404);
 })->where('path', '.*');

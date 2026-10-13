@@ -167,12 +167,16 @@ class AttendanceController extends Controller
         }
         
         $selfiePath = null;
+        $selfieBase64 = null;
         if ($request->hasFile('selfie')) {
-            $selfiePath = $this->fileUploadService->uploadImage($request->file('selfie'));
+            $uploaded = $this->fileUploadService->uploadImageWithBase64($request->file('selfie'));
+            $selfiePath = $uploaded['path'];
+            $selfieBase64 = $uploaded['base64'];
         }
 
         $payload = $request->validated();
         $payload['selfie_path'] = $selfiePath;
+        $payload['selfie_base64'] = $selfieBase64;
 
         $attendance = $this->attendanceService->recordEvent($employee, $shift, $eventType, $payload);
 
