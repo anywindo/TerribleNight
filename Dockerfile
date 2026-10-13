@@ -12,6 +12,9 @@ RUN install-php-extensions \
     pcntl \
     redis
 
+# Copy composer binary from official composer image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /app
 
 # Copy dependency definition files first for better layer caching
