@@ -66,6 +66,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
     Route::get('/attendance/profile', [AttendanceController::class, 'profile'])->name('attendance.profile');
+    Route::put('/attendance/profile', [AttendanceController::class, 'updateProfile'])->name('attendance.profile.update');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     
     // HR / Admin Routes

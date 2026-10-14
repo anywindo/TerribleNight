@@ -7,6 +7,9 @@ use App\Models\Attendance;
 use App\Models\AttendanceEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Services\FileUploadService;
 
 class AttendanceController extends Controller
 {
@@ -182,5 +185,44 @@ class AttendanceController extends Controller
         }
         
         return redirect()->route('attendance.index')->with('success', $message);
+    }
+
+    public function updateProfile(Request $request, FileUploadService $fileUploadService)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'phone' => 'nullable|string|max:20|regex:/^[0-9+\-\s()]+$/',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'current_password' => 'required_with:password|current_password:web',
+            'password' => 'nullable|string|min:8|confirmed',
+        ], [
+            'current_password.current_password' => 'Current password does not match.',
+            'password.min' => 'New password must be at least 8 characters.',
+            'password.confirmed' => 'New password confirmation does not match.',
+            'avatar.max' => 'Profile picture size must not exceed 5MB.',
+            'avatar.image' => 'The file must be an image.',
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                try { Storage::disk('r2')->delete($user->avatar); } catch (\Throwable $e) {}
+                try { Storage::disk('public')->delete($user->avatar); } catch (\Throwable $e) {}
+            }
+            $uploaded = $fileUploadService->uploadImageWithBase64($request->file('avatar'), 'avatars');
+            $validated['avatar'] = $uploaded['path'];
+            $validated['avatar_base64'] = $uploaded['base64'];
+        }
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+        unset($validated['current_password']);
+
+        $user->update($validated);
+
+        return redirect()->route('attendance.profile')->with('success', 'Profile updated successfully!');
     }
 }

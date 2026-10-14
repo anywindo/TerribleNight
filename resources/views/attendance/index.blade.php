@@ -44,6 +44,14 @@
         showCamera: false,
         previewImage: null,
         currentFormId: null,
+        showEditProfileModal: {{ $errors->any() ? 'true' : 'false' }},
+        avatarPreview: null,
+        previewAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.avatarPreview = URL.createObjectURL(file);
+            }
+        },
         locationData: { lat: null, lng: null, accuracy: null, distance: null },
         locationStatusText: 'Getting location...',
         locationValid: false,
@@ -728,12 +736,32 @@
         x-transition:enter-end="opacity-100 scale-100">
         <h1 class="text-2xl font-bold mb-6">Profile</h1>
 
+        @if(session('success'))
+            <div class="mb-4">
+                <div class="bg-green-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center">
+                    <i class="fa-solid fa-circle-check mr-2"></i> {{ session('success') }}
+                </div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="mb-4">
+                <div class="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm flex items-center">
+                    <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ session('error') }}
+                </div>
+            </div>
+        @endif
+
         <div class="card-bg rounded-xl p-6 text-center mb-6">
             <img src="{{ $user->avatar_url }}"
                 class="w-24 h-24 rounded-full border-4 border-gray-600 bg-white mx-auto mb-4 object-cover">
             <h2 class="text-xl font-bold text-gray-100">{{ $user->name }}</h2>
 
-            <div class="mt-4 flex justify-center space-x-2">
+            <div class="mt-4 flex flex-wrap justify-center items-center gap-2">
+                <button type="button" @click="showEditProfileModal = true"
+                    class="inline-flex items-center space-x-1.5 px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/40 rounded-full text-xs font-semibold transition active:scale-95 shadow-sm">
+                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                    <span>Edit Profile</span>
+                </button>
                 @if($user->isAdmin())
                     <span
                         class="px-3 py-1 bg-orange-900/40 text-orange-400 border border-orange-800/50 rounded-full text-[10px] font-semibold uppercase tracking-wide">Admin/HR</span>
@@ -750,6 +778,11 @@
             <div>
                 <p class="text-xs text-gray-500 mb-1">Email Address</p>
                 <p class="font-medium text-gray-200">{{ $user->email }}</p>
+            </div>
+            <div class="h-[1px] bg-gray-700"></div>
+            <div>
+                <p class="text-xs text-gray-500 mb-1">Phone Number</p>
+                <p class="font-medium text-gray-200">{{ $user->phone ?? 'Not set' }}</p>
             </div>
             <div class="h-[1px] bg-gray-700"></div>
             <div>
@@ -1003,6 +1036,121 @@
                     <span>Google Maps</span>
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div x-show="showEditProfileModal" x-cloak style="display: none;"
+        class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        @keydown.escape.window="showEditProfileModal = false"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+
+        <!-- Modal Card -->
+        <div class="relative max-w-lg w-full bg-[#313340] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            @click.away="showEditProfileModal = false"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-700 bg-gray-800/60">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-[#f97316]"></i>
+                    <span>Edit Profile</span>
+                </h3>
+                <button type="button" @click="showEditProfileModal = false"
+                    class="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white flex items-center justify-center transition active:scale-95">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form Body -->
+            <form method="POST" action="{{ route('attendance.profile.update') }}" enctype="multipart/form-data" class="flex flex-col">
+                @csrf
+                @method('PUT')
+
+                <div class="overflow-y-auto p-5 space-y-4 max-h-[70vh]">
+                    <!-- Avatar Selection -->
+                    <div class="flex flex-col items-center justify-center pb-2">
+                        <div class="relative cursor-pointer group" @click="$refs.avatarInput.click()">
+                            <img :src="avatarPreview ? avatarPreview : '{{ $user->avatar_url }}'"
+                                class="w-20 h-20 rounded-full border-2 border-gray-600 bg-white object-cover group-hover:border-orange-500 transition">
+                            <span class="absolute bottom-0 right-0 bg-gray-800 text-orange-400 rounded-full w-6 h-6 flex items-center justify-center border border-gray-600 shadow text-[10px]">
+                                <i class="fa-solid fa-camera"></i>
+                            </span>
+                        </div>
+                        <input type="file" x-ref="avatarInput" name="avatar" class="hidden" accept="image/*"
+                            @change="previewAvatar($event)">
+                        <button type="button" @click="$refs.avatarInput.click()"
+                            class="mt-2 text-xs text-orange-400 hover:text-orange-300 font-medium">
+                            Change Photo
+                        </button>
+                        @error('avatar')
+                            <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
+                        <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 08123456789"
+                            class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                        @error('phone')
+                            <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="h-[1px] bg-gray-700"></div>
+
+                    <!-- Change Password -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-0.5">Change Password</p>
+                        <p class="text-[11px] text-gray-500 mb-3">Leave blank if you don't want to change it</p>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Current Password</label>
+                                <input type="password" name="current_password" placeholder="Current Password"
+                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                                @error('current_password')
+                                    <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
+                                <input type="password" name="password" placeholder="New Password (min. 8 characters)"
+                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                                @error('password')
+                                    <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Confirm New Password</label>
+                                <input type="password" name="password_confirmation" placeholder="Confirm New Password"
+                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="p-4 bg-gray-800/40 border-t border-gray-700 flex items-center justify-end space-x-2">
+                    <button type="button" @click="showEditProfileModal = false"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition active:scale-95">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2 bg-[#f97316] hover:bg-[#ea580c] text-white rounded-lg text-xs font-bold transition active:scale-95 shadow">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
