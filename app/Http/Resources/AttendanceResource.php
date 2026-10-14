@@ -21,6 +21,16 @@ class AttendanceResource extends JsonResource
             'date' => $this->getRawOriginal('date') ?? ($this->date instanceof \Carbon\Carbon ? $this->date->format('Y-m-d') : substr((string)$this->date, 0, 10)),
             'status' => $this->status,
             'events' => AttendanceEventResource::collection($this->whenLoaded('events')),
+            'shift' => $this->relationLoaded('shift') && $this->shift ? [
+                'id' => $this->shift->id,
+                'name' => $this->shift->shift_name ?? $this->shift->name,
+                'start_time' => $this->shift->default_start_time ?? ($this->shift->start_time ?? '08:00:00'),
+                'end_time' => $this->shift->default_end_time ?? ($this->shift->end_time ?? '17:00:00'),
+                'break_start' => $this->shift->break_start ? \Carbon\Carbon::parse($this->shift->break_start)->format('H:i:s') : null,
+                'break_end' => $this->shift->break_end ? \Carbon\Carbon::parse($this->shift->break_end)->format('H:i:s') : null,
+                'break_start_time' => $this->shift->break_start ? \Carbon\Carbon::parse($this->shift->break_start)->format('H:i:s') : null,
+                'break_end_time' => $this->shift->break_end ? \Carbon\Carbon::parse($this->shift->break_end)->format('H:i:s') : null,
+            ] : null,
         ];
     }
 }

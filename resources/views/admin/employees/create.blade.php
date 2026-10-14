@@ -41,7 +41,7 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tanggal Lahir (DOB) <span class="text-danger">*</span></label>
                             <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob') }}" required>
-                            <div class="form-text">Bila diisi atau dapat diambil dari NIK, default password adalah DDMMYYYY (contoh: 12072004).</div>
+                            <div class="form-text">Default password otomatis memakai tanggal lahir dengan format DDMMYYYY (contoh: 12072004).</div>
                             @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">

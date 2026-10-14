@@ -96,15 +96,35 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
         // Notifications
-        Route::post('notifications/clear', function() {
+        Route::match(['get', 'post'], 'notifications/clear', function() {
             auth()->user()->notifications()->delete();
             return back();
         })->name('notifications.clear');
 
         Route::get('notifications/{id}/read', function($id) {
-            $notification = auth()->user()->notifications()->findOrFail($id);
-            $notification->markAsRead();
-            return redirect(request('redirect_to', route('admin.dashboard')));
+            $notification = auth()->user()->notifications()->find($id);
+            if ($notification) {
+                $notification->markAsRead();
+            }
+
+            if (request()->filled('redirect_to')) {
+                return redirect(request('redirect_to'));
+            }
+
+            $employeeName = null;
+            if ($notification && isset($notification->data['employee_id'])) {
+                $employeeName = \App\Models\User::find($notification->data['employee_id'])?->name;
+            }
+            if (!$employeeName && $notification && isset($notification->data['message'])) {
+                $parts = explode(' terlambat ', $notification->data['message']);
+                $employeeName = $parts[0] ?? null;
+            }
+
+            if ($employeeName) {
+                return redirect()->route('admin.attendances.index', ['search' => trim($employeeName)]);
+            }
+
+            return redirect()->route('admin.attendances.index');
         })->name('notifications.read');
 
         // Profile

@@ -23,11 +23,15 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $dob = fake()->dateTimeBetween('-45 years', '-20 years');
+        $dobFormatted = $dob->format('Y-m-d');
+
         return [
             'name' => fake('id_ID')->name(),
             'email' => fake('id_ID')->unique()->safeEmail(),
             'employee_id' => fake('id_ID')->unique()->numerify('EMP-#####'),
             'nik' => fake('id_ID')->unique()->numerify('################'),
+            'dob' => $dobFormatted,
             'phone' => fake('id_ID')->phoneNumber(),
             'location_id' => \App\Models\Location::inRandomOrder()->first()?->id ?? \App\Models\Location::factory(),
             'avatar' => null, // Factory won't generate real image files, we'll leave it null

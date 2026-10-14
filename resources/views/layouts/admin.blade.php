@@ -160,6 +160,79 @@
             border-top-color: rgba(255, 255, 255, 0.1) !important;
         }
 
+        /* Notification Dropdown Styling */
+        .dropdown-menu-notifications {
+            min-width: 320px;
+            max-width: 380px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .notification-header {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .notification-item-unread {
+            background-color: rgba(13, 110, 253, 0.05);
+            color: #212529 !important;
+            transition: background-color 0.15s ease;
+        }
+
+        .notification-item-unread:hover,
+        .notification-item-unread:focus {
+            background-color: rgba(13, 110, 253, 0.12) !important;
+            color: #0d6efd !important;
+        }
+
+        .notification-item-read {
+            background-color: transparent;
+            color: #6c757d !important;
+            transition: background-color 0.15s ease;
+        }
+
+        .notification-item-read:hover,
+        .notification-item-read:focus {
+            background-color: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        /* Dark Mode Notification Overrides */
+        [data-bs-theme="dark"] .dropdown-menu-notifications {
+            background-color: #1e2227 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        [data-bs-theme="dark"] .notification-header {
+            color: rgba(255, 255, 255, 0.7) !important;
+            background-color: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        [data-bs-theme="dark"] .notification-item-unread {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: #f1f5f9 !important;
+        }
+
+        [data-bs-theme="dark"] .notification-item-unread:hover,
+        [data-bs-theme="dark"] .notification-item-unread:focus {
+            background-color: rgba(255, 255, 255, 0.16) !important;
+            color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] .notification-item-read {
+            background-color: transparent !important;
+            color: rgba(255, 255, 255, 0.55) !important;
+        }
+
+        [data-bs-theme="dark"] .notification-item-read:hover,
+        [data-bs-theme="dark"] .notification-item-read:focus {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] .notification-text {
+            color: inherit !important;
+        }
+
         /* Table Dark Mode Overrides */
         [data-bs-theme="dark"] .table thead th {
             background-color: rgba(0, 0, 0, 0.2) !important;
@@ -430,40 +503,48 @@
                                         class="navbar-badge badge text-bg-warning">{{ auth()->user()->unreadNotifications->count() }}</span>
                                 @endif
                             </a>
-                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                                <div
-                                    class="dropdown-item dropdown-header d-flex justify-content-between align-items-center">
-                                    <span>Notifikasi ({{ auth()->user()->unreadNotifications->count() }} Baru)</span>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end dropdown-menu-notifications">
+                                <div class="dropdown-header notification-header d-flex justify-content-between align-items-center py-2 px-3">
+                                    <span class="fw-bold">Notifikasi ({{ auth()->user()->unreadNotifications->count() }} Baru)</span>
                                     @if(auth()->user()->notifications->count() > 0)
-                                        <form action="{{ route('admin.notifications.clear') }}" method="POST"
-                                            class="d-inline m-0">
+                                        <form action="{{ route('admin.notifications.clear', [], false) }}" method="POST"
+                                            class="d-inline m-0 p-0" id="clearNotificationsForm">
                                             @csrf
                                             <button type="submit"
-                                                class="btn btn-sm btn-link text-decoration-none text-muted p-0 m-0"><i
-                                                    class="bi bi-trash"></i> Bersihkan</button>
+                                                class="btn btn-sm btn-link text-decoration-none p-0 m-0 notif-clear-btn"
+                                                style="font-size: 0.8rem; color: #ef4444;">
+                                                <i class="bi bi-trash"></i> Bersihkan
+                                            </button>
                                         </form>
                                     @endif
                                 </div>
-                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-divider m-0"></div>
 
                                 {{-- UNREAD NOTIFICATIONS --}}
                                 @forelse(auth()->user()->unreadNotifications->take(5) as $notification)
                                     @php
                                         $notifMessage = $notification->data['message'] ?? 'Notifikasi baru';
-                                        $employeeName = explode(' terlambat ', $notifMessage)[0];
-                                        $targetUrl = route('admin.attendances.index', ['search' => $employeeName, 'date' => $notification->created_at->format('Y-m-d')]);
+                                        $employeeName = null;
+                                        if (isset($notification->data['employee_id'])) {
+                                            $employeeName = \App\Models\User::find($notification->data['employee_id'])?->name;
+                                        }
+                                        if (!$employeeName) {
+                                            $parts = explode(' terlambat ', $notifMessage);
+                                            $employeeName = $parts[0] ?? null;
+                                        }
+                                        $targetUrl = route('admin.attendances.index', ['search' => trim($employeeName ?? '')], false);
                                     @endphp
-                                    <a href="{{ route('admin.notifications.read', ['id' => $notification->id, 'redirect_to' => $targetUrl]) }}"
-                                        class="dropdown-item d-flex justify-content-between align-items-start bg-light">
-                                        <div class="pe-3" style="white-space: normal;">
+                                    <a href="{{ route('admin.notifications.read', ['id' => $notification->id, 'redirect_to' => $targetUrl], false) }}"
+                                        class="dropdown-item notification-item-unread d-flex justify-content-between align-items-start py-2 px-3">
+                                        <div class="pe-2" style="white-space: normal;">
                                             <i class="bi bi-circle-fill text-primary me-1" style="font-size: 8px;"></i>
                                             <i class="bi bi-exclamation-circle text-warning me-1"></i>
-                                            <span class="fw-bold">{{ $notifMessage }}</span>
+                                            <span class="fw-semibold notification-text">{{ $notifMessage }}</span>
                                         </div>
                                         <span
-                                            class="text-secondary fs-7 flex-shrink-0 mt-1">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
+                                            class="text-secondary fs-7 flex-shrink-0 mt-1 ms-2">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
                                     </a>
-                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-divider m-0"></div>
                                 @empty
                                 @endforelse
 
@@ -473,31 +554,37 @@
                                 @endphp
 
                                 @if($readNotifications->count() > 0)
-                                    <div class="dropdown-item dropdown-header text-start bg-light fw-bold">Riwayat (1 Hari
-                                        Terakhir)</div>
-                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-header notification-header text-start fw-bold py-2 px-3">Riwayat (1 Hari Terakhir)</div>
+                                    <div class="dropdown-divider m-0"></div>
                                     @foreach($readNotifications as $notification)
                                         @php
                                             $notifMessage = $notification->data['message'] ?? 'Notifikasi baru';
-                                            $employeeName = explode(' terlambat ', $notifMessage)[0];
-                                            $targetUrl = route('admin.attendances.index', ['search' => $employeeName, 'date' => $notification->created_at->format('Y-m-d')]);
+                                            $employeeName = null;
+                                            if (isset($notification->data['employee_id'])) {
+                                                $employeeName = \App\Models\User::find($notification->data['employee_id'])?->name;
+                                            }
+                                            if (!$employeeName) {
+                                                $parts = explode(' terlambat ', $notifMessage);
+                                                $employeeName = $parts[0] ?? null;
+                                            }
+                                            $targetUrl = route('admin.attendances.index', ['search' => trim($employeeName ?? '')], false);
                                         @endphp
                                         <a href="{{ $targetUrl }}"
-                                            class="dropdown-item d-flex justify-content-between align-items-start text-muted">
-                                            <div class="pe-3" style="white-space: normal;">
-                                                <i class="bi bi-check2-circle me-1"></i>
-                                                {{ $notifMessage }}
+                                            class="dropdown-item notification-item-read d-flex justify-content-between align-items-start py-2 px-3">
+                                            <div class="pe-2" style="white-space: normal;">
+                                                <i class="bi bi-check2-circle text-success me-1"></i>
+                                                <span class="notification-text">{{ $notifMessage }}</span>
                                             </div>
                                             <span
-                                                class="text-secondary fs-7 flex-shrink-0 mt-1">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
+                                                class="text-secondary fs-7 flex-shrink-0 mt-1 ms-2">{{ $notification->created_at->diffForHumans(null, true, true) }}</span>
                                         </a>
-                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-divider m-0"></div>
                                     @endforeach
                                 @endif
 
                                 @if(auth()->user()->notifications->count() == 0)
-                                    <a href="#" class="dropdown-item text-center text-muted">Belum ada notifikasi</a>
-                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-item text-center text-muted py-3">Belum ada notifikasi</div>
+                                    <div class="dropdown-divider m-0"></div>
                                 @endif
                             </div>
                         </li>
@@ -705,6 +792,19 @@
                     }
                 });
             }
+
+            // Clear notifications click handler
+            document.addEventListener('click', (e) => {
+                const clearBtn = e.target.closest('.notif-clear-btn');
+                if (clearBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const form = clearBtn.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                }
+            });
         });
 
         function showEasterEgg() {

@@ -39,6 +39,7 @@ class UserSeeder extends Seeder
             'email' => 'superadmin@example.com',
             'employee_id' => 'SA-00001',
             'nik' => '1111222233334444',
+            'dob' => '1985-01-01',
             'password' => $defaultPassword,
             'avatar' => 'avatars/6acd9bef6c89c_1791859695.webp',
             'location_id' => $locationId,
@@ -51,33 +52,39 @@ class UserSeeder extends Seeder
             'email' => 'hr@example.com',
             'employee_id' => 'HR-00001',
             'nik' => '5555666677778888',
+            'dob' => '1990-01-01',
             'password' => $defaultPassword,
             'avatar' => 'avatars/6ac71a0a19855_1791433226.png',
             'location_id' => $locationId,
         ]);
         $hr->roles()->syncWithoutDetaching([$hrRoleSanctum->id, $hrRoleWeb->id]);
 
-        // Create Managers (2 managers)
-        $managers = User::factory(2)->create([
-            'password' => $defaultPassword,
-            'location_id' => $locationId,
-        ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb, $avatarList, &$avatarIndex) {
-            $user->update(['avatar' => $avatarList[$avatarIndex++ % count($avatarList)]]);
+        $createWithDobPassword = function (array $attributes = []) use ($locationId, $employeeRoleSanctum, $employeeRoleWeb, $avatarList, &$avatarIndex) {
+            $dob = fake()->dateTimeBetween('-45 years', '-22 years');
+            $user = User::factory()->create(array_merge([
+                'dob' => $dob->format('Y-m-d'),
+                'password' => \Illuminate\Support\Facades\Hash::make($dob->format('dmY')),
+                'password_changed_at' => null,
+                'location_id' => $locationId,
+                'avatar' => $avatarList[$avatarIndex++ % count($avatarList)],
+            ], $attributes));
             $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
-        });
+            return $user;
+        };
+
+        // Create Managers (2 managers)
+        $managers = collect();
+        for ($i = 0; $i < 2; $i++) {
+            $managers->push($createWithDobPassword());
+        }
 
         // Create Supervisors (1 supervisor per manager = 2 total)
         $supervisors = collect();
         foreach ($managers as $manager) {
-            $createdSupervisors = User::factory(1)->create([
-                'password' => $defaultPassword,
+            $supervisors->push($createWithDobPassword([
                 'immediate_manager_id' => $manager->id,
                 'location_id' => $manager->location_id,
-            ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb, $avatarList, &$avatarIndex) {
-                $user->update(['avatar' => $avatarList[$avatarIndex++ % count($avatarList)]]);
-                $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
-            });
-            $supervisors = $supervisors->merge($createdSupervisors);
+            ]));
         }
 
         // Create an Employee (for testing)
@@ -86,6 +93,7 @@ class UserSeeder extends Seeder
             'email' => 'employee@example.com',
             'employee_id' => 'EMP-00001',
             'nik' => '9999000011112222',
+            'dob' => '2000-01-01',
             'password' => $defaultPassword,
             'avatar' => 'avatars/6ac7594a71d64_1791449418.webp',
             'direct_supervisor_id' => $supervisors->first()?->id,
@@ -96,15 +104,13 @@ class UserSeeder extends Seeder
 
         // Create random employees under supervisors (2 per supervisor = 4 total)
         foreach ($supervisors as $supervisor) {
-            User::factory(2)->create([
-                'password' => $defaultPassword,
-                'direct_supervisor_id' => $supervisor->id,
-                'immediate_manager_id' => $supervisor->immediate_manager_id,
-                'location_id' => $supervisor->location_id,
-            ])->each(function ($user) use ($employeeRoleSanctum, $employeeRoleWeb, $avatarList, &$avatarIndex) {
-                $user->update(['avatar' => $avatarList[$avatarIndex++ % count($avatarList)]]);
-                $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
-            });
+            for ($i = 0; $i < 2; $i++) {
+                $createWithDobPassword([
+                    'direct_supervisor_id' => $supervisor->id,
+                    'immediate_manager_id' => $supervisor->immediate_manager_id,
+                    'location_id' => $supervisor->location_id,
+                ]);
+            }
         }
     }
 }

@@ -76,12 +76,7 @@ class AttendanceController extends Controller
         });
 
         // Build available shifts list for the shift picker
-        $availableShifts = Shift::all()->map(fn($s) => [
-            'id' => $s->id,
-            'name' => $s->shift_name ?? $s->name,
-            'start_time' => $s->default_start_time ?? ($s->start_time ?? '08:00:00'),
-            'end_time' => $s->default_end_time ?? ($s->end_time ?? '17:00:00'),
-        ]);
+        $availableShifts = Shift::all()->map(fn($s) => $this->formatShift($s));
 
         return response()->json([
             'meta' => [
@@ -93,12 +88,7 @@ class AttendanceController extends Controller
                 'status' => $attendance?->status?->value ?? ($attendance?->status ?? 'EXACT'),
                 'next_allowed_action' => $nextAction,
                 'active_break' => $activeBreak,
-                'shift' => $shift ? [
-                    'id' => $shift->id,
-                    'name' => $shift->shift_name ?? $shift->name,
-                    'start_time' => $shift->default_start_time ?? ($shift->start_time ?? '08:00:00'),
-                    'end_time' => $shift->default_end_time ?? ($shift->end_time ?? '17:00:00'),
-                ] : null,
+                'shift' => $this->formatShift($shift),
                 'available_shifts' => $availableShifts,
                 'work_location' => $workLocation ? [
                     'id' => $workLocation->id,
@@ -113,11 +103,35 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Format a shift object for API response including break times configured in admin panel.
+     */
+    private function formatShift(?Shift $shift): ?array
+    {
+        if (!$shift) {
+            return null;
+        }
+
+        $breakStart = $shift->break_start ? Carbon::parse($shift->break_start)->format('H:i:s') : null;
+        $breakEnd = $shift->break_end ? Carbon::parse($shift->break_end)->format('H:i:s') : null;
+
+        return [
+            'id' => $shift->id,
+            'name' => $shift->shift_name ?? $shift->name,
+            'start_time' => $shift->default_start_time ?? ($shift->start_time ?? '08:00:00'),
+            'end_time' => $shift->default_end_time ?? ($shift->end_time ?? '17:00:00'),
+            'break_start' => $breakStart,
+            'break_end' => $breakEnd,
+            'break_start_time' => $breakStart,
+            'break_end_time' => $breakEnd,
+        ];
+    }
+
+    /**
      * View own attendance records.
      */
     public function history(Request $request)
     {
-        $attendances = $request->user()->attendances()->with('events')->latest('date')->paginate(15);
+        $attendances = $request->user()->attendances()->with(['events', 'shift'])->latest('date')->paginate(15);
 
         return AttendanceResource::collection($attendances);
     }
