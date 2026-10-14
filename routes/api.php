@@ -10,13 +10,17 @@ Route::get('health', fn () => response()->json(['status' => 'ok', 'timestamp' =>
 Route::prefix('v1')->group(function () {
     Route::get('/', fn () => response()->json(['name' => config('app.name'), 'api' => 'v1', 'status' => 'healthy']));
 
-    // Auth (Rate limited to 10/min)
-    Route::prefix('auth')->middleware('throttle:auth')->group(function () {
-        Route::post('login', [AuthController::class, 'login']);
-        Route::post('register', [AuthController::class, 'register']);
-        
-        Route::middleware('auth:sanctum')->group(function () {
+    // Auth Routes
+    Route::prefix('auth')->group(function () {
+        Route::middleware('throttle:auth')->group(function () {
+            Route::post('login', [AuthController::class, 'login']);
+            Route::post('register', [AuthController::class, 'register']);
+        });
+
+        Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             Route::get('profile', [AuthController::class, 'profile']);
+            Route::match(['put', 'post'], 'profile', [AuthController::class, 'updateProfile']);
+            Route::post('change-password', [AuthController::class, 'changePassword']);
             Route::post('logout', [AuthController::class, 'logout']);
             Route::post('refresh', [AuthController::class, 'refresh']);
         });
