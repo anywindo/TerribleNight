@@ -126,13 +126,8 @@
                                     }
 
                                     // Prepare data for detail modal
-                                    $inPhoto = $startBreak && $startBreak->selfie_path && Storage::disk('public')->exists($startBreak->selfie_path)
-                                        ? Storage::url($startBreak->selfie_path)
-                                        : asset('placeholder.svg');
-
-                                    $outPhoto = $endBreak && $endBreak->selfie_path && Storage::disk('public')->exists($endBreak->selfie_path)
-                                        ? Storage::url($endBreak->selfie_path)
-                                        : asset('placeholder.svg');
+                                    $inPhoto = $startBreak && $startBreak->selfie_url ? $startBreak->selfie_url : asset('placeholder.svg');
+                                    $outPhoto = $endBreak && $endBreak->selfie_url ? $endBreak->selfie_url : asset('placeholder.svg');
 
                                     $inStatusLabel = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'Awal' : 'Tepat') : '-';
                                     $inStatusColor = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'danger' : 'success') : 'secondary';
@@ -200,17 +195,17 @@
                                         <div class="d-flex gap-1">
                                             @if($startBreak)
                                                 <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1"
-                                                    style="width: 40px; height: 40px; object-fit: cover;">
+                                                    style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                             @else
-                                                <img src="{{ $inPhoto }}" alt="Mulai Istirahat" class="img-thumbnail p-1 opacity-50"
+                                                <img src="{{ asset('placeholder.svg') }}" alt="Mulai Istirahat" class="img-thumbnail p-1 opacity-50"
                                                     style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
 
                                             @if($endBreak)
                                                 <img src="{{ $outPhoto }}" alt="Selesai Istirahat" class="img-thumbnail p-1"
-                                                    style="width: 40px; height: 40px; object-fit: cover;">
+                                                    style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                             @else
-                                                <img src="{{ $outPhoto }}" alt="Selesai Istirahat"
+                                                <img src="{{ asset('placeholder.svg') }}" alt="Selesai Istirahat"
                                                     class="img-thumbnail p-1 opacity-50"
                                                     style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif

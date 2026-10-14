@@ -71,7 +71,7 @@ class AttendanceController extends Controller
                 'timestamp' => $event->timestamp ? Carbon::parse($event->timestamp)->format('Y-m-d H:i:s') : '',
                 'latitude' => $event->latitude !== null ? (float) $event->latitude : null,
                 'longitude' => $event->longitude !== null ? (float) $event->longitude : null,
-                'selfie_url' => $event->selfie_path ? Storage::disk('public')->url($event->selfie_path) : null,
+                'selfie_url' => $event->selfie_url,
             ];
         });
 

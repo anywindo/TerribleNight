@@ -101,7 +101,7 @@
 
                                                 $isEarly = $checkOut && $scheduledEnd && $actualEnd->format('H:i') < $scheduledEnd->format('H:i');
 
-                                                $inPhoto = $checkIn && $checkIn->selfie_path && Storage::disk('public')->exists($checkIn->selfie_path) ? Storage::url($checkIn->selfie_path) : asset('placeholder.svg');
+                                                $inPhoto = $checkIn && $checkIn->selfie_url ? $checkIn->selfie_url : asset('placeholder.svg');
                                                 $inLat = $checkIn ? $checkIn->latitude : '';
                                                 $inLng = $checkIn ? $checkIn->longitude : '';
                                                 $inTime = $checkIn ? $actualStart->format('H:i') : '-';
@@ -109,7 +109,7 @@
                                                 $inStatusLabel = $isWarning ? 'Hampir Terlambat' : ($isLate ? 'Terlambat' : 'Tepat Waktu');
                                                 $inStatusColor = $isWarning ? 'warning' : ($isLate ? 'danger' : 'success');
 
-                                                $outPhoto = $checkOut && $checkOut->selfie_path && Storage::disk('public')->exists($checkOut->selfie_path) ? Storage::url($checkOut->selfie_path) : asset('placeholder.svg');
+                                                $outPhoto = $checkOut && $checkOut->selfie_url ? $checkOut->selfie_url : asset('placeholder.svg');
                                                 $outLat = $checkOut ? $checkOut->latitude : '';
                                                 $outLng = $checkOut ? $checkOut->longitude : '';
                                                 $outTime = $checkOut ? $actualEnd->format('H:i') : '-';
@@ -167,15 +167,15 @@
                                     <td>
                                         <div class="d-flex gap-1">
                                             @if($checkIn)
-                                                <img src="{{ $inPhoto }}" alt="In" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $inPhoto }}" alt="In" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                             @else
-                                                <img src="{{ $inPhoto }}" alt="In" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ asset('placeholder.svg') }}" alt="In" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
 
                                             @if($checkOut)
-                                                <img src="{{ $outPhoto }}" alt="Out" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ $outPhoto }}" alt="Out" class="img-thumbnail p-1" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                             @else
-                                                <img src="{{ $outPhoto }}" alt="Out" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
+                                                <img src="{{ asset('placeholder.svg') }}" alt="Out" class="img-thumbnail p-1 opacity-50" style="width: 40px; height: 40px; object-fit: cover;">
                                             @endif
                                         </div>
                                     </td>

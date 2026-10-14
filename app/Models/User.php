@@ -373,6 +373,14 @@ class User extends Authenticatable
             if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
                 return $this->avatar;
             }
+
+            $r2Url = config('filesystems.disks.r2.url');
+            if (!empty($r2Url)) {
+                $clean = ltrim($this->avatar, '/');
+                $subPath = str_starts_with($clean, 'storage/') ? substr($clean, 8) : $clean;
+                return rtrim($r2Url, '/') . '/' . ltrim($subPath, '/');
+            }
+
             $clean = ltrim($this->avatar, '/');
             $fullPath = str_starts_with($clean, 'storage/') ? $clean : 'storage/' . $clean;
             return asset($fullPath) . '?v=3';

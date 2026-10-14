@@ -56,9 +56,9 @@
                         @forelse($employees as $employee)
                         <tr>
                             <td>
-                                @if($employee->avatar && Storage::disk('public')->exists($employee->avatar))
-                                    <a href="javascript:void(0)" onclick="showLightbox('{{ Storage::url($employee->avatar) }}')" title="Lihat Foto">
-                                        <img src="{{ Storage::url($employee->avatar) }}" alt="Avatar" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                                @if($employee->avatar)
+                                    <a href="javascript:void(0)" onclick="showLightbox('{{ $employee->avatar_url }}')" title="Lihat Foto">
+                                        <img src="{{ $employee->avatar_url }}" alt="Avatar" class="rounded" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                     </a>
                                 @else
                                     <a href="javascript:void(0)" onclick="showLightbox('{{ asset('placeholder.svg') }}')" title="Tidak ada foto">

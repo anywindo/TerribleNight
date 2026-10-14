@@ -168,11 +168,12 @@
 
                     <!-- Start Time -->
                     <div class="flex-1 flex items-center">
-                        @if($startEvent && $startEvent->selfie_path && $startEvent->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ asset('storage/' . $startEvent->selfie_path) }}"
-                                @click="openLightbox('{{ asset('storage/' . $startEvent->selfie_path) }}', 'Start Shift Photo', '{{ \Carbon\Carbon::parse($startEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                        @if($startEvent && $startEvent->selfie_url && $startEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $startEvent->selfie_url }}"
+                                @click="openLightbox('{{ $startEvent->selfie_url }}', 'Start Shift Photo', '{{ \Carbon\Carbon::parse($startEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar">
+                                title="Klik untuk memperbesar"
+                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                         @else
                             <div
                                 class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
@@ -195,11 +196,12 @@
 
                     <!-- End Time -->
                     <div class="flex-1 flex items-center pl-4">
-                        @if($endEvent && $endEvent->selfie_path && $endEvent->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ asset('storage/' . $endEvent->selfie_path) }}"
-                                @click="openLightbox('{{ asset('storage/' . $endEvent->selfie_path) }}', 'End Shift Photo', '{{ \Carbon\Carbon::parse($endEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                        @if($endEvent && $endEvent->selfie_url && $endEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $endEvent->selfie_url }}"
+                                @click="openLightbox('{{ $endEvent->selfie_url }}', 'End Shift Photo', '{{ \Carbon\Carbon::parse($endEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar">
+                                title="Klik untuk memperbesar"
+                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                         @else
                             <div
                                 class="w-10 h-10 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold mr-3 border border-red-800/50">
@@ -272,11 +274,12 @@
                     @forelse($historyEvents->filter(fn($e) => in_array($e->event_type?->value ?? $e->event_type, ['START_SHIFT', 'END_SHIFT'])) as $event)
                         <div class="card-bg rounded-xl p-4 flex items-center justify-between border border-gray-700">
                             <div class="flex items-center space-x-4">
-                                @if($event->selfie_path && $event->selfie_path !== 'dummy/path.jpg')
-                                    <img src="{{ asset('storage/' . $event->selfie_path) }}"
-                                        @click="openLightbox('{{ asset('storage/' . $event->selfie_path) }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift Photo' : 'End Shift Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                @if($event->selfie_url && $event->selfie_path !== 'dummy/path.jpg')
+                                    <img src="{{ $event->selfie_url }}"
+                                        @click="openLightbox('{{ $event->selfie_url }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift Photo' : 'End Shift Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                         class="w-10 h-10 rounded-full object-cover border border-gray-600 cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                        title="Klik untuk memperbesar">
+                                        title="Klik untuk memperbesar"
+                                        onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
@@ -355,11 +358,12 @@
 
                     <!-- Start Break -->
                     <div class="flex-1 flex items-center">
-                        @if($startBreak && $startBreak->selfie_path && $startBreak->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ asset('storage/' . $startBreak->selfie_path) }}"
-                                @click="openLightbox('{{ asset('storage/' . $startBreak->selfie_path) }}', 'Start Break Photo', '{{ \Carbon\Carbon::parse($startBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                        @if($startBreak && $startBreak->selfie_url && $startBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $startBreak->selfie_url }}"
+                                @click="openLightbox('{{ $startBreak->selfie_url }}', 'Start Break Photo', '{{ \Carbon\Carbon::parse($startBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar">
+                                title="Klik untuk memperbesar"
+                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                         @else
                             <div
                                 class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
@@ -380,11 +384,12 @@
 
                     <!-- End Break -->
                     <div class="flex-1 flex items-center pl-4">
-                        @if($endBreak && $endBreak->selfie_path && $endBreak->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ asset('storage/' . $endBreak->selfie_path) }}"
-                                @click="openLightbox('{{ asset('storage/' . $endBreak->selfie_path) }}', 'End Break Photo', '{{ \Carbon\Carbon::parse($endBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                        @if($endBreak && $endBreak->selfie_url && $endBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $endBreak->selfie_url }}"
+                                @click="openLightbox('{{ $endBreak->selfie_url }}', 'End Break Photo', '{{ \Carbon\Carbon::parse($endBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                 class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar">
+                                title="Klik untuk memperbesar"
+                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                         @else
                             <div
                                 class="w-10 h-10 rounded-full bg-blue-900/30 text-blue-500 flex items-center justify-center font-bold mr-3 border border-blue-800/50">
@@ -462,11 +467,12 @@
                     @forelse($historyEvents->filter(fn($e) => in_array($e->event_type?->value ?? $e->event_type, ['START_BREAK', 'END_BREAK'])) as $event)
                         <div class="card-bg rounded-xl p-4 flex items-center justify-between border border-gray-700">
                             <div class="flex items-center space-x-4">
-                                @if($event->selfie_path && $event->selfie_path !== 'dummy/path.jpg')
-                                    <img src="{{ asset('storage/' . $event->selfie_path) }}"
-                                        @click="openLightbox('{{ asset('storage/' . $event->selfie_path) }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break Photo' : 'End Break Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                @if($event->selfie_url && $event->selfie_path !== 'dummy/path.jpg')
+                                    <img src="{{ $event->selfie_url }}"
+                                        @click="openLightbox('{{ $event->selfie_url }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break Photo' : 'End Break Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
                                         class="w-10 h-10 rounded-full object-cover border border-gray-600 cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                        title="Klik untuk memperbesar">
+                                        title="Klik untuk memperbesar"
+                                        onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
@@ -584,13 +590,14 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check In</p>
                                 @php $inEvent = $att->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first() ?? $att->events->where('event_type', 'START_SHIFT')->first(); @endphp
-                                @if($inEvent && $inEvent->selfie_path && $inEvent->selfie_path !== 'dummy/path.jpg')
+                                @if($inEvent && $inEvent->selfie_url && $inEvent->selfie_path !== 'dummy/path.jpg')
                                     <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ asset('storage/' . $inEvent->selfie_path) }}', 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
+                                        @click="openLightbox('{{ $inEvent->selfie_url }}', 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ asset('storage/' . $inEvent->selfie_path) }}"
+                                        <img src="{{ $inEvent->selfie_url }}"
                                             alt="Foto Check In"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-green-500/50 shadow-md group-hover:border-green-400 group-hover:scale-105 transition-all active:scale-95">
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-green-500/50 shadow-md group-hover:border-green-400 group-hover:scale-105 transition-all active:scale-95"
+                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                         <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-green-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
@@ -614,13 +621,14 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check Out</p>
                                 @php $outEvent = $att->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first() ?? $att->events->where('event_type', 'END_SHIFT')->first(); @endphp
-                                @if($outEvent && $outEvent->selfie_path && $outEvent->selfie_path !== 'dummy/path.jpg')
+                                @if($outEvent && $outEvent->selfie_url && $outEvent->selfie_path !== 'dummy/path.jpg')
                                     <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ asset('storage/' . $outEvent->selfie_path) }}', 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
+                                        @click="openLightbox('{{ $outEvent->selfie_url }}', 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ asset('storage/' . $outEvent->selfie_path) }}"
+                                        <img src="{{ $outEvent->selfie_url }}"
                                             alt="Foto Check Out"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-red-500/50 shadow-md group-hover:border-red-400 group-hover:scale-105 transition-all active:scale-95">
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-red-500/50 shadow-md group-hover:border-red-400 group-hover:scale-105 transition-all active:scale-95"
+                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                         <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-red-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
@@ -646,13 +654,14 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-orange-400 uppercase tracking-wider mb-1">Break Start</p>
                                 @php $breakInEvent = $att->events->where('event_type', \App\Enums\EventType::START_BREAK)->first() ?? $att->events->where('event_type', 'START_BREAK')->first(); @endphp
-                                @if($breakInEvent && $breakInEvent->selfie_path && $breakInEvent->selfie_path !== 'dummy/path.jpg')
+                                @if($breakInEvent && $breakInEvent->selfie_url && $breakInEvent->selfie_path !== 'dummy/path.jpg')
                                     <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ asset('storage/' . $breakInEvent->selfie_path) }}', 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
+                                        @click="openLightbox('{{ $breakInEvent->selfie_url }}', 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ asset('storage/' . $breakInEvent->selfie_path) }}"
+                                        <img src="{{ $breakInEvent->selfie_url }}"
                                             alt="Foto Break Start"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-orange-500/50 shadow-md group-hover:border-orange-400 group-hover:scale-105 transition-all active:scale-95">
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-orange-500/50 shadow-md group-hover:border-orange-400 group-hover:scale-105 transition-all active:scale-95"
+                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                         <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-orange-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
@@ -676,13 +685,14 @@
                             <div class="text-center w-1/3 flex flex-col items-center">
                                 <p class="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Break End</p>
                                 @php $breakOutEvent = $att->events->where('event_type', \App\Enums\EventType::END_BREAK)->first() ?? $att->events->where('event_type', 'END_BREAK')->first(); @endphp
-                                @if($breakOutEvent && $breakOutEvent->selfie_path && $breakOutEvent->selfie_path !== 'dummy/path.jpg')
+                                @if($breakOutEvent && $breakOutEvent->selfie_url && $breakOutEvent->selfie_path !== 'dummy/path.jpg')
                                     <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ asset('storage/' . $breakOutEvent->selfie_path) }}', 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
+                                        @click="openLightbox('{{ $breakOutEvent->selfie_url }}', 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ asset('storage/' . $breakOutEvent->selfie_path) }}"
+                                        <img src="{{ $breakOutEvent->selfie_url }}"
                                             alt="Foto Break End"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 shadow-md group-hover:border-blue-400 group-hover:scale-105 transition-all active:scale-95">
+                                            class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 shadow-md group-hover:border-blue-400 group-hover:scale-105 transition-all active:scale-95"
+                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
                                         <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-blue-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
