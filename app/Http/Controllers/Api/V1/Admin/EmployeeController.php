@@ -25,7 +25,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'nik' => 'required|string|unique:users,nik|max:255',
-            'dob' => 'nullable|date',
+            'dob' => 'required|date',
             'phone' => 'required|string|max:255',
             'location_id' => 'required|exists:locations,id',
             'avatar' => 'nullable|image|max:2048', // 2MB max
@@ -90,7 +90,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $employee->id,
             'nik' => 'required|string|max:255|unique:users,nik,' . $employee->id,
-            'dob' => 'nullable|date',
+            'dob' => 'required|date',
             'phone' => 'required|string|max:255',
             'location_id' => 'required|exists:locations,id',
             'avatar' => 'nullable|image|max:2048',

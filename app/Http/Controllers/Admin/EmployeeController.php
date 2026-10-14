@@ -52,11 +52,15 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'nik' => 'nullable|string|max:50|unique:users',
-            'dob' => 'nullable|date',
+            'dob' => 'required|date',
             'password' => 'nullable|string|min:8|confirmed',
             'location_id' => 'required|exists:locations,id',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'dob.required' => 'Tanggal lahir (DOB) wajib diisi.',
+            'dob.date' => 'Format tanggal lahir tidak valid.',
             'location_id.required' => 'Lokasi kerja wajib dipilih.',
             'location_id.exists' => 'Lokasi kerja yang dipilih tidak valid.',
         ]);
@@ -118,10 +122,14 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$employee->id,
             'nik' => 'nullable|string|max:50|unique:users,nik,'.$employee->id,
-            'dob' => 'nullable|date',
+            'dob' => 'required|date',
             'location_id' => 'required|exists:locations,id',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'dob.required' => 'Tanggal lahir (DOB) wajib diisi.',
+            'dob.date' => 'Format tanggal lahir tidak valid.',
             'location_id.required' => 'Lokasi kerja wajib dipilih.',
             'location_id.exists' => 'Lokasi kerja yang dipilih tidak valid.',
         ]);

@@ -16,6 +16,7 @@ test('creating employee without location_id fails validation in web backend', fu
     $response = $this->actingAs($admin)->post(route('admin.employees.store'), [
         'name' => 'Test Employee',
         'email' => 'test_emp_nolocation@example.com',
+        'dob' => '2000-01-01',
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'location_id' => null,
@@ -41,6 +42,7 @@ test('updating employee without location_id fails validation in web backend', fu
     $response = $this->actingAs($admin)->put(route('admin.employees.update', $employee), [
         'name' => 'Updated Name',
         'email' => $employee->email,
+        'dob' => '2000-01-01',
         'location_id' => null,
     ]);
 

@@ -12,12 +12,12 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Nama Lengkap</label>
+                            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required>
                             @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
                             <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" required>
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -39,8 +39,8 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Tanggal Lahir (DOB)</label>
-                            <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob') }}">
+                            <label class="form-label">Tanggal Lahir (DOB) <span class="text-danger">*</span></label>
+                            <input type="date" name="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob') }}" required>
                             <div class="form-text">Bila diisi atau dapat diambil dari NIK, default password adalah DDMMYYYY (contoh: 12072004).</div>
                             @error('dob')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
