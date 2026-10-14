@@ -33,12 +33,13 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $today = Carbon::today();
         
-        // Find today's attendance record
-        $attendance = Attendance::where('user_id', $user->id)
+        // Find today's attendance record with eager loaded relations
+        $attendance = Attendance::with(['events' => fn($q) => $q->orderBy('timestamp', 'asc'), 'shift'])
+            ->where('user_id', $user->id)
             ->whereDate('date', $today)
             ->first();
             
-        $events = $attendance ? $attendance->events()->orderBy('timestamp', 'asc')->get() : collect();
+        $events = $attendance ? $attendance->events : collect();
         
         // Determine the next allowed action based on existing events
         $nextAction = 'START_SHIFT';
@@ -62,7 +63,8 @@ class AttendanceController extends Controller
             $query->where('user_id', $user->id);
         })->orderBy('timestamp', 'desc')->take(20)->get();
         
-        $historyQuery = \App\Models\Attendance::where('user_id', $user->id);
+        $historyQuery = Attendance::with(['events' => fn($q) => $q->orderBy('timestamp', 'asc'), 'shift'])
+            ->where('user_id', $user->id);
         
         if ($request->filled('start_date')) {
             $historyQuery->whereDate('date', '>=', $request->start_date);
