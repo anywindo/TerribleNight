@@ -41,7 +41,7 @@ class EmployeeExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
 
         return [
             $this->rowNumber,
-            'EMP' . str_pad($employee->id, 4, '0', STR_PAD_LEFT),
+            $employee->employee_id,
             $employee->nik ?? '-',
             $employee->dob ? $employee->dob->format('Y-m-d') : ($employee->nik ? (\App\Models\User::parseDobDateFromNik($employee->nik) ?? '-') : '-'),
             $employee->name,

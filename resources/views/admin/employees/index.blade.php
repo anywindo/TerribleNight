@@ -28,7 +28,7 @@
                             </select>
                         </div>
                         <div class="input-group input-group-sm">
-                            <input type="text" name="search" class="form-control" placeholder="Cari nama, email, NIK..." value="{{ request('search') }}">
+                            <input type="text" name="search" class="form-control" placeholder="Cari nama, email, NIK, ID..." value="{{ request('search') }}">
                             <button type="submit" class="btn btn-default">
                                 <i class="bi bi-search"></i>
                             </button>
@@ -67,7 +67,7 @@
                                 @endif
                             </td>
                             <td>
-                                <div>EMP{{ str_pad($employee->id, 4, '0', STR_PAD_LEFT) }}</div>
+                                <div>{{ $employee->employee_id }}</div>
                                 <div class="text-muted small">{{ $employee->nik ?: '-' }}</div>
                             </td>
                             <td>{{ $employee->name }}</td>
