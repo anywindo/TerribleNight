@@ -99,6 +99,9 @@ class AuthController extends BaseController
         $user->password_changed_at = now();
         $user->save();
 
-        return $this->success(null, 'Password updated successfully');
+        return $this->success(
+            new UserResource($user->fresh()->load('roles', 'location')),
+            'Password updated successfully'
+        );
     }
 }
