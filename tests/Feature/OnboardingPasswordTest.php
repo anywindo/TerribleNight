@@ -19,11 +19,8 @@ class OnboardingPasswordTest extends TestCase
 
         $this->app[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'sanctum']);
         Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'HR', 'guard_name' => 'sanctum']);
         Role::firstOrCreate(['name' => 'HR', 'guard_name' => 'web']);
-        Role::firstOrCreate(['name' => 'Employee', 'guard_name' => 'sanctum']);
         Role::firstOrCreate(['name' => 'Employee', 'guard_name' => 'web']);
     }
 

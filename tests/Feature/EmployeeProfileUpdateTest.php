@@ -39,7 +39,7 @@ class EmployeeProfileUpdateTest extends TestCase
         $this->assertEquals('0899999999', $user->fresh()->phone);
     }
 
-    public function test_employee_can_change_password_with_valid_current_password(): void
+    public function test_employee_can_change_password_without_current_password(): void
     {
         $user = User::factory()->create([
             'password' => Hash::make('old-password-123'),
@@ -47,7 +47,6 @@ class EmployeeProfileUpdateTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->put(route('attendance.profile.update'), [
-            'current_password' => 'old-password-123',
             'password' => 'new-secret-password-456',
             'password_confirmation' => 'new-secret-password-456',
         ]);
@@ -58,21 +57,23 @@ class EmployeeProfileUpdateTest extends TestCase
         $this->assertTrue(Hash::check('new-secret-password-456', $user->fresh()->password));
     }
 
-    public function test_employee_cannot_change_password_with_invalid_current_password(): void
+    public function test_employee_can_update_profile_without_password(): void
     {
         $user = User::factory()->create([
-            'password' => Hash::make('real-password-123'),
+            'phone' => '0811111111',
+            'password' => Hash::make('original-password-123'),
             'password_changed_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->put(route('attendance.profile.update'), [
-            'current_password' => 'wrong-current-password',
-            'password' => 'new-secret-password-456',
-            'password_confirmation' => 'new-secret-password-456',
+            'phone' => '0822222222',
         ]);
 
-        $response->assertSessionHasErrors(['current_password']);
-        $this->assertTrue(Hash::check('real-password-123', $user->fresh()->password));
+        $response->assertRedirect(route('attendance.profile'));
+        $response->assertSessionHas('success');
+
+        $this->assertEquals('0822222222', $user->fresh()->phone);
+        $this->assertTrue(Hash::check('original-password-123', $user->fresh()->password));
     }
 
     public function test_employee_can_upload_avatar(): void

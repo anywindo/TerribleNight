@@ -4,8 +4,9 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Masuk | SIMSDM Garment</title>
+    <title>Masuk | Kirana People</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('layouts.partials.favicons')
     <!--begin::Fonts-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
         crossorigin="anonymous">
@@ -47,7 +48,7 @@
 <body class="login-page bg-body-secondary">
     <div class="login-box">
         <div class="login-logo">
-            <a href="/"><b>SIMSDM</b> Garment</a>
+            <a href="/"><b>Kirana</b> People</a>
         </div>
         <!-- /.login-logo -->
         <div class="card">
@@ -79,7 +80,8 @@
                 <form action="/login" method="post">
                     @csrf
                     <div class="input-group mb-3">
-                        <input type="text" name="email" class="form-control" placeholder="Email / ID Karyawan / NIK" value="{{ old('email', old('login')) }}" required autofocus>
+                        <input type="text" name="email" class="form-control" placeholder="Email / ID Karyawan / NIK"
+                            value="{{ old('email', old('login')) }}" required autofocus>
                         <div class="input-group-text">
                             <span class="bi bi-person"></span>
                         </div>
@@ -108,6 +110,10 @@
                         <!-- /.col -->
                     </div>
                 </form>
+
+                <p class="mb-0 mt-3 text-center">
+                    <a href="{{ route('password.request') }}" class="text-decoration-none small text-primary">Lupa kata sandi?</a>
+                </p>
             </div>
             <!-- /.login-card-body -->
         </div>

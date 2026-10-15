@@ -196,10 +196,8 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'phone' => 'nullable|string|max:20|regex:/^[0-9+\-\s()]+$/',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            'current_password' => 'required_with:password|current_password:web',
             'password' => 'nullable|string|min:8|confirmed',
         ], [
-            'current_password.current_password' => 'Current password does not match.',
             'password.min' => 'New password must be at least 8 characters.',
             'password.confirmed' => 'New password confirmation does not match.',
             'avatar.max' => 'Profile picture size must not exceed 5MB.',

@@ -5,7 +5,6 @@ use App\Models\Location;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'sanctum']);
     Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
 });
 

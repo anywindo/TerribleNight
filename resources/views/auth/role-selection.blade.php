@@ -3,8 +3,9 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Pilih Portal | SIMSDM Garment</title>
+    <title>Pilih Portal | Kirana People</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('layouts.partials.favicons')
     <!--begin::Fonts-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
         crossorigin="anonymous">

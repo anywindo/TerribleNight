@@ -86,8 +86,18 @@ class Attendance extends Model
             return ['label' => 'Sedang Istirahat', 'color' => 'warning'];
         }
 
-        $actualDuration = \Carbon\Carbon::parse($endBreakEvent->timestamp)->diffInMinutes(\Carbon\Carbon::parse($startBreakEvent->timestamp));
-        $expectedDuration = \Carbon\Carbon::parse($this->shift->break_end)->diffInMinutes(\Carbon\Carbon::parse($this->shift->break_start));
+        $actualDuration = \Carbon\Carbon::parse($endBreakEvent->timestamp)->diffInMinutes(\Carbon\Carbon::parse($startBreakEvent->timestamp), true);
+        
+        $breakStart = $this->shift->break_start;
+        $breakEnd = $this->shift->break_end;
+
+        $isFriday = $this->date ? \Carbon\Carbon::parse($this->date)->isFriday() : \Carbon\Carbon::parse($startBreakEvent->timestamp)->isFriday();
+        if ($isFriday && \App\Models\Setting::get('friday_break_enabled', true)) {
+            $breakStart = \App\Models\Setting::get('friday_break_start', '11:30');
+            $breakEnd = \App\Models\Setting::get('friday_break_end', '13:00');
+        }
+
+        $expectedDuration = \Carbon\Carbon::parse($breakEnd)->diffInMinutes(\Carbon\Carbon::parse($breakStart), true);
 
         if ($actualDuration <= $expectedDuration) {
             return ['label' => 'Tepat Waktu', 'color' => 'success'];

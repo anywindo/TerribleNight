@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\Auth\UserResource;
 use App\Services\AuthService;
 use App\Services\FileUploadService;
+use App\Services\PasswordResetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -221,6 +222,50 @@ class AuthController extends BaseController
         return $this->success(
             new UserResource($user->fresh()->load('roles', 'location')),
             'Password updated successfully'
+        );
+    }
+
+    /**
+     * Send password reset OTP for mobile users.
+     */
+    public function forgotPassword(Request $request, PasswordResetService $service): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ], PasswordResetService::validationMessages());
+
+        $service->sendResetNotification($request->email);
+
+        return $this->success(
+            null,
+            'Jika email Anda terdaftar, instruksi reset kata sandi dan kode OTP telah dikirimkan ke email Anda.'
+        );
+    }
+
+    /**
+     * Reset password using numeric OTP.
+     */
+    public function resetPassword(Request $request, PasswordResetService $service): JsonResponse
+    {
+        $request->validate(array_merge([
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+            'password' => PasswordResetService::passwordRules(),
+        ]), PasswordResetService::validationMessages());
+
+        $result = $service->resetWithOtp(
+            $request->email,
+            $request->otp,
+            $request->password
+        );
+
+        if (!$result['success']) {
+            return $this->error($result['message'], 422);
+        }
+
+        return $this->success(
+            null,
+            $result['message']
         );
     }
 }

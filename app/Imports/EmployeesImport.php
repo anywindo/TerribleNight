@@ -35,9 +35,8 @@ class EmployeesImport implements ToModel, WithHeadingRow
             ]
         );
 
-        $roleSanctum = \Spatie\Permission\Models\Role::findByName('Employee', 'sanctum');
         $roleWeb = \Spatie\Permission\Models\Role::findByName('Employee', 'web');
-        $user->roles()->syncWithoutDetaching([$roleSanctum->id, $roleWeb->id]);
+        $user->roles()->syncWithoutDetaching([$roleWeb->id]);
 
         return $user;
     }

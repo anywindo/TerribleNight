@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Presensi | SIMSDM Garment</title>
+    <title>Presensi | Kirana People</title>
+    @include('layouts.partials.favicons')
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -291,7 +292,7 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
+                                                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
                                         <i
                                             class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'fa-right-to-bracket' : 'fa-right-from-bracket' }}"></i>
                                     </div>
@@ -341,9 +342,10 @@
                     @php
                         $displayBreakStart = ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--';
                         $displayBreakEnd = ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--';
-                        if (now()->isFriday() && $shift && $shift->break_start) {
-                            $displayBreakStart = '11:30';
-                            $displayBreakEnd = '13:00';
+                        $fridayBreakEnabled = \App\Models\Setting::get('friday_break_enabled', true);
+                        if (now()->isFriday() && $fridayBreakEnabled && $shift && $shift->break_start) {
+                            $displayBreakStart = \App\Models\Setting::get('friday_break_start', '11:30');
+                            $displayBreakEnd = \App\Models\Setting::get('friday_break_end', '13:00');
                         }
                     @endphp
                     <div class="flex items-center">
@@ -484,7 +486,7 @@
                                 @else
                                     <div
                                         class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                                                            {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
+                                                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
                                         <i
                                             class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'fa-mug-hot' : 'fa-briefcase' }}"></i>
                                     </div>
@@ -602,11 +604,11 @@
                                     <div class="relative group my-1.5 cursor-pointer"
                                         @click="openLightbox('{{ $inEvent->selfie_url }}', 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ $inEvent->selfie_url }}"
-                                            alt="Foto Check In"
+                                        <img src="{{ $inEvent->selfie_url }}" alt="Foto Check In"
                                             class="w-12 h-12 rounded-xl object-cover border-2 border-green-500/50 shadow-md group-hover:border-green-400 group-hover:scale-105 transition-all active:scale-95"
                                             onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-green-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                        <span
+                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-green-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
                                     </div>
@@ -633,11 +635,11 @@
                                     <div class="relative group my-1.5 cursor-pointer"
                                         @click="openLightbox('{{ $outEvent->selfie_url }}', 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ $outEvent->selfie_url }}"
-                                            alt="Foto Check Out"
+                                        <img src="{{ $outEvent->selfie_url }}" alt="Foto Check Out"
                                             class="w-12 h-12 rounded-xl object-cover border-2 border-red-500/50 shadow-md group-hover:border-red-400 group-hover:scale-105 transition-all active:scale-95"
                                             onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-red-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                        <span
+                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-red-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
                                     </div>
@@ -666,11 +668,11 @@
                                     <div class="relative group my-1.5 cursor-pointer"
                                         @click="openLightbox('{{ $breakInEvent->selfie_url }}', 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ $breakInEvent->selfie_url }}"
-                                            alt="Foto Break Start"
+                                        <img src="{{ $breakInEvent->selfie_url }}" alt="Foto Break Start"
                                             class="w-12 h-12 rounded-xl object-cover border-2 border-orange-500/50 shadow-md group-hover:border-orange-400 group-hover:scale-105 transition-all active:scale-95"
                                             onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-orange-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                        <span
+                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-orange-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
                                     </div>
@@ -697,11 +699,11 @@
                                     <div class="relative group my-1.5 cursor-pointer"
                                         @click="openLightbox('{{ $breakOutEvent->selfie_url }}', 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
                                         title="Klik untuk memperbesar">
-                                        <img src="{{ $breakOutEvent->selfie_url }}"
-                                            alt="Foto Break End"
+                                        <img src="{{ $breakOutEvent->selfie_url }}" alt="Foto Break End"
                                             class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 shadow-md group-hover:border-blue-400 group-hover:scale-105 transition-all active:scale-95"
                                             onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span class="absolute -bottom-1 -right-1 bg-gray-900/90 text-blue-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
+                                        <span
+                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-blue-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
                                             <i class="fa-solid fa-camera"></i>
                                         </span>
                                     </div>
@@ -738,14 +740,16 @@
 
         @if(session('success'))
             <div class="mb-4">
-                <div class="bg-green-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center">
+                <div
+                    class="bg-green-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center">
                     <i class="fa-solid fa-circle-check mr-2"></i> {{ session('success') }}
                 </div>
             </div>
         @endif
         @if(session('error'))
             <div class="mb-4">
-                <div class="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm flex items-center">
+                <div
+                    class="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm flex items-center">
                     <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ session('error') }}
                 </div>
             </div>
@@ -853,8 +857,7 @@
             class="flex flex-col items-center cursor-pointer transition w-16">
             <div class="w-6 h-6 rounded-full overflow-hidden border mb-1 transition-colors"
                 :class="currentNav === 'profile' ? 'border-orange-500' : 'border-gray-500'">
-                <img src="{{ $user->avatar_url }}"
-                    class="w-full h-full object-cover">
+                <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
             </div>
             <span class="text-[10px] font-medium">Profile</span>
         </a>
@@ -1042,16 +1045,14 @@
     <!-- Edit Profile Modal -->
     <div x-show="showEditProfileModal" x-cloak style="display: none;"
         class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        @keydown.escape.window="showEditProfileModal = false"
-        x-transition:enter="transition ease-out duration-200"
+        @keydown.escape.window="showEditProfileModal = false" x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0">
 
         <!-- Modal Card -->
         <div class="relative max-w-lg w-full bg-[#313340] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            @click.away="showEditProfileModal = false"
-            x-transition:enter="transition ease-out duration-200"
+            @click.away="showEditProfileModal = false" x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
@@ -1069,7 +1070,8 @@
             </div>
 
             <!-- Form Body -->
-            <form method="POST" action="{{ route('attendance.profile.update') }}" enctype="multipart/form-data" class="flex flex-col">
+            <form method="POST" action="{{ route('attendance.profile.update') }}" enctype="multipart/form-data"
+                class="flex flex-col">
                 @csrf
                 @method('PUT')
 
@@ -1079,7 +1081,8 @@
                         <div class="relative cursor-pointer group" @click="$refs.avatarInput.click()">
                             <img :src="avatarPreview ? avatarPreview : '{{ $user->avatar_url }}'"
                                 class="w-20 h-20 rounded-full border-2 border-gray-600 bg-white object-cover group-hover:border-orange-500 transition">
-                            <span class="absolute bottom-0 right-0 bg-gray-800 text-orange-400 rounded-full w-6 h-6 flex items-center justify-center border border-gray-600 shadow text-[10px]">
+                            <span
+                                class="absolute bottom-0 right-0 bg-gray-800 text-orange-400 rounded-full w-6 h-6 flex items-center justify-center border border-gray-600 shadow text-[10px]">
                                 <i class="fa-solid fa-camera"></i>
                             </span>
                         </div>
@@ -1097,7 +1100,8 @@
                     <!-- Phone Number -->
                     <div>
                         <label class="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
-                        <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 08123456789"
+                        <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
+                            placeholder="e.g. 08123456789"
                             class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
                         @error('phone')
                             <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
@@ -1108,18 +1112,11 @@
 
                     <!-- Change Password -->
                     <div>
-                        <p class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-0.5">Change Password</p>
+                        <p class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-0.5">Change Password
+                        </p>
                         <p class="text-[11px] text-gray-500 mb-3">Leave blank if you don't want to change it</p>
 
                         <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Current Password</label>
-                                <input type="password" name="current_password" placeholder="Current Password"
-                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
-                                @error('current_password')
-                                    <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
