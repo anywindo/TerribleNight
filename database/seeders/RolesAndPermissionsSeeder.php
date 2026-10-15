@@ -14,20 +14,13 @@ class RolesAndPermissionsSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Permissions
-        Permission::firstOrCreate(['name' => 'manage-rbac', 'guard_name' => 'sanctum']);
-        Permission::firstOrCreate(['name' => 'manage-rbac', 'guard_name' => 'web']);
-
-        // Create Roles for Sanctum
-        $superAdminSanctum = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'sanctum']);
-        Role::firstOrCreate(['name' => 'HR', 'guard_name' => 'sanctum']);
-        Role::firstOrCreate(['name' => 'Employee', 'guard_name' => 'sanctum']);
+        $manageRbac = Permission::firstOrCreate(['name' => 'manage-rbac', 'guard_name' => 'web']);
 
         // Create Roles for Web
-        $superAdminWeb = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'HR', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'Employee', 'guard_name' => 'web']);
         
-        $superAdminSanctum->givePermissionTo('manage-rbac');
-        $superAdminWeb->givePermissionTo('manage-rbac');
+        $superAdmin->givePermissionTo($manageRbac);
     }
 }

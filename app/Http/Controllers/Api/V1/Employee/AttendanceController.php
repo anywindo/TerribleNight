@@ -114,6 +114,14 @@ class AttendanceController extends Controller
         $breakStart = $shift->break_start ? Carbon::parse($shift->break_start)->format('H:i:s') : null;
         $breakEnd = $shift->break_end ? Carbon::parse($shift->break_end)->format('H:i:s') : null;
 
+        $fridayBreakEnabled = \App\Models\Setting::get('friday_break_enabled', true);
+        if (now()->isFriday() && $fridayBreakEnabled && $shift->break_start) {
+            $fridayStart = \App\Models\Setting::get('friday_break_start', '11:30');
+            $fridayEnd = \App\Models\Setting::get('friday_break_end', '13:00');
+            $breakStart = Carbon::parse($fridayStart)->format('H:i:s');
+            $breakEnd = Carbon::parse($fridayEnd)->format('H:i:s');
+        }
+
         return [
             'id' => $shift->id,
             'name' => $shift->shift_name ?? $shift->name,

@@ -17,6 +17,9 @@ Route::prefix('v1')->group(function () {
             Route::post('register', [AuthController::class, 'register']);
         });
 
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,15');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,15');
+
         Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             Route::get('profile', [AuthController::class, 'profile']);
             Route::match(['put', 'post'], 'profile', [AuthController::class, 'updateProfile']);

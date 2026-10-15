@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>@yield('title', 'Admin Dashboard') | SIMSDM Garment</title>
+    <title>@yield('title', 'Admin Dashboard') | Kirana People</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--begin::Fonts-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
@@ -287,15 +287,19 @@
             border-color: rgba(255, 255, 255, 0.1);
             color: rgba(255, 255, 255, 0.85);
         }
+
         [data-bs-theme="dark"] .modal-header {
             border-bottom-color: rgba(255, 255, 255, 0.1);
         }
+
         [data-bs-theme="dark"] .modal-footer {
             border-top-color: rgba(255, 255, 255, 0.1);
         }
+
         [data-bs-theme="dark"] .btn-close {
             filter: invert(1) grayscale(100%) brightness(200%);
         }
+
         [data-bs-theme="dark"] .modal-title {
             color: rgba(255, 255, 255, 0.9);
         }
@@ -485,7 +489,7 @@
                     </li>
                     <li class="nav-item d-none d-md-flex align-items-center ms-2">
                         <span class="fw-bold fs-5 header-title d-none d-sm-inline">
-                            Sistem Informasi Manajemen SDM Garment
+                            Kirana People - Garment HRIS
                         </span>
                     </li>
                 </ul>
@@ -504,8 +508,10 @@
                                 @endif
                             </a>
                             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end dropdown-menu-notifications">
-                                <div class="dropdown-header notification-header d-flex justify-content-between align-items-center py-2 px-3">
-                                    <span class="fw-bold">Notifikasi ({{ auth()->user()->unreadNotifications->count() }} Baru)</span>
+                                <div
+                                    class="dropdown-header notification-header d-flex justify-content-between align-items-center py-2 px-3">
+                                    <span class="fw-bold">Notifikasi ({{ auth()->user()->unreadNotifications->count() }}
+                                        Baru)</span>
                                     @if(auth()->user()->notifications->count() > 0)
                                         <form action="{{ route('admin.notifications.clear', [], false) }}" method="POST"
                                             class="d-inline m-0 p-0" id="clearNotificationsForm">
@@ -554,7 +560,8 @@
                                 @endphp
 
                                 @if($readNotifications->count() > 0)
-                                    <div class="dropdown-header notification-header text-start fw-bold py-2 px-3">Riwayat (1 Hari Terakhir)</div>
+                                    <div class="dropdown-header notification-header text-start fw-bold py-2 px-3">Riwayat (1
+                                        Hari Terakhir)</div>
                                     <div class="dropdown-divider m-0"></div>
                                     @foreach($readNotifications as $notification)
                                         @php
@@ -601,8 +608,7 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <img src="{{ auth()->user()->avatar_url }}"
-                                class="user-image rounded-circle shadow"
+                            <img src="{{ auth()->user()->avatar_url }}" class="user-image rounded-circle shadow"
                                 style="object-fit: cover; width: 2.1rem; height: 2.1rem;" alt="User Image">
                             <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
                         </a>
@@ -701,7 +707,8 @@
                         target="_blank">Kirana Group</a>.</strong> All rights reserved.
             </div>
             <div class="d-none d-sm-inline">
-                <a href="javascript:void(0)" onclick="showEasterEgg()" class="text-decoration-none link-secondary" style="cursor: pointer;">SIMSDM Garment</a>
+                <a href="javascript:void(0)" onclick="showEasterEgg()" class="text-decoration-none link-secondary"
+                    style="cursor: pointer;">Kirana People</a>
             </div>
         </footer>
         <!--end::Footer-->
@@ -809,8 +816,8 @@
 
         function showEasterEgg() {
             Swal.fire({
-                title: 'SIMSDM Garment',
-                html: '<div class="text-start"><p>Sistem Informasi Manajemen Sumber Daya Manusia (SIMSDM) khusus dirancang untuk kebutuhan industri garmen.</p><p>Dikembangkan dengan ❤️ untuk <b>Kirana Group</b>.</p><p class="text-muted small mt-3 mb-0">Versi 1.0.0</p></div>',
+                title: 'Kirana People',
+                html: '<div class="text-start"><p>Sistem Informasi Manajemen Sumber Daya Manusia terpadu dari <b>Kirana People</b>.</p><p>Dikembangkan dengan ❤️ untuk <b>Kirana Group</b>.</p><p class="text-muted small mt-3 mb-0">Versi 1.0.0</p></div>',
                 icon: 'info',
                 confirmButtonText: 'Keren!',
                 confirmButtonColor: '#3085d6',

@@ -14,12 +14,9 @@ class UserSeeder extends Seeder
         $defaultPassword = bcrypt('password');
         $locationId = Location::first()->id ?? null;
 
-        $superAdminRoleSanctum = Role::findByName('super-admin', 'sanctum');
-        $superAdminRoleWeb = Role::findByName('super-admin', 'web');
-        $hrRoleSanctum = Role::findByName('HR', 'sanctum');
-        $hrRoleWeb = Role::findByName('HR', 'web');
-        $employeeRoleSanctum = Role::findByName('Employee', 'sanctum');
-        $employeeRoleWeb = Role::findByName('Employee', 'web');
+        $superAdminRole = Role::findByName('super-admin', 'web');
+        $hrRole = Role::findByName('HR', 'web');
+        $employeeRole = Role::findByName('Employee', 'web');
 
         $avatarList = [
             'avatars/6ac7594a71d64_1791449418.webp',
@@ -44,7 +41,7 @@ class UserSeeder extends Seeder
             'avatar' => 'avatars/6acd9bef6c89c_1791859695.webp',
             'location_id' => $locationId,
         ]);
-        $superadmin->roles()->syncWithoutDetaching([$superAdminRoleSanctum->id, $superAdminRoleWeb->id]);
+        $superadmin->roles()->syncWithoutDetaching([$superAdminRole->id]);
 
         // Create an HR Admin
         $hr = User::factory()->create([
@@ -57,9 +54,9 @@ class UserSeeder extends Seeder
             'avatar' => 'avatars/6ac71a0a19855_1791433226.png',
             'location_id' => $locationId,
         ]);
-        $hr->roles()->syncWithoutDetaching([$hrRoleSanctum->id, $hrRoleWeb->id]);
+        $hr->roles()->syncWithoutDetaching([$hrRole->id]);
 
-        $createWithDobPassword = function (array $attributes = []) use ($locationId, $employeeRoleSanctum, $employeeRoleWeb, $avatarList, &$avatarIndex) {
+        $createWithDobPassword = function (array $attributes = []) use ($locationId, $employeeRole, $avatarList, &$avatarIndex) {
             $dob = fake()->dateTimeBetween('-45 years', '-22 years');
             $user = User::factory()->create(array_merge([
                 'dob' => $dob->format('Y-m-d'),
@@ -68,7 +65,7 @@ class UserSeeder extends Seeder
                 'location_id' => $locationId,
                 'avatar' => $avatarList[$avatarIndex++ % count($avatarList)],
             ], $attributes));
-            $user->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
+            $user->roles()->syncWithoutDetaching([$employeeRole->id]);
             return $user;
         };
 
@@ -100,7 +97,7 @@ class UserSeeder extends Seeder
             'immediate_manager_id' => $managers->first()?->id,
             'location_id' => $locationId,
         ]);
-        $employee->roles()->syncWithoutDetaching([$employeeRoleSanctum->id, $employeeRoleWeb->id]);
+        $employee->roles()->syncWithoutDetaching([$employeeRole->id]);
 
         // Create random employees under supervisors (2 per supervisor = 4 total)
         foreach ($supervisors as $supervisor) {

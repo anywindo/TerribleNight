@@ -11,6 +11,8 @@ use App\Http\Controllers\Admin\ShiftController;
 use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Admin\BreakController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -34,6 +36,14 @@ Route::get('/login', function () {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::any('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Password Reset Routes
+Route::middleware('guest')->group(function () {
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:3,15');
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update')->middleware('throttle:5,15');
+});
 
 Route::get('/csrf-token', function () {
     return response()->json([

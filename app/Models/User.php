@@ -17,7 +17,7 @@ class User extends Authenticatable
     /**
      * The guard name for Spatie permissions.
      */
-    protected string $guard_name = 'sanctum';
+    protected string $guard_name = 'web';
 
     /**
      * Mass assignable attributes.
