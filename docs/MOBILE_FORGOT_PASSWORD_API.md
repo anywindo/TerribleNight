@@ -243,7 +243,7 @@ final class AuthService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
+
         let payload = ResetPasswordRequest(
             email: email,
             otp: otp,
