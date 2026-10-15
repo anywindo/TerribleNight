@@ -7,7 +7,7 @@
     <title>Lupa Kata Sandi | Kirana People</title>
     <!--begin::Primary Meta Tags-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{{ asset('logoKirana.png') }}">
+    @include('layouts.partials.favicons')
 
     <!--begin::Fonts-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
