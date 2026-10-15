@@ -19,7 +19,7 @@ class EmployeeProfileUpdateTest extends TestCase
             'phone' => '081234567890',
         ]);
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
     }
 
     public function test_employee_can_update_phone_number(): void

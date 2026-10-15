@@ -136,6 +136,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
 // Serve storage files (supports serverless /tmp, static files, database cache, and fallbacks)
 Route::get('/storage/{path}', function ($path) {
+    if (str_contains($path, '../') || str_contains($path, '..\\')) {
+        abort(404);
+    }
+
     $filename = basename($path);
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $defaultMime = match($ext) {
