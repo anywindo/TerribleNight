@@ -141,6 +141,20 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         // Profile
         Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
+
+        // Audit Logs (Superadmin Only)
+        Route::middleware(['role:super-admin'])->group(function () {
+            // Archives & Safe Purge (Dual-Gate: Mandatory Download + OTP)
+            Route::get('audit-logs/archives', [\App\Http\Controllers\Admin\AuditLogArchiveController::class, 'index'])->name('audit-logs.archives.index');
+            Route::post('audit-logs/archives', [\App\Http\Controllers\Admin\AuditLogArchiveController::class, 'store'])->name('audit-logs.archives.store');
+            Route::get('audit-logs/archives/{archive}/download', [\App\Http\Controllers\Admin\AuditLogArchiveController::class, 'download'])->name('audit-logs.archives.download');
+            Route::post('audit-logs/archives/{archive}/request-otp', [\App\Http\Controllers\Admin\AuditLogArchiveController::class, 'requestOtp'])->name('audit-logs.archives.request-otp');
+            Route::post('audit-logs/archives/{archive}/purge', [\App\Http\Controllers\Admin\AuditLogArchiveController::class, 'purge'])->name('audit-logs.archives.purge');
+
+            Route::get('audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
+            Route::get('audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('audit-logs/{auditLog}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
+        });
     });
 });
 

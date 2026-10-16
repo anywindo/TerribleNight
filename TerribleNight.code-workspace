@@ -1,10 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "../TerribleNightGit/TerribleNight-iOS"
+			"name": "TerribleNight",
+			"path": "."
 		},
 		{
-			"path": "."
+			"name": "TerribleNight-iOS",
+			"path": "../TerribleNightGit/TerribleNight-iOS"
 		}
 	],
 	"settings": {

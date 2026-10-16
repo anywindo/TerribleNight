@@ -115,17 +115,29 @@
                     </a>
                 </li>
 
-                @can('manage-rbac')
+                @if(auth()->user()->can('manage-rbac') || auth()->user()->isSuperAdmin())
                     <li class="nav-header">SISTEM</li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('admin.roles.index') }}"
-                            class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-                            <i class="nav-icon bi bi-shield-lock-fill"></i>
-                            <p>Hak Akses (RBAC)</p>
-                        </a>
-                    </li>
-                @endcan
+                    @can('manage-rbac')
+                        <li class="nav-item">
+                            <a href="{{ route('admin.roles.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-shield-lock-fill"></i>
+                                <p>Hak Akses (RBAC)</p>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @if(auth()->user()->isSuperAdmin())
+                        <li class="nav-item">
+                            <a href="{{ route('admin.audit-logs.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
+                                <i class="nav-icon bi bi-journal-text"></i>
+                                <p>Log Audit CRUD</p>
+                            </a>
+                        </li>
+                    @endif
+                @endif
 
             </ul>
         </nav>
