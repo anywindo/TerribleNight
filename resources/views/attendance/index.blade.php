@@ -15,16 +15,20 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #272933;
-            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #F6F7FA;
+            color: #1C1C1E;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .card-bg {
-            background-color: #313340;
+        .tn-card {
+            background-color: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(240, 242, 245, 0.9);
         }
 
         .leaflet-bottom,
@@ -35,14 +39,67 @@
         [x-cloak] {
             display: none !important;
         }
+
+        /* Smooth scroll & hide scrollbar for clean app feel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .leaflet-div-icon {
+            background: transparent !important;
+            border: none !important;
+        }
     </style>
 </head>
 
-<body class="min-h-screen pb-24" x-data="{ 
+@php
+    $currentHour = (int) now()->format('H');
+    if ($currentHour >= 5 && $currentHour < 11) {
+        $greeting = 'Selamat Pagi,';
+    } elseif ($currentHour >= 11 && $currentHour < 15) {
+        $greeting = 'Selamat Siang,';
+    } elseif ($currentHour >= 15 && $currentHour < 18) {
+        $greeting = 'Selamat Sore,';
+    } else {
+        $greeting = 'Selamat Malam,';
+    }
+
+    $startEvent = $events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_SHIFT');
+    $endEvent = $events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_SHIFT');
+    $startBreak = $events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK');
+    $endBreak = $events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
+    $hasActiveBreak = $events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK') && !$events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
+
+    $displayBreakStart = ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '12:00';
+    $displayBreakEnd = ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '13:00';
+    $fridayBreakEnabled = \App\Models\Setting::get('friday_break_enabled', true);
+    if (now()->isFriday() && $fridayBreakEnabled && $shift && $shift->break_start) {
+        $displayBreakStart = \App\Models\Setting::get('friday_break_start', '11:30');
+        $displayBreakEnd = \App\Models\Setting::get('friday_break_end', '13:00');
+    }
+
+    $activeShiftName = $shift ? $shift->shift_name : 'Morning Shift';
+    $activeShiftStart = $shift ? \Carbon\Carbon::parse($shift->default_start_time)->format('H:i') : '08:00';
+    $activeShiftEnd = $shift ? \Carbon\Carbon::parse($shift->default_end_time)->format('H:i') : '16:00';
+    $activeShiftId = $shift ? $shift->id : 1;
+@endphp
+
+<body class="min-h-screen pb-28 antialiased select-none" x-data="{ 
         activeTab: 'work', 
         currentNav: '{{ $activeNav ?? (request()->is('attendance/history*') ? 'history' : (request()->is('attendance/profile*') ? 'profile' : (request()->hasAny(['start_date', 'end_date']) ? 'history' : 'home'))) }}',
         showPreview: false,
         showCamera: false,
+        showLogoutModal: false,
+        showShiftPicker: false,
+        selectedShiftId: {{ $activeShiftId }},
+        selectedShiftName: '{{ addslashes($activeShiftName) }}',
+        selectedShiftHours: '{{ $activeShiftStart }} - {{ $activeShiftEnd }}',
+        selectedShiftStart: '{{ $activeShiftStart }}',
+        selectedShiftEnd: '{{ $activeShiftEnd }}',
         previewImage: null,
         currentFormId: null,
         showEditProfileModal: {{ $errors->any() ? 'true' : 'false' }},
@@ -54,10 +111,35 @@
             }
         },
         locationData: { lat: null, lng: null, accuracy: null, distance: null },
-        locationStatusText: 'Getting location...',
+        locationStatusText: 'Memeriksa lokasi GPS...',
+        locationDistanceText: 'Memeriksa jarak...',
         locationValid: false,
         showNotes: false,
         isSubmitting: false,
+        get currentMapActionLabel() {
+            @if(!$startEvent)
+                return 'Ambil Presensi: Masuk Kerja';
+            @elseif(!$endEvent)
+                @if($hasActiveBreak)
+                    return 'Ambil Presensi: Selesai Istirahat';
+                @else
+                    return 'Ambil Presensi: Pulang Kerja';
+                @endif
+            @else
+                return 'Shift Telah Selesai';
+            @endif
+        },
+        triggerAttendanceFromMap() {
+            @if(!$startEvent)
+                openCameraUI('attendanceForm');
+            @elseif(!$endEvent)
+                @if($hasActiveBreak)
+                    openCameraUI('breakForm');
+                @else
+                    openCameraUI('attendanceForm');
+                @endif
+            @endif
+        },
         lightboxOpen: false,
         lightboxImage: '',
         lightboxTitle: '',
@@ -96,779 +178,885 @@
                 window.historyMapInstance.remove();
                 window.historyMapInstance = null;
             }
+        },
+        initLiveMap() {
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    initLiveAttendanceMap();
+                    if (window.liveMapInstance) {
+                        window.liveMapInstance.invalidateSize();
+                        fitLiveMapBounds();
+                    }
+                }, 150);
+            });
         }
     }"
-    x-init="window.alpineApp = $data; window.addEventListener('popstate', () => { if (window.location.pathname.includes('/attendance/history')) { currentNav = 'history'; } else if (window.location.pathname.includes('/attendance/profile')) { currentNav = 'profile'; } else if (window.location.pathname.endsWith('/attendance') || window.location.pathname.endsWith('/attendance/')) { currentNav = 'home'; } })"
+    x-init="window.alpineApp = $data; $watch('currentNav', val => { if (val === 'map') initLiveMap(); }); window.addEventListener('popstate', () => { if (window.location.pathname.includes('/attendance/history')) { currentNav = 'history'; } else if (window.location.pathname.includes('/attendance/profile')) { currentNav = 'profile'; } else if (window.location.pathname.endsWith('/attendance') || window.location.pathname.endsWith('/attendance/')) { currentNav = 'home'; } })"
     @preview-ready.window="previewImage = $event.detail.image; currentFormId = $event.detail.formId; showPreview = true; setTimeout(() => getLocationAndInitMap(), 50)">
-    <!-- Top Header -->
-    <header class="px-5 pt-10 pb-4" x-show="currentNav === 'home'" x-cloak>
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-lg font-semibold tracking-wide uppercase">KIRANA GROUP</h1>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit"
-                    class="text-gray-400 hover:text-red-500 transition active:scale-95 flex items-center justify-center w-8 h-8 rounded-full bg-gray-700/50">
-                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
-                </button>
-            </form>
-        </div>
 
-        <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-3">
+    <!-- Center Container for mobile feel (Home, History, Profile) -->
+    <div class="max-w-md mx-auto min-h-screen px-4 pt-3 flex flex-col justify-between" x-show="currentNav !== 'map'">
+
+        <!-- ==================== HOME VIEW ==================== -->
+        <div x-show="currentNav === 'home'" x-cloak x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-98" x-transition:enter-end="opacity-100 scale-100">
+
+            <!-- Top Header (Company Name + Logout Button) -->
+            <header class="flex justify-between items-center py-2 mb-3">
+                <h1 class="text-[20px] font-extrabold tracking-tight text-[#1C1C1E] uppercase">KIRANA GROUP</h1>
+                <button type="button" @click="showLogoutModal = true"
+                    class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100/90 flex items-center justify-center text-gray-500 hover:text-red-500 transition active:scale-92"
+                    title="Keluar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H9" />
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Employee Greeting Row -->
+            <div class="flex items-center space-x-3.5 mb-4 px-1">
                 <img src="{{ $user->avatar_url }}"
                     @click="openLightbox('{{ $user->avatar_url }}', '{{ addslashes($user->name) }}', 'Foto Profil')"
-                    class="w-12 h-12 rounded-full border-2 border-gray-600 bg-white object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                    title="Klik untuk memperbesar">
-                <div>
-                    <h2 class="font-bold text-base">{{ $user->name }}</h2>
-                    <p class="text-sm text-gray-400">{{ $user->email }}</p>
+                    class="w-[52px] h-[52px] rounded-full object-cover border border-gray-200/80 shadow-sm cursor-pointer hover:ring-2 hover:ring-[#FF21A4] transition-all flex-shrink-0"
+                    alt="{{ $user->name }}" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                <div class="flex flex-col min-w-0">
+                    <span class="text-[13px] font-normal text-[#8E8E93] leading-tight">{{ $greeting }}</span>
+                    <span class="text-[17px] font-bold text-[#1C1C1E] tracking-tight leading-snug truncate">{{ $user->name }}</span>
                 </div>
             </div>
-        </div>
-    </header>
 
-    @if(session('success'))
-        <div class="px-5 mb-2">
-            <div
-                class="bg-green-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center">
-                <i class="fa-solid fa-circle-check mr-2"></i> {{ session('success') }}
+            <!-- Session Alert Banner -->
+            @if(session('success'))
+                <div class="mb-3">
+                    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center shadow-sm">
+                        <i class="fa-solid fa-circle-check text-emerald-500 mr-2 text-sm"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="mb-3">
+                    <div class="bg-rose-50 border border-rose-200 text-rose-700 px-3.5 py-2.5 rounded-xl text-xs font-medium flex items-center shadow-sm">
+                        <i class="fa-solid fa-circle-exclamation text-rose-500 mr-2 text-sm"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Segment Bar: Capsule (Kerja / Istirahat) -->
+            <div class="p-1 bg-[#EEF0F5] rounded-full flex gap-1 mb-4 shadow-inner">
+                <button type="button" @click="activeTab = 'work'"
+                    :class="activeTab === 'work' ? 'bg-[#FF21A4] text-white shadow-md shadow-pink-500/25' : 'text-[#8E8E93] hover:text-[#1C1C1E]'"
+                    class="flex-1 py-2 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200">
+                    <i class="fa-solid fa-briefcase text-xs"></i>
+                    <span>Kerja</span>
+                </button>
+                <button type="button" @click="activeTab = 'break'"
+                    :class="activeTab === 'break' ? 'bg-[#FF21A4] text-white shadow-md shadow-pink-500/25' : 'text-[#8E8E93] hover:text-[#1C1C1E]'"
+                    class="flex-1 py-2 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200">
+                    <i class="fa-solid fa-mug-hot text-xs"></i>
+                    <span>Istirahat</span>
+                </button>
             </div>
-        </div>
-    @endif
 
-    <!-- Tabs -->
-    <div class="flex px-5 border-b border-gray-600 mt-2" x-show="currentNav === 'home'" x-cloak>
-        <button @click="activeTab = 'work'"
-            :class="activeTab === 'work' ? 'text-white border-orange-500' : 'text-gray-400 border-transparent'"
-            class="flex-1 pb-3 text-center font-medium border-b-2 transition-colors">
-            Work
-        </button>
-        <button @click="activeTab = 'break'"
-            :class="activeTab === 'break' ? 'text-white border-orange-500' : 'text-gray-400 border-transparent'"
-            class="flex-1 pb-3 text-center font-medium border-b-2 transition-colors">
-            Break
-        </button>
-    </div>
+            <!-- Main Shift Schedule Card -->
+            <div class="tn-card p-5 mb-4">
+                <!-- Date Header -->
+                <p class="text-[13px] text-[#8E8E93] font-normal mb-3">
+                    Hari Ini ({{ now()->locale('id')->translatedFormat('D, d M Y') }})
+                </p>
 
-    <!-- Main Content -->
-    <main class="px-5 mt-4" x-show="currentNav === 'home'" x-cloak x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-        <!-- Work Tab -->
-        <div x-show="activeTab === 'work'" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-            <!-- Card -->
-            <div class="card-bg rounded-xl p-4 mb-4">
-                <div class="flex justify-between items-start mb-4 border-b border-gray-600 pb-3">
-                    <div>
-                        <p class="text-xs text-gray-400 mb-1">Today ({{ now()->translatedFormat('D, d M Y') }})</p>
-                        <p class="text-sm font-semibold text-gray-200">Shift: OFFICE [08:00 - 16:00]</p>
-                    </div>
-                    <!-- <i class="fa-solid fa-file-pen text-gray-400 text-lg"></i> -->
-                </div>
-
-                <div class="flex mb-5 relative">
-                    <!-- Divider line -->
-                    <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-600"></div>
-
-                    @php
-                        $startEvent = $events->where('event_type', 'START_SHIFT')->first();
-                        $endEvent = $events->where('event_type', 'END_SHIFT')->first();
-                    @endphp
-
-                    <!-- Start Time -->
-                    <div class="flex-1 flex items-center">
-                        @if($startEvent && $startEvent->selfie_url && $startEvent->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ $startEvent->selfie_url }}"
-                                @click="openLightbox('{{ $startEvent->selfie_url }}', 'Start Shift Photo', '{{ \Carbon\Carbon::parse($startEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar"
-                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                        @else
-                            <div
-                                class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
-                                <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                <!-- Shift Row (Work Tab) -->
+                <div x-show="activeTab === 'work'">
+                    <div class="bg-[#F8F9FB] border border-[#EEF0F5] rounded-2xl p-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                <i class="fa-regular fa-clock text-base"></i>
                             </div>
-                        @endif
-                        <div>
-                            <p class="text-xs text-gray-400 mb-0.5">Start Time</p>
-                            @if($startEvent)
-                                <p class="text-green-500 font-bold text-lg leading-none">
-                                    {{ \Carbon\Carbon::parse($startEvent->timestamp)->format('H:i') }} <i
-                                        class="fa-solid fa-circle-check text-xs ml-1"></i>
+                            <div class="min-w-0">
+                                <p class="font-bold text-[14px] text-[#1C1C1E] leading-snug truncate"
+                                    x-text="selectedShiftName + ' (' + selectedShiftHours + ')'">
+                                    {{ $activeShiftName }} ({{ $activeShiftStart }} - {{ $activeShiftEnd }})
                                 </p>
-                            @else
-                                <p class="text-red-500 font-bold text-lg leading-none">--:-- <i
-                                        class="fa-solid fa-location-dot text-xs ml-1"></i></p>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- End Time -->
-                    <div class="flex-1 flex items-center pl-4">
-                        @if($endEvent && $endEvent->selfie_url && $endEvent->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ $endEvent->selfie_url }}"
-                                @click="openLightbox('{{ $endEvent->selfie_url }}', 'End Shift Photo', '{{ \Carbon\Carbon::parse($endEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar"
-                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                        @else
-                            <div
-                                class="w-10 h-10 rounded-full bg-red-900/30 text-red-500 flex items-center justify-center font-bold mr-3 border border-red-800/50">
-                                <i class="fa-solid fa-right-from-bracket text-sm"></i>
                             </div>
-                        @endif
-                        <div>
-                            <p class="text-xs text-gray-400 mb-0.5">End Time</p>
-                            @if($endEvent)
-                                <p class="text-green-500 font-bold text-lg leading-none">
-                                    {{ \Carbon\Carbon::parse($endEvent->timestamp)->format('H:i') }} <i
-                                        class="fa-solid fa-circle-check text-xs ml-1"></i>
-                                </p>
-                            @else
-                                <p class="text-red-500 font-bold text-lg leading-none">--:-- <i
-                                        class="fa-solid fa-location-dot text-xs ml-1"></i></p>
-                            @endif
                         </div>
-                    </div>
-                </div>
-
-                <form action="{{ route('attendance.store') }}" method="POST" id="attendanceForm"
-                    enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="latitude" id="lat">
-                    <input type="hidden" name="longitude" id="lng">
-
-                    <!-- Camera trigger hidden input -->
-                    <input type="file" name="selfie" id="selfie_input" accept="image/*" capture="user" class="hidden"
-                        required>
-
-                    @if(!$startEvent)
-                        <input type="hidden" name="event_type" value="START_SHIFT">
-                        <button type="button" onclick="openCameraUI('attendanceForm')"
-                            class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                            Record Time
-                        </button>
-                    @elseif(!$endEvent)
-                        @php
-                            $hasActiveBreak = $events->contains('event_type', 'START_BREAK') && !$events->contains('event_type', 'END_BREAK');
-                        @endphp
-                        <input type="hidden" name="event_type" value="END_SHIFT">
-                        @if($hasActiveBreak)
-                            <button type="button" disabled
-                                class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                <span>Record End Time</span>
-                                <span class="text-[10px] font-normal mt-0.5">Selesaikan istirahat terlebih dahulu</span>
-                            </button>
-                        @else
-                            <button type="button" onclick="openCameraUI('attendanceForm')"
-                                class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                Record End Time
+                        @if(!$startEvent)
+                            <button type="button" @click="showShiftPicker = true"
+                                class="bg-[#FFF0F7] hover:bg-[#FFE2F1] text-[#FF21A4] text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition active:scale-95 flex-shrink-0 ml-2">
+                                <span>Pilih</span>
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
                             </button>
                         @endif
-                    @else
-                        <button type="button" disabled
-                            class="w-full bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
-                            Shift Completed
-                        </button>
-                    @endif
-                </form>
-
-            </div>
-
-            <!-- Attendance History -->
-            <div class="mt-6">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Attendance History</h3>
-
-                <div class="space-y-3">
-                    @forelse($historyEvents->filter(fn($e) => in_array($e->event_type?->value ?? $e->event_type, ['START_SHIFT', 'END_SHIFT'])) as $event)
-                        <div class="card-bg rounded-xl p-4 flex items-center justify-between border border-gray-700">
-                            <div class="flex items-center space-x-4">
-                                @if($event->selfie_url && $event->selfie_path !== 'dummy/path.jpg')
-                                    <img src="{{ $event->selfie_url }}"
-                                        @click="openLightbox('{{ $event->selfie_url }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift Photo' : 'End Shift Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                        class="w-10 h-10 rounded-full object-cover border border-gray-600 cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                        title="Klik untuk memperbesar"
-                                        onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                @else
-                                    <div
-                                        class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'bg-green-900/30 text-green-500' : 'bg-red-900/30 text-red-500' }}">
-                                        <i
-                                            class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'fa-right-to-bracket' : 'fa-right-from-bracket' }}"></i>
-                                    </div>
-                                @endif
-                                <div>
-                                    <p class="text-sm font-bold text-gray-200">
-                                        {{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift' : 'End Shift' }}
-                                    </p>
-                                    <div class="flex items-center space-x-2 mt-0.5">
-                                        <span class="text-xs text-gray-400">
-                                            {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
-                                        </span>
-                                        @if($event->latitude && $event->longitude)
-                                            <button type="button"
-                                                @click="openMapModal({{ $event->latitude }}, {{ $event->longitude }}, '{{ ($event->event_type?->value ?? $event->event_type) === 'START_SHIFT' ? 'Start Shift' : 'End Shift' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                                class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 transition active:scale-95 shadow-sm">
-                                                <i class="fa-solid fa-map-pin text-[10px]"></i>
-                                                <span>Pinpoint</span>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-lg font-bold text-white">
-                                    {{ \Carbon\Carbon::parse($event->timestamp)->format('H:i') }}
-                                </p>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-6 text-gray-500 border border-dashed border-gray-700 rounded-xl">
-                            <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 opacity-50"></i>
-                            <p class="text-xs font-medium">No history yet</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        <!-- Break Tab -->
-        <div x-show="activeTab === 'break'" style="display: none;" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-            <!-- Break Card -->
-            <div class="card-bg rounded-xl p-4 mb-6">
-                <div class="mb-4">
-                    <p class="text-xs text-gray-400 mb-2">{{ now()->translatedFormat('D, d M Y') }}</p>
-                    @php
-                        $displayBreakStart = ($shift && $shift->break_start) ? \Carbon\Carbon::parse($shift->break_start)->format('H:i') : '--:--';
-                        $displayBreakEnd = ($shift && $shift->break_end) ? \Carbon\Carbon::parse($shift->break_end)->format('H:i') : '--:--';
-                        $fridayBreakEnabled = \App\Models\Setting::get('friday_break_enabled', true);
-                        if (now()->isFriday() && $fridayBreakEnabled && $shift && $shift->break_start) {
-                            $displayBreakStart = \App\Models\Setting::get('friday_break_start', '11:30');
-                            $displayBreakEnd = \App\Models\Setting::get('friday_break_end', '13:00');
-                        }
-                    @endphp
-                    <div class="flex items-center">
-                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mr-3">
-                            Break Time
-                            [{{ $displayBreakStart }} - {{ $displayBreakEnd }}]
-                        </p>
-                        <div class="flex-1 h-[1px] bg-gray-600"></div>
                     </div>
                 </div>
 
-                <div class="flex mb-6 relative mt-4">
-                    <!-- Divider line -->
-                    <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-600"></div>
-
-                    @php
-                        $startBreak = $events->where('event_type', 'START_BREAK')->first();
-                        $endBreak = $events->where('event_type', 'END_BREAK')->first();
-                    @endphp
-
-                    <!-- Start Break -->
-                    <div class="flex-1 flex items-center">
-                        @if($startBreak && $startBreak->selfie_url && $startBreak->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ $startBreak->selfie_url }}"
-                                @click="openLightbox('{{ $startBreak->selfie_url }}', 'Start Break Photo', '{{ \Carbon\Carbon::parse($startBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar"
-                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                        @else
-                            <div
-                                class="w-10 h-10 rounded-full bg-orange-900/30 text-orange-500 flex items-center justify-center font-bold mr-3 border border-orange-800/50">
+                <!-- Shift Row (Break Tab) -->
+                <div x-show="activeTab === 'break'" style="display: none;">
+                    <div class="bg-[#F8F9FB] border border-[#EEF0F5] rounded-2xl p-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
                                 <i class="fa-solid fa-mug-hot text-sm"></i>
                             </div>
-                        @endif
-                        <div>
-                            <p class="text-xs text-gray-400 mb-0.5">Start Break</p>
-                            @if($startBreak)
-                                <p class="text-white font-bold text-lg leading-none">
-                                    {{ \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') }}
+                            <div class="min-w-0">
+                                <p class="font-bold text-[14px] text-[#1C1C1E] leading-snug truncate">
+                                    Waktu Istirahat [{{ $displayBreakStart }} - {{ $displayBreakEnd }}]
                                 </p>
-                            @else
-                                <p class="text-white font-bold text-lg leading-none">--:--</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- End Break -->
-                    <div class="flex-1 flex items-center pl-4">
-                        @if($endBreak && $endBreak->selfie_url && $endBreak->selfie_path !== 'dummy/path.jpg')
-                            <img src="{{ $endBreak->selfie_url }}"
-                                @click="openLightbox('{{ $endBreak->selfie_url }}', 'End Break Photo', '{{ \Carbon\Carbon::parse($endBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                class="w-10 h-10 rounded-full mr-3 border border-gray-600 object-cover cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                title="Klik untuk memperbesar"
-                                onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                        @else
-                            <div
-                                class="w-10 h-10 rounded-full bg-blue-900/30 text-blue-500 flex items-center justify-center font-bold mr-3 border border-blue-800/50">
-                                <i class="fa-solid fa-briefcase text-sm"></i>
                             </div>
-                        @endif
-                        <div>
-                            <p class="text-xs text-gray-400 mb-0.5">End Break</p>
-                            @if($endBreak)
-                                <p class="text-white font-bold text-lg leading-none">
-                                    {{ \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') }}
-                                </p>
+                        </div>
+                        <div class="flex-shrink-0 ml-2">
+                            @if(!$startBreak)
+                                <span class="text-[11px] font-bold text-[#FF21A4] bg-[#FFF0F7] px-2.5 py-1 rounded-full">Belum Mulai</span>
+                            @elseif(!$endBreak)
+                                <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Sedang Istirahat</span>
                             @else
-                                <p class="text-white font-bold text-lg leading-none">--:--</p>
+                                <span class="text-[11px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Selesai</span>
                             @endif
                         </div>
                     </div>
                 </div>
 
-                <form action="{{ route('attendance.store') }}" method="POST" id="breakForm"
-                    enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="latitude" id="lat2">
-                    <input type="hidden" name="longitude" id="lng2">
-                    <input type="file" name="selfie" id="break_selfie_input" accept="image/*" capture="user"
-                        class="hidden" required>
+                <!-- Divider -->
+                <div class="border-t border-[#EEF0F5] my-4"></div>
 
-                    <div class="flex space-x-3">
-                        @php
-                            $shiftNotStarted = !$events->contains('event_type', 'START_SHIFT');
-                            $shiftEnded = $events->contains('event_type', 'END_SHIFT');
-                        @endphp
+                <!-- Two-Column Timings: Work Mode -->
+                <div x-show="activeTab === 'work'" class="flex items-center">
+                    <!-- Jam Masuk -->
+                    <div class="flex-1 flex items-center space-x-2.5 min-w-0">
+                        @if($startEvent && $startEvent->selfie_url && $startEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $startEvent->selfie_url }}"
+                                @click="openLightbox('{{ $startEvent->selfie_url }}', 'Foto Masuk Kerja', '{{ \Carbon\Carbon::parse($startEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                class="w-9 h-9 rounded-full object-cover border border-[#FF21A4]/40 cursor-pointer hover:scale-105 transition flex-shrink-0 shadow-sm"
+                                title="Lihat Foto" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-briefcase text-xs"></i>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-[12px] text-[#8E8E93] font-normal truncate">Jam Masuk</span>
+                                <span class="text-[11px] font-semibold text-[#FF21A4]" x-text="'(' + selectedShiftStart + ')'">
+                                    ({{ $activeShiftStart }})
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-1 mt-0.5">
+                                @if($startEvent)
+                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
+                                        {{ \Carbon\Carbon::parse($startEvent->timestamp)->format('H:i') }}
+                                    </span>
+                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                @else
+                                    <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
 
-                        @if($shiftEnded)
-                            <button type="button" disabled
-                                class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                <span>Record Break Time</span>
-                                <span class="text-[10px] font-normal mt-0.5">Shift telah selesai</span>
-                            </button>
-                        @elseif(!$startBreak)
-                            <input type="hidden" name="event_type" value="START_BREAK">
-                            @if($shiftNotStarted)
-                                <button type="button" disabled
-                                    class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg flex flex-col items-center justify-center cursor-not-allowed">
-                                    <span>Record Break Time</span>
-                                    <span class="text-[10px] font-normal mt-0.5">Mulai shift terlebih dahulu</span>
+                    <!-- Jam Pulang -->
+                    <div class="flex-1 flex items-center space-x-2.5 pl-3 border-l border-[#EEF0F5] min-w-0">
+                        @if($endEvent && $endEvent->selfie_url && $endEvent->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $endEvent->selfie_url }}"
+                                @click="openLightbox('{{ $endEvent->selfie_url }}', 'Foto Pulang Kerja', '{{ \Carbon\Carbon::parse($endEvent->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                class="w-9 h-9 rounded-full object-cover border border-[#FF21A4]/40 cursor-pointer hover:scale-105 transition flex-shrink-0 shadow-sm"
+                                title="Lihat Foto" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-house text-xs"></i>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-[12px] text-[#8E8E93] font-normal truncate">Jam Pulang</span>
+                                <span class="text-[11px] font-semibold text-[#FF21A4]" x-text="'(' + selectedShiftEnd + ')'">
+                                    ({{ $activeShiftEnd }})
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-1 mt-0.5">
+                                @if($endEvent)
+                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
+                                        {{ \Carbon\Carbon::parse($endEvent->timestamp)->format('H:i') }}
+                                    </span>
+                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                @else
+                                    <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Timings: Break Mode -->
+                <div x-show="activeTab === 'break'" style="display: none;" class="flex items-center">
+                    <!-- Mulai Istirahat -->
+                    <div class="flex-1 flex items-center space-x-2.5 min-w-0">
+                        @if($startBreak && $startBreak->selfie_url && $startBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $startBreak->selfie_url }}"
+                                @click="openLightbox('{{ $startBreak->selfie_url }}', 'Foto Mulai Istirahat', '{{ \Carbon\Carbon::parse($startBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                class="w-9 h-9 rounded-full object-cover border border-[#FF21A4]/40 cursor-pointer hover:scale-105 transition flex-shrink-0 shadow-sm"
+                                title="Lihat Foto" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-mug-hot text-xs"></i>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-[12px] text-[#8E8E93] font-normal truncate">Mulai</span>
+                                <span class="text-[11px] font-semibold text-[#FF21A4]">({{ $displayBreakStart }})</span>
+                            </div>
+                            <div class="flex items-center space-x-1 mt-0.5">
+                                @if($startBreak)
+                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
+                                        {{ \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') }}
+                                    </span>
+                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                @else
+                                    <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selesai Istirahat -->
+                    <div class="flex-1 flex items-center space-x-2.5 pl-3 border-l border-[#EEF0F5] min-w-0">
+                        @if($endBreak && $endBreak->selfie_url && $endBreak->selfie_path !== 'dummy/path.jpg')
+                            <img src="{{ $endBreak->selfie_url }}"
+                                @click="openLightbox('{{ $endBreak->selfie_url }}', 'Foto Selesai Istirahat', '{{ \Carbon\Carbon::parse($endBreak->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                class="w-9 h-9 rounded-full object-cover border border-[#FF21A4]/40 cursor-pointer hover:scale-105 transition flex-shrink-0 shadow-sm"
+                                title="Lihat Foto" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-briefcase text-xs"></i>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-[12px] text-[#8E8E93] font-normal truncate">Selesai</span>
+                                <span class="text-[11px] font-semibold text-[#FF21A4]">({{ $displayBreakEnd }})</span>
+                            </div>
+                            <div class="flex items-center space-x-1 mt-0.5">
+                                @if($endBreak)
+                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
+                                        {{ \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') }}
+                                    </span>
+                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                @else
+                                    <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="mt-5">
+                    <!-- Work Mode Action -->
+                    <div x-show="activeTab === 'work'">
+                        @if(!$startEvent)
+                            <form action="{{ route('attendance.store') }}" method="POST" id="attendanceForm" enctype="multipart/form-data">
+                                @csrf
+                                <input type="hidden" name="latitude" id="lat">
+                                <input type="hidden" name="longitude" id="lng">
+                                <input type="hidden" name="event_type" value="START_SHIFT">
+                                <input type="hidden" name="shift_id" :value="selectedShiftId">
+                                <input type="file" name="selfie" id="selfie_input" accept="image/*" capture="user" class="hidden" required>
+                                <button type="button" onclick="openCameraUI('attendanceForm')"
+                                    class="w-full h-[50px] bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold text-base rounded-[14px] flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(255,33,164,0.35)] transition active:scale-[0.98]">
+                                    <i class="fa-solid fa-briefcase text-base"></i>
+                                    <span>Masuk Kerja</span>
                                 </button>
-                            @else
-                                <button type="button" onclick="openCameraUI('breakForm')"
-                                    class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                    Record Break Time
-                                </button>
-                            @endif
-                        @elseif(!$endBreak)
-                            <input type="hidden" name="event_type" value="END_BREAK">
-                            <button type="button" onclick="openCameraUI('breakForm')"
-                                class="flex-1 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-lg transition active:scale-95 shadow-md">
-                                Record End Break
-                            </button>
+                            </form>
+                        @elseif(!$endEvent)
+                            @php
+                                $hasActiveBreak = $events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK') && !$events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
+                            @endphp
+                            <form action="{{ route('attendance.store') }}" method="POST" id="attendanceForm" enctype="multipart/form-data">
+                                @csrf
+                                <input type="hidden" name="latitude" id="lat">
+                                <input type="hidden" name="longitude" id="lng">
+                                <input type="hidden" name="event_type" value="END_SHIFT">
+                                <input type="hidden" name="shift_id" :value="selectedShiftId">
+                                <input type="file" name="selfie" id="selfie_input" accept="image/*" capture="user" class="hidden" required>
+                                @if($hasActiveBreak)
+                                    <button type="button" disabled
+                                        class="w-full h-[50px] bg-[#E5E7EB] text-[#9CA3AF] font-bold text-sm rounded-[14px] flex flex-col items-center justify-center cursor-not-allowed">
+                                        <span>Pulang Kerja</span>
+                                        <span class="text-[10px] font-normal">Selesaikan istirahat terlebih dahulu</span>
+                                    </button>
+                                @else
+                                    <button type="button" onclick="openCameraUI('attendanceForm')"
+                                        class="w-full h-[50px] bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold text-base rounded-[14px] flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(255,33,164,0.35)] transition active:scale-[0.98]">
+                                        <i class="fa-solid fa-house text-base"></i>
+                                        <span>Pulang Kerja</span>
+                                    </button>
+                                @endif
+                            </form>
                         @else
                             <button type="button" disabled
-                                class="flex-1 bg-gray-600 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
-                                Break Completed
+                                class="w-full h-[50px] bg-[#E5E7EB] text-[#9CA3AF] font-bold text-base rounded-[14px] flex items-center justify-center cursor-not-allowed">
+                                Shift Selesai
                             </button>
                         @endif
                     </div>
-                </form>
+
+                    <!-- Break Mode Action -->
+                    <div x-show="activeTab === 'break'" style="display: none;">
+                        @php
+                            $shiftNotStarted = !$events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_SHIFT');
+                            $shiftEnded = $events->contains(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_SHIFT');
+                        @endphp
+                        <form action="{{ route('attendance.store') }}" method="POST" id="breakForm" enctype="multipart/form-data">
+                            @csrf
+                            <input type="hidden" name="latitude" id="lat2">
+                            <input type="hidden" name="longitude" id="lng2">
+                            <input type="hidden" name="shift_id" :value="selectedShiftId">
+                            <input type="file" name="selfie" id="break_selfie_input" accept="image/*" capture="user" class="hidden" required>
+
+                            @if($shiftEnded)
+                                <button type="button" disabled
+                                    class="w-full h-[50px] bg-[#E5E7EB] text-[#9CA3AF] font-bold text-sm rounded-[14px] flex flex-col items-center justify-center cursor-not-allowed">
+                                    <span>Mulai Istirahat</span>
+                                    <span class="text-[10px] font-normal">Shift telah selesai</span>
+                                </button>
+                            @elseif(!$startBreak)
+                                <input type="hidden" name="event_type" value="START_BREAK">
+                                @if($shiftNotStarted)
+                                    <button type="button" disabled
+                                        class="w-full h-[50px] bg-[#E5E7EB] text-[#9CA3AF] font-bold text-sm rounded-[14px] flex flex-col items-center justify-center cursor-not-allowed">
+                                        <span>Mulai Istirahat</span>
+                                        <span class="text-[10px] font-normal">Mulai shift terlebih dahulu</span>
+                                    </button>
+                                @else
+                                    <button type="button" onclick="openCameraUI('breakForm')"
+                                        class="w-full h-[50px] bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold text-base rounded-[14px] flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(255,33,164,0.35)] transition active:scale-[0.98]">
+                                        <i class="fa-solid fa-mug-hot text-base"></i>
+                                        <span>Mulai Istirahat</span>
+                                    </button>
+                                @endif
+                            @elseif(!$endBreak)
+                                <input type="hidden" name="event_type" value="END_BREAK">
+                                <button type="button" onclick="openCameraUI('breakForm')"
+                                    class="w-full h-[50px] bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold text-base rounded-[14px] flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(255,33,164,0.35)] transition active:scale-[0.98]">
+                                    <i class="fa-solid fa-briefcase text-base"></i>
+                                    <span>Selesai Istirahat</span>
+                                </button>
+                            @else
+                                <button type="button" disabled
+                                    class="w-full h-[50px] bg-[#E5E7EB] text-[#9CA3AF] font-bold text-base rounded-[14px] flex items-center justify-center cursor-not-allowed">
+                                    Istirahat Selesai
+                                </button>
+                            @endif
+                        </form>
+                    </div>
+                </div>
             </div>
 
-            <!-- Break History -->
-            <div class="mt-6">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Break History</h3>
+            <!-- Activity History Card ("Aktivitas Hari Ini") -->
+            <div class="tn-card p-5 mb-8">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base font-bold text-[#1C1C1E]">Aktivitas Hari Ini</h3>
+                    <a href="{{ route('attendance.history') }}"
+                        @click.prevent="currentNav = 'history'; window.history.pushState({}, '', '{{ route('attendance.history') }}')"
+                        class="text-xs font-semibold text-[#FF21A4] hover:underline flex items-center gap-1 transition">
+                        <span>Riwayat Lengkap</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </a>
+                </div>
 
-                <div class="space-y-3">
-                    @forelse($historyEvents->filter(fn($e) => in_array($e->event_type?->value ?? $e->event_type, ['START_BREAK', 'END_BREAK'])) as $event)
-                        <div class="card-bg rounded-xl p-4 flex items-center justify-between border border-gray-700">
-                            <div class="flex items-center space-x-4">
-                                @if($event->selfie_url && $event->selfie_path !== 'dummy/path.jpg')
-                                    <img src="{{ $event->selfie_url }}"
-                                        @click="openLightbox('{{ $event->selfie_url }}', '{{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break Photo' : 'End Break Photo' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                        class="w-10 h-10 rounded-full object-cover border border-gray-600 cursor-pointer hover:ring-2 hover:ring-orange-500 hover:scale-105 transition-all"
-                                        title="Klik untuk memperbesar"
-                                        onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                @else
-                                    <div
-                                        class="w-10 h-10 rounded-full flex items-center justify-center 
-                                                                                                    {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'bg-orange-900/30 text-orange-500' : 'bg-blue-900/30 text-blue-500' }}">
-                                        <i
-                                            class="fa-solid {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'fa-mug-hot' : 'fa-briefcase' }}"></i>
-                                    </div>
-                                @endif
-                                <div>
-                                    <p class="text-sm font-bold text-gray-200">
-                                        {{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break' : 'End Break' }}
-                                    </p>
-                                    <div class="flex items-center space-x-2 mt-0.5">
-                                        <span class="text-xs text-gray-400">
-                                            {{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}
-                                        </span>
+                @if($events->isEmpty())
+                    <!-- Exact empty state matching screenshot -->
+                    <div class="py-9 flex flex-col items-center justify-center text-center">
+                        <div class="relative w-12 h-12 flex items-center justify-center mb-2">
+                            <!-- Clock circle icon with badge xmark -->
+                            <svg class="w-11 h-11 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <polyline points="12 7 12 12 15 14"></polyline>
+                            </svg>
+                            <span class="absolute -bottom-0.5 -right-0.5 bg-white rounded-full p-0.5 shadow-sm">
+                                <i class="fa-solid fa-circle-xmark text-gray-400 text-xs"></i>
+                            </span>
+                        </div>
+                        <p class="text-[13px] text-[#8E8E93] font-normal">Belum ada riwayat presensi hari ini.</p>
+                    </div>
+                @else
+                    <div class="divide-y divide-[#EEF0F5]">
+                        @foreach($events as $event)
+                            @php
+                                $type = $event->event_type?->value ?? $event->event_type;
+                                $title = match($type) {
+                                    'START_SHIFT' => 'Masuk Kerja',
+                                    'END_SHIFT' => 'Pulang Kerja',
+                                    'START_BREAK' => 'Mulai Istirahat',
+                                    'END_BREAK' => 'Selesai Istirahat',
+                                    default => $type
+                                };
+                                $icon = match($type) {
+                                    'START_SHIFT' => 'fa-briefcase',
+                                    'END_SHIFT' => 'fa-house',
+                                    'START_BREAK' => 'fa-mug-hot',
+                                    'END_BREAK' => 'fa-briefcase',
+                                    default => 'fa-clock'
+                                };
+                            @endphp
+                            <div class="py-3 flex items-center justify-between">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    @if($event->selfie_url && $event->selfie_path !== 'dummy/path.jpg')
+                                        <img src="{{ $event->selfie_url }}"
+                                            @click="openLightbox('{{ $event->selfie_url }}', '{{ $title }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                            class="w-11 h-11 rounded-full object-cover border border-gray-200 cursor-pointer hover:scale-105 transition flex-shrink-0 shadow-sm"
+                                            title="Lihat Foto" onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
+                                    @else
+                                        <div class="w-11 h-11 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center flex-shrink-0">
+                                            <i class="fa-solid {{ $icon }} text-sm"></i>
+                                        </div>
+                                    @endif
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-[#1C1C1E] truncate">{{ $title }}</p>
+                                        <p class="text-xs text-[#8E8E93]">{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y') }}</p>
                                         @if($event->latitude && $event->longitude)
                                             <button type="button"
-                                                @click="openMapModal({{ $event->latitude }}, {{ $event->longitude }}, '{{ ($event->event_type?->value ?? $event->event_type) === 'START_BREAK' ? 'Start Break' : 'End Break' }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
-                                                class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 transition active:scale-95 shadow-sm">
-                                                <i class="fa-solid fa-map-pin text-[10px]"></i>
-                                                <span>Pinpoint</span>
+                                                @click="openMapModal({{ $event->latitude }}, {{ $event->longitude }}, '{{ $title }}', '{{ \Carbon\Carbon::parse($event->timestamp)->translatedFormat('d M Y, H:i') }}')"
+                                                class="inline-flex items-center space-x-1 px-2.5 py-0.5 mt-0.5 rounded-full text-[10px] font-semibold bg-[#FFF0F7] text-[#FF21A4] hover:bg-[#FFE2F1] transition active:scale-95">
+                                                <i class="fa-solid fa-location-dot text-[9px]"></i>
+                                                <span>Titik Lokasi</span>
                                             </button>
                                         @endif
                                     </div>
                                 </div>
+                                <div class="text-right flex-shrink-0 ml-3">
+                                    <p class="text-[15px] font-bold text-[#1C1C1E]">
+                                        {{ \Carbon\Carbon::parse($event->timestamp)->format('H:i') }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-lg font-bold text-white">
-                                    {{ \Carbon\Carbon::parse($event->timestamp)->format('H:i') }}
-                                </p>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+        </div>
+
+        <!-- ==================== HISTORY VIEW (RIWAYAT) ==================== -->
+        <div x-show="currentNav === 'history'" x-cloak x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-98" x-transition:enter-end="opacity-100 scale-100" class="pt-2 pb-8">
+            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-[#1C1C1E]">Riwayat Presensi</h2>
+                <button type="button" @click="showFilterSheet = !showFilterSheet"
+                    class="px-3 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white shadow-sm flex items-center gap-1.5 transition active:scale-95"
+                    :class="showFilterSheet ? 'text-[#FF21A4] border-[#FF21A4]' : 'text-[#1C1C1E]'">
+                    <i class="fa-solid fa-sliders text-xs"></i>
+                    <span>Filter</span>
+                </button>
+            </div>
+
+            <!-- Filter Panel -->
+            <div x-data="{ showFilterSheet: {{ request()->hasAny(['start_date', 'end_date']) ? 'true' : 'false' }} }">
+                <div x-show="showFilterSheet" style="display: none;" class="tn-card p-4 mb-4">
+                    <form method="GET" action="{{ route('attendance.history') }}" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#8E8E93] mb-1">Dari Tanggal</label>
+                                <input type="date" name="start_date" value="{{ request('start_date') }}"
+                                    class="w-full bg-[#F6F7FA] border border-gray-200 rounded-xl text-xs text-[#1C1C1E] px-3 py-2 focus:outline-none focus:border-[#FF21A4]">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-[#8E8E93] mb-1">Sampai Tanggal</label>
+                                <input type="date" name="end_date" value="{{ request('end_date') }}"
+                                    class="w-full bg-[#F6F7FA] border border-gray-200 rounded-xl text-xs text-[#1C1C1E] px-3 py-2 focus:outline-none focus:border-[#FF21A4]">
                             </div>
                         </div>
-                    @empty
-                        <div class="text-center py-6 text-gray-500 border border-dashed border-gray-700 rounded-xl">
-                            <i class="fa-solid fa-clock-rotate-left text-2xl mb-2 opacity-50"></i>
-                            <p class="text-xs font-medium">No break history yet</p>
+                        <div class="flex gap-2 pt-1">
+                            <button type="submit"
+                                class="flex-1 bg-[#FF21A4] text-white py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-[#E01890] transition">
+                                Terapkan Filter
+                            </button>
+                            @if(request()->hasAny(['start_date', 'end_date']))
+                                <a href="{{ route('attendance.history') }}"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-200 transition flex items-center justify-center">
+                                    Reset
+                                </a>
+                            @endif
                         </div>
-                    @endforelse
+                    </form>
                 </div>
             </div>
 
-        </div>
-    </main>
-
-    <!-- History Content -->
-    <main class="px-5 pt-12 mt-4 pb-24" x-show="currentNav === 'history'" x-cloak
-        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100">
-        <h1 class="text-2xl font-bold mb-4 text-gray-100">Attendance History</h1>
-
-        <div x-data="{ showFilters: {{ request()->hasAny(['start_date', 'end_date']) ? 'true' : 'false' }} }"
-            class="mb-6">
-            <button @click="showFilters = !showFilters" type="button"
-                class="flex items-center space-x-2 text-sm text-gray-300 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-lg border border-gray-700 transition">
-                <i class="fa-solid fa-filter"></i>
-                <span>Filter History</span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
-                    :class="showFilters ? 'rotate-180' : ''"></i>
-            </button>
-
-            <div x-show="showFilters" style="display: none;" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-                class="mt-3">
-                <form method="GET" action="{{ route('attendance.history') }}"
-                    class="card-bg p-3 rounded-xl border border-gray-700 space-y-2.5 shadow-lg relative z-10">
-                    <div class="w-full overflow-hidden">
-                        <label class="block text-[11px] text-gray-400 mb-1">From</label>
-                        <input type="date" name="start_date" value="{{ request('start_date') }}"
-                            class="block w-full min-w-0 box-border bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2.5 py-1.5 focus:outline-none focus:border-[#f97316] appearance-none">
-                    </div>
-                    <div class="w-full overflow-hidden">
-                        <label class="block text-[11px] text-gray-400 mb-1">To</label>
-                        <input type="date" name="end_date" value="{{ request('end_date') }}"
-                            class="block w-full min-w-0 box-border bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-2.5 py-1.5 focus:outline-none focus:border-[#f97316] appearance-none">
-                    </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <button type="submit"
-                            class="flex-1 bg-[#f97316] text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-[#ea580c] transition flex items-center justify-center space-x-1.5">
-                            <i class="fa-solid fa-check text-xs"></i>
-                            <span>Apply</span>
-                        </button>
-                        @if(request()->hasAny(['start_date', 'end_date']))
-                            <a href="{{ route('attendance.history') }}"
-                                class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-500 transition flex items-center justify-center">
-                                Clear
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="space-y-4">
-            @forelse($attendancesHistory as $att)
-                <div class="card-bg rounded-xl p-4 border border-gray-700">
-                    <div class="flex justify-between items-center mb-3">
-                        <div>
-                            <p class="font-bold text-gray-200">
-                                {{ \Carbon\Carbon::parse($att->date)->translatedFormat('l, d M Y') }}
-                            </p>
-                            <p class="text-xs text-gray-400 mt-1">Status:
-                                <span
-                                    class="{{ $att->status === 'PRESENT' ? 'text-green-500' : ($att->status === 'ABSENT' ? 'text-red-500' : 'text-orange-500') }} font-semibold">{{ $att->status }}</span>
-                            </p>
+            <!-- Attendance History List -->
+            <div class="space-y-3.5">
+                @forelse($attendancesHistory as $att)
+                    <div class="tn-card p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <p class="font-bold text-[14px] text-[#1C1C1E]">
+                                    {{ \Carbon\Carbon::parse($att->date)->translatedFormat('l, d M Y') }}
+                                </p>
+                                <p class="text-[11px] text-[#8E8E93] mt-0.5">
+                                    Status: 
+                                    <span class="font-bold {{ $att->status === 'PRESENT' ? 'text-emerald-600' : ($att->status === 'ABSENT' ? 'text-rose-600' : 'text-amber-600') }}">
+                                        {{ $att->status }}
+                                    </span>
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="space-y-2">
-                        <!-- Shift Times -->
-                        <div
-                            class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                        <!-- Shift Times Box -->
+                        <div class="bg-[#F8F9FB] border border-[#EEF0F5] rounded-xl p-3 flex items-center justify-between">
+                            <!-- Check In -->
                             <div class="text-center w-1/3 flex flex-col items-center">
-                                <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check In</p>
+                                <span class="text-[10px] text-[#8E8E93] uppercase tracking-wider mb-1">Masuk</span>
                                 @php $inEvent = $att->events->where('event_type', \App\Enums\EventType::START_SHIFT)->first() ?? $att->events->where('event_type', 'START_SHIFT')->first(); @endphp
                                 @if($inEvent && $inEvent->selfie_url && $inEvent->selfie_path !== 'dummy/path.jpg')
-                                    <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ $inEvent->selfie_url }}', 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
-                                        title="Klik untuk memperbesar">
-                                        <img src="{{ $inEvent->selfie_url }}" alt="Foto Check In"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-green-500/50 shadow-md group-hover:border-green-400 group-hover:scale-105 transition-all active:scale-95"
-                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span
-                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-green-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
-                                            <i class="fa-solid fa-camera"></i>
-                                        </span>
-                                    </div>
+                                    <img src="{{ $inEvent->selfie_url }}"
+                                        @click="openLightbox('{{ $inEvent->selfie_url }}', 'Masuk ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
+                                        class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm my-1 cursor-pointer hover:scale-105 transition"
+                                        alt="Selfie Masuk">
                                 @endif
-                                <p class="font-bold {{ $inEvent ? 'text-white' : 'text-gray-500' }}">
+                                <p class="font-bold text-sm {{ $inEvent ? 'text-[#1C1C1E]' : 'text-gray-400' }}">
                                     {{ $inEvent ? \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
                                 @if($inEvent && $inEvent->latitude && $inEvent->longitude)
                                     <button type="button"
-                                        @click="openMapModal({{ $inEvent->latitude }}, {{ $inEvent->longitude }}, 'Check In ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
-                                        class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 mt-1.5 transition active:scale-95 shadow-sm">
-                                        <i class="fa-solid fa-map-pin text-[9px]"></i>
-                                        <span>Pinpoint</span>
+                                        @click="openMapModal({{ $inEvent->latitude }}, {{ $inEvent->longitude }}, 'Masuk ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($inEvent->timestamp)->format('H:i') }} WIB')"
+                                        class="text-[9px] font-semibold text-[#FF21A4] bg-[#FFF0F7] px-2 py-0.5 rounded-full mt-1 hover:bg-[#FFE2F1] transition">
+                                        <i class="fa-solid fa-location-dot"></i> Titik
                                     </button>
                                 @endif
                             </div>
-                            <div class="text-center text-gray-500">
+
+                            <div class="text-gray-300">
                                 <i class="fa-solid fa-arrow-right text-xs"></i>
                             </div>
+
+                            <!-- Check Out -->
                             <div class="text-center w-1/3 flex flex-col items-center">
-                                <p class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Check Out</p>
+                                <span class="text-[10px] text-[#8E8E93] uppercase tracking-wider mb-1">Pulang</span>
                                 @php $outEvent = $att->events->where('event_type', \App\Enums\EventType::END_SHIFT)->first() ?? $att->events->where('event_type', 'END_SHIFT')->first(); @endphp
                                 @if($outEvent && $outEvent->selfie_url && $outEvent->selfie_path !== 'dummy/path.jpg')
-                                    <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ $outEvent->selfie_url }}', 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
-                                        title="Klik untuk memperbesar">
-                                        <img src="{{ $outEvent->selfie_url }}" alt="Foto Check Out"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-red-500/50 shadow-md group-hover:border-red-400 group-hover:scale-105 transition-all active:scale-95"
-                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span
-                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-red-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
-                                            <i class="fa-solid fa-camera"></i>
-                                        </span>
-                                    </div>
+                                    <img src="{{ $outEvent->selfie_url }}"
+                                        @click="openLightbox('{{ $outEvent->selfie_url }}', 'Pulang ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
+                                        class="w-10 h-10 rounded-full object-cover border-2 border-[#FF21A4] shadow-sm my-1 cursor-pointer hover:scale-105 transition"
+                                        alt="Selfie Pulang">
                                 @endif
-                                <p class="font-bold {{ $outEvent ? 'text-white' : 'text-gray-500' }}">
+                                <p class="font-bold text-sm {{ $outEvent ? 'text-[#1C1C1E]' : 'text-gray-400' }}">
                                     {{ $outEvent ? \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') : '--:--' }}
                                 </p>
                                 @if($outEvent && $outEvent->latitude && $outEvent->longitude)
                                     <button type="button"
-                                        @click="openMapModal({{ $outEvent->latitude }}, {{ $outEvent->longitude }}, 'Check Out ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
-                                        class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 mt-1.5 transition active:scale-95 shadow-sm">
-                                        <i class="fa-solid fa-map-pin text-[9px]"></i>
-                                        <span>Pinpoint</span>
-                                    </button>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Break Times -->
-                        <div
-                            class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-                            <div class="text-center w-1/3 flex flex-col items-center">
-                                <p class="text-[10px] text-orange-400 uppercase tracking-wider mb-1">Break Start</p>
-                                @php $breakInEvent = $att->events->where('event_type', \App\Enums\EventType::START_BREAK)->first() ?? $att->events->where('event_type', 'START_BREAK')->first(); @endphp
-                                @if($breakInEvent && $breakInEvent->selfie_url && $breakInEvent->selfie_path !== 'dummy/path.jpg')
-                                    <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ $breakInEvent->selfie_url }}', 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
-                                        title="Klik untuk memperbesar">
-                                        <img src="{{ $breakInEvent->selfie_url }}" alt="Foto Break Start"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-orange-500/50 shadow-md group-hover:border-orange-400 group-hover:scale-105 transition-all active:scale-95"
-                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span
-                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-orange-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
-                                            <i class="fa-solid fa-camera"></i>
-                                        </span>
-                                    </div>
-                                @endif
-                                <p class="font-bold {{ $breakInEvent ? 'text-white' : 'text-gray-500' }}">
-                                    {{ $breakInEvent ? \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') : '--:--' }}
-                                </p>
-                                @if($breakInEvent && $breakInEvent->latitude && $breakInEvent->longitude)
-                                    <button type="button"
-                                        @click="openMapModal({{ $breakInEvent->latitude }}, {{ $breakInEvent->longitude }}, 'Break Start ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakInEvent->timestamp)->format('H:i') }} WIB')"
-                                        class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 mt-1.5 transition active:scale-95 shadow-sm">
-                                        <i class="fa-solid fa-map-pin text-[9px]"></i>
-                                        <span>Pinpoint</span>
-                                    </button>
-                                @endif
-                            </div>
-                            <div class="text-center text-gray-500">
-                                <i class="fa-solid fa-arrow-right text-xs"></i>
-                            </div>
-                            <div class="text-center w-1/3 flex flex-col items-center">
-                                <p class="text-[10px] text-blue-400 uppercase tracking-wider mb-1">Break End</p>
-                                @php $breakOutEvent = $att->events->where('event_type', \App\Enums\EventType::END_BREAK)->first() ?? $att->events->where('event_type', 'END_BREAK')->first(); @endphp
-                                @if($breakOutEvent && $breakOutEvent->selfie_url && $breakOutEvent->selfie_path !== 'dummy/path.jpg')
-                                    <div class="relative group my-1.5 cursor-pointer"
-                                        @click="openLightbox('{{ $breakOutEvent->selfie_url }}', 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
-                                        title="Klik untuk memperbesar">
-                                        <img src="{{ $breakOutEvent->selfie_url }}" alt="Foto Break End"
-                                            class="w-12 h-12 rounded-xl object-cover border-2 border-blue-500/50 shadow-md group-hover:border-blue-400 group-hover:scale-105 transition-all active:scale-95"
-                                            onerror="this.onerror=null;this.src='{{ asset('placeholder.svg') }}';">
-                                        <span
-                                            class="absolute -bottom-1 -right-1 bg-gray-900/90 text-blue-400 rounded-full w-4 h-4 flex items-center justify-center border border-gray-700 shadow text-[8px]">
-                                            <i class="fa-solid fa-camera"></i>
-                                        </span>
-                                    </div>
-                                @endif
-                                <p class="font-bold {{ $breakOutEvent ? 'text-white' : 'text-gray-500' }}">
-                                    {{ $breakOutEvent ? \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') : '--:--' }}
-                                </p>
-                                @if($breakOutEvent && $breakOutEvent->latitude && $breakOutEvent->longitude)
-                                    <button type="button"
-                                        @click="openMapModal({{ $breakOutEvent->latitude }}, {{ $breakOutEvent->longitude }}, 'Break End ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($breakOutEvent->timestamp)->format('H:i') }} WIB')"
-                                        class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white border border-orange-500/40 mt-1.5 transition active:scale-95 shadow-sm">
-                                        <i class="fa-solid fa-map-pin text-[9px]"></i>
-                                        <span>Pinpoint</span>
+                                        @click="openMapModal({{ $outEvent->latitude }}, {{ $outEvent->longitude }}, 'Pulang ({{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }})', '{{ \Carbon\Carbon::parse($outEvent->timestamp)->format('H:i') }} WIB')"
+                                        class="text-[9px] font-semibold text-[#FF21A4] bg-[#FFF0F7] px-2 py-0.5 rounded-full mt-1 hover:bg-[#FFE2F1] transition">
+                                        <i class="fa-solid fa-location-dot"></i> Titik
                                     </button>
                                 @endif
                             </div>
                         </div>
                     </div>
-                </div>
-            @empty
-                <div class="text-center py-10 text-gray-500 border border-dashed border-gray-700 rounded-xl">
-                    <i class="fa-solid fa-calendar-xmark text-3xl mb-3 opacity-50"></i>
-                    <p class="text-sm font-medium">Belum ada riwayat kehadiran.</p>
-                </div>
-            @endforelse
-        </div>
-    </main>
-
-    <!-- Profile Content -->
-    <main class="px-5 pt-12 mt-4" x-show="currentNav === 'profile'" x-cloak
-        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100">
-        <h1 class="text-2xl font-bold mb-6">Profile</h1>
-
-        @if(session('success'))
-            <div class="mb-4">
-                <div
-                    class="bg-green-500/20 border border-green-500/50 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center">
-                    <i class="fa-solid fa-circle-check mr-2"></i> {{ session('success') }}
-                </div>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="mb-4">
-                <div
-                    class="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm flex items-center">
-                    <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ session('error') }}
-                </div>
-            </div>
-        @endif
-
-        <div class="card-bg rounded-xl p-6 text-center mb-6">
-            <img src="{{ $user->avatar_url }}"
-                class="w-24 h-24 rounded-full border-4 border-gray-600 bg-white mx-auto mb-4 object-cover">
-            <h2 class="text-xl font-bold text-gray-100">{{ $user->name }}</h2>
-
-            <div class="mt-4 flex flex-wrap justify-center items-center gap-2">
-                <button type="button" @click="showEditProfileModal = true"
-                    class="inline-flex items-center space-x-1.5 px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/40 rounded-full text-xs font-semibold transition active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-pen-to-square text-xs"></i>
-                    <span>Edit Profile</span>
-                </button>
-                @if($user->isAdmin())
-                    <span
-                        class="px-3 py-1 bg-orange-900/40 text-orange-400 border border-orange-800/50 rounded-full text-[10px] font-semibold uppercase tracking-wide">Admin/HR</span>
-                @endif
+                @empty
+                    <div class="tn-card p-10 text-center">
+                        <i class="fa-solid fa-calendar-xmark text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-sm font-medium text-[#8E8E93]">Belum ada riwayat kehadiran.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
 
-        <div class="card-bg rounded-xl p-5 mb-6 space-y-4">
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Full Name</p>
-                <p class="font-medium text-gray-200">{{ $user->name }}</p>
-            </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Email Address</p>
-                <p class="font-medium text-gray-200">{{ $user->email }}</p>
-            </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Phone Number</p>
-                <p class="font-medium text-gray-200">{{ $user->phone ?? 'Not set' }}</p>
-            </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Employee ID</p>
-                <p class="font-medium text-gray-200">{{ $user->employee_id ?? 'Not set' }}</p>
-            </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">NIK (KTP)</p>
-                <p class="font-medium text-gray-200">{{ $user->nik ?? 'Not set' }}</p>
-            </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Date of Birth</p>
-                <p class="font-medium text-gray-200">
-                    @if($user->dob)
-                        {{ $user->dob->translatedFormat('d F Y') }}
-                    @elseif($user->nik && \App\Models\User::parseDobDateFromNik($user->nik))
-                        {{ \Illuminate\Support\Carbon::parse(\App\Models\User::parseDobDateFromNik($user->nik))->translatedFormat('d F Y') }}
-                    @else
-                        Not set
+        <!-- ==================== PROFILE VIEW (PROFIL) ==================== -->
+        <div x-show="currentNav === 'profile'" x-cloak x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-98" x-transition:enter-end="opacity-100 scale-100" class="pt-2 pb-8">
+            
+            <h2 class="text-xl font-bold text-[#1C1C1E] mb-4">Profil Saya</h2>
+
+            <!-- Avatar & Main Info -->
+            <div class="tn-card p-6 text-center mb-4">
+                <img src="{{ $user->avatar_url }}"
+                    class="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mx-auto mb-3 shadow-sm"
+                    alt="{{ $user->name }}">
+                <h3 class="text-lg font-bold text-[#1C1C1E]">{{ $user->name }}</h3>
+                <p class="text-xs text-[#8E8E93] mt-0.5">{{ $user->email }}</p>
+
+                <div class="mt-4 flex justify-center gap-2">
+                    <button type="button" @click="showEditProfileModal = true"
+                        class="px-4 py-1.5 bg-[#FFF0F7] text-[#FF21A4] rounded-full text-xs font-bold hover:bg-[#FFE2F1] transition active:scale-95 shadow-sm">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Profil
+                    </button>
+                    @if($user->isAdmin())
+                        <span class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            Admin/HR
+                        </span>
                     @endif
-                </p>
+                </div>
             </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Work Location</p>
-                <p class="font-medium text-gray-200">{{ $user->location->name ?? 'Not set' }}</p>
+
+            <!-- Profile Details List -->
+            <div class="tn-card p-4 mb-4 divide-y divide-[#EEF0F5]">
+                <div class="py-2.5 flex justify-between items-center text-xs">
+                    <span class="text-[#8E8E93]">Nama Lengkap</span>
+                    <span class="font-bold text-[#1C1C1E]">{{ $user->name }}</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center text-xs">
+                    <span class="text-[#8E8E93]">Email</span>
+                    <span class="font-semibold text-[#1C1C1E]">{{ $user->email }}</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center text-xs">
+                    <span class="text-[#8E8E93]">No. Telepon</span>
+                    <span class="font-semibold text-[#1C1C1E]">{{ $user->phone ?? '-' }}</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center text-xs">
+                    <span class="text-[#8E8E93]">ID Karyawan</span>
+                    <span class="font-semibold text-[#1C1C1E]">{{ $user->employee_id ?? '-' }}</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center text-xs">
+                    <span class="text-[#8E8E93]">Lokasi Kerja</span>
+                    <span class="font-semibold text-[#1C1C1E]">{{ $user->location->name ?? '-' }}</span>
+                </div>
             </div>
-            <div class="h-[1px] bg-gray-700"></div>
-            <div>
-                <p class="text-xs text-gray-500 mb-1">Registered Since</p>
-                <p class="font-medium text-gray-200">
-                    {{ $user->created_at ? $user->created_at->translatedFormat('d M Y') : '-' }}
-                </p>
+
+            <!-- Sign Out Button -->
+            <button type="button" @click="showLogoutModal = true"
+                class="w-full bg-white border border-rose-200 text-rose-600 font-bold py-3.5 rounded-2xl shadow-sm hover:bg-rose-50 transition active:scale-98 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Keluar Akun</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ==================== FULL-BLEED LIVE MAP VIEW (Matching iOS AttendanceMapView.swift) ==================== -->
+    <div x-show="currentNav === 'map'" x-cloak class="fixed inset-0 z-10 flex flex-col justify-between overflow-hidden">
+        <!-- Fullscreen Leaflet Map Container -->
+        <div id="liveAttendanceMap" class="absolute inset-0 w-full h-full z-0 bg-[#E5E9EE]"></div>
+
+        <!-- Top Floating Office Capsule Bar -->
+        <div class="relative z-20 pt-4 px-4 max-w-md mx-auto w-full pointer-events-none">
+            <div class="bg-white/95 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 px-4 py-2.5 flex items-center justify-between pointer-events-auto">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div class="w-7 h-7 rounded-full bg-pink-50 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-building text-[#FF21A4] text-xs"></i>
+                    </div>
+                    <span class="text-[13px] font-bold text-[#1C1C1E] truncate">
+                        {{ $user->location->name ?? 'Lokasi Kantor Belum Diatur' }}
+                    </span>
+                </div>
+                <button type="button" @click="refreshLiveMapLocation()"
+                    class="w-8 h-8 rounded-full bg-pink-50 hover:bg-pink-100 text-[#FF21A4] flex items-center justify-center transition active:scale-92 shrink-0 shadow-xs"
+                    title="Muat Ulang Lokasi">
+                    <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                </button>
             </div>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit"
-                class="w-full card-bg hover:bg-red-900/30 border border-gray-700 hover:border-red-800/50 text-red-500 font-bold py-4 rounded-xl transition flex items-center justify-center">
-                <i class="fa-solid fa-right-from-bracket mr-2 text-lg"></i> Sign Out
-            </button>
-        </form>
-    </main>
+        <!-- Right Floating Map Controls -->
+        <div class="absolute right-4 bottom-64 z-20 flex flex-col pointer-events-auto">
+            <div class="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-100/90 flex flex-col overflow-hidden">
+                <button type="button" @click="centerOnUserLiveMap()"
+                    class="w-11 h-11 flex items-center justify-center text-[#FF21A4] hover:bg-pink-50 transition active:scale-92"
+                    title="Pusatkan Lokasi Saya">
+                    <i class="fa-solid fa-location-arrow text-[15px]"></i>
+                </button>
+                <div class="h-[1px] bg-gray-100 w-full"></div>
+                <button type="button" @click="fitLiveMapBounds()"
+                    class="w-11 h-11 flex items-center justify-center text-[#1C1C1E] hover:bg-gray-50 transition active:scale-92"
+                    title="Tampilkan Kantor & Lokasi">
+                    <i class="fa-solid fa-up-right-and-down-left-from-center text-[13px]"></i>
+                </button>
+            </div>
+        </div>
 
-    <!-- Bottom Navigation -->
-    <nav
-        class="fixed bottom-0 w-full card-bg border-t border-gray-700 flex justify-around items-center px-6 pt-3 pb-6 z-50">
+        <!-- Bottom Floating Attendance Card -->
+        <div class="relative z-20 pb-20 px-4 max-w-md mx-auto w-full pointer-events-none">
+            <div class="bg-white/98 backdrop-blur-md rounded-[26px] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100/90 p-4 pointer-events-auto transition-all">
+                <!-- Status Row -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="relative flex h-3.5 w-3.5 shrink-0">
+                            <span :class="locationValid ? 'bg-emerald-400' : 'bg-rose-400'"
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
+                            <span :class="locationValid ? 'bg-emerald-500' : 'bg-rose-500'"
+                                class="relative inline-flex rounded-full h-3.5 w-3.5"></span>
+                        </span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[13px] font-bold leading-tight"
+                                :class="locationValid ? 'text-emerald-600' : 'text-rose-600'"
+                                x-text="locationValid ? 'Dalam Radius Presensi' : 'Di Luar Radius Presensi'">
+                                Dalam Radius Presensi
+                            </span>
+                            <span class="text-[11px] text-[#8E8E93] leading-tight mt-0.5 truncate"
+                                x-text="locationDistanceText">
+                                Menghitung jarak...
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Rute Button -->
+                    <a :href="officeLat && officeLng ? 'https://www.google.com/maps/dir/?api=1&destination=' + officeLat + ',' + officeLng : '#'"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3.5 py-1.5 rounded-full bg-[#FFF0F7] hover:bg-[#FFE0F0] text-[#FF21A4] text-xs font-bold flex items-center gap-1.5 shrink-0 transition active:scale-95 shadow-xs">
+                        <i class="fa-solid fa-diamond-turn-right text-[11px]"></i>
+                        <span>Rute</span>
+                    </a>
+                </div>
+
+                <!-- Shift Info Row -->
+                <div class="bg-[#F6F7FA] rounded-xl px-3 py-2 flex items-center gap-2 text-xs text-[#1C1C1E] font-medium mb-3">
+                    <i class="fa-regular fa-clock text-gray-400 text-xs shrink-0"></i>
+                    <span class="truncate">
+                        Shift: {{ $shift->shift_name ?? 'OFFICE' }} [{{ $activeShiftStart }} - {{ $activeShiftEnd }}]
+                    </span>
+                </div>
+
+                <!-- Action Button -->
+                <button type="button" @click="triggerAttendanceFromMap()"
+                    :disabled="!locationValid && !{{ $endEvent ? 'true' : 'false' }}"
+                    class="w-full bg-[#FF21A4] hover:bg-[#E00084] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-2xl shadow-sm hover:shadow-md transition active:scale-[0.99] flex items-center justify-center gap-2.5 text-[14px]">
+                    <i class="fa-solid fa-camera text-base"></i>
+                    <span x-text="currentMapActionLabel">Ambil Presensi: Pulang Kerja</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== FLOATING BOTTOM NAVIGATION BAR ==================== -->
+    <nav class="fixed bottom-3 left-4 right-4 max-w-md mx-auto bg-white/95 backdrop-blur-md rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-100/90 px-3 py-2 flex justify-around items-center z-50">
+        <!-- Beranda (Home) -->
         <a href="{{ route('attendance.index') }}"
             @click.prevent="currentNav = 'home'; window.history.pushState({}, '', '{{ route('attendance.index') }}')"
-            :class="currentNav === 'home' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-200'"
-            class="flex flex-col items-center cursor-pointer w-16 transition">
-            <i class="fa-solid fa-house text-xl mb-1"></i>
-            <span class="text-[10px] font-semibold">Home</span>
+            :class="currentNav === 'home' ? 'bg-[#FFF0F7] text-[#FF21A4]' : 'text-[#1C1C1E] hover:text-black'"
+            class="flex flex-col items-center justify-center py-1 px-4 rounded-full transition-all duration-200">
+            <i class="fa-solid fa-house text-[17px] mb-0.5"></i>
+            <span class="text-[10px] font-bold">Beranda</span>
         </a>
+
+        <!-- Peta (Map) -->
+        <button type="button"
+            @click="currentNav = 'map'; initLiveMap();"
+            :class="currentNav === 'map' ? 'bg-[#FFF0F7] text-[#FF21A4]' : 'text-[#1C1C1E] hover:text-black'"
+            class="flex flex-col items-center justify-center py-1 px-4 rounded-full transition-all duration-200">
+            <i class="fa-solid fa-map text-[17px] mb-0.5"></i>
+            <span class="text-[10px] font-bold">Peta</span>
+        </button>
+
+        <!-- Riwayat (History) -->
         <a href="{{ route('attendance.history') }}"
             @click.prevent="currentNav = 'history'; window.history.pushState({}, '', '{{ route('attendance.history') }}')"
-            :class="currentNav === 'history' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-200'"
-            class="flex flex-col items-center cursor-pointer w-16 transition">
-            <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
-            <span class="text-[10px] font-semibold">History</span>
+            :class="currentNav === 'history' ? 'bg-[#FFF0F7] text-[#FF21A4]' : 'text-[#1C1C1E] hover:text-black'"
+            class="flex flex-col items-center justify-center py-1 px-4 rounded-full transition-all duration-200">
+            <i class="fa-solid fa-clock-rotate-left text-[17px] mb-0.5"></i>
+            <span class="text-[10px] font-bold">Riwayat</span>
         </a>
+
+        <!-- Profil (Profile) -->
         <a href="{{ route('attendance.profile') }}"
             @click.prevent="currentNav = 'profile'; window.history.pushState({}, '', '{{ route('attendance.profile') }}')"
-            :class="currentNav === 'profile' ? 'text-orange-500' : 'text-gray-400 hover:text-gray-200'"
-            class="flex flex-col items-center cursor-pointer transition w-16">
-            <div class="w-6 h-6 rounded-full overflow-hidden border mb-1 transition-colors"
-                :class="currentNav === 'profile' ? 'border-orange-500' : 'border-gray-500'">
-                <img src="{{ $user->avatar_url }}" class="w-full h-full object-cover">
-            </div>
-            <span class="text-[10px] font-medium">Profile</span>
+            :class="currentNav === 'profile' ? 'bg-[#FFF0F7] text-[#FF21A4]' : 'text-[#1C1C1E] hover:text-black'"
+            class="flex flex-col items-center justify-center py-1 px-4 rounded-full transition-all duration-200">
+            <i class="fa-solid fa-circle-user text-[17px] mb-0.5"></i>
+            <span class="text-[10px] font-bold">Profil</span>
         </a>
     </nav>
 
-    <!-- Camera Modal -->
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- 1. SHIFT PICKER MODAL (Matching ShiftPickerView.swift) -->
+    <div x-show="showShiftPicker" x-cloak style="display: none;"
+        class="fixed inset-0 z-[140] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+        @keydown.escape.window="showShiftPicker = false"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+
+        <div class="relative w-full max-w-md bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl p-6 flex flex-col max-h-[85vh] overflow-hidden"
+            @click.away="showShiftPicker = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full sm:scale-95"
+            x-transition:enter-end="translate-y-0 sm:scale-100">
+
+            <!-- Sheet Handle / Header -->
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 rounded-full bg-[#FFF0F7] text-[#FF21A4] flex items-center justify-center mx-auto mb-2.5">
+                    <i class="fa-solid fa-clock text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-[#1C1C1E]">Pilih Shift Anda</h3>
+                <p class="text-xs text-[#8E8E93] mt-1 px-4">
+                    Pilih shift yang sedang Anda jalani hari ini sebelum melakukan presensi masuk.
+                </p>
+            </div>
+
+            <!-- Shifts List -->
+            <div class="overflow-y-auto space-y-2.5 my-2 flex-1 pr-1">
+                @foreach($availableShifts as $s)
+                    @php
+                        $sStart = \Carbon\Carbon::parse($s->default_start_time)->format('H:i');
+                        $sEnd = \Carbon\Carbon::parse($s->default_end_time)->format('H:i');
+                    @endphp
+                    <div @click="selectedShiftId = {{ $s->id }}; selectedShiftName = '{{ addslashes($s->shift_name) }}'; selectedShiftHours = '{{ $sStart }} - {{ $sEnd }}'; selectedShiftStart = '{{ $sStart }}'; selectedShiftEnd = '{{ $sEnd }}'"
+                        class="p-4 rounded-2xl border cursor-pointer transition flex items-center justify-between"
+                        :class="selectedShiftId === {{ $s->id }} ? 'border-[#FF21A4] bg-[#FFF0F7]/40 ring-1 ring-[#FF21A4]' : 'border-gray-200 bg-white hover:border-gray-300'">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center"
+                                :class="selectedShiftId === {{ $s->id }} ? 'bg-[#FF21A4] text-white' : 'bg-gray-100 text-gray-500'">
+                                <i class="fa-solid fa-business-time text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-[#1C1C1E]">{{ $s->shift_name }}</h4>
+                                <p class="text-xs text-[#8E8E93]">{{ $sStart }} - {{ $sEnd }} WIB</p>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border flex items-center justify-center"
+                            :class="selectedShiftId === {{ $s->id }} ? 'border-[#FF21A4] bg-[#FF21A4] text-white' : 'border-gray-300'">
+                            <i x-show="selectedShiftId === {{ $s->id }}" class="fa-solid fa-check text-[10px]"></i>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 flex gap-2 border-t border-gray-100 mt-2">
+                <button type="button" @click="showShiftPicker = false"
+                    class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition">
+                    Batal
+                </button>
+                <button type="button" @click="showShiftPicker = false"
+                    class="flex-1 py-3 bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold text-sm rounded-xl transition shadow-md shadow-pink-500/20">
+                    Pilih Shift Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. LOGOUT CONFIRMATION MODAL (Matching iOS Alert) -->
+    <div x-show="showLogoutModal" x-cloak style="display: none;"
+        class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @keydown.escape.window="showLogoutModal = false">
+        <div class="relative w-full max-w-xs bg-white rounded-2xl shadow-2xl p-5 text-center"
+            @click.away="showLogoutModal = false">
+            <h3 class="text-base font-bold text-[#1C1C1E] mb-1">Keluar Akun</h3>
+            <p class="text-xs text-[#8E8E93] mb-5">Apakah Anda yakin ingin keluar dari akun ini?</p>
+
+            <div class="flex gap-2">
+                <button type="button" @click="showLogoutModal = false"
+                    class="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition">
+                    Batal
+                </button>
+                <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                        class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm">
+                        Keluar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CAMERA MODAL -->
     <div x-show="showCamera" style="display: none;"
-        class="fixed inset-0 bg-black z-[110] flex flex-col justify-between">
+        class="fixed inset-0 bg-black z-[160] flex flex-col justify-between">
         <!-- Header -->
-        <div class="flex items-center justify-between px-4 py-5 bg-black w-full z-10">
-            <h2 class="text-white font-semibold text-lg">Ambil Foto</h2>
+        <div class="flex items-center justify-between px-5 py-5 bg-black w-full z-10">
+            <h2 class="text-white font-semibold text-lg">Ambil Foto Selfie</h2>
             <button @click="closeCameraUI()" class="text-white p-2">
                 <i class="fa-solid fa-xmark text-xl"></i>
             </button>
@@ -893,185 +1081,143 @@
         </div>
     </div>
 
-    <!-- Preview Modal -->
+    <!-- 4. PREVIEW MODAL -->
     <div x-show="showPreview" style="display: none;"
-        class="fixed inset-0 bg-[#272933] z-[100] flex flex-col overflow-y-auto">
+        class="fixed inset-0 bg-[#F6F7FA] z-[160] flex flex-col overflow-y-auto">
         <!-- Header -->
-        <div class="flex items-center px-4 py-4 bg-[#313340]">
-            <button @click="showPreview = false; previewImage = null" class="text-white mr-4">
-                <i class="fa-solid fa-arrow-left"></i>
+        <div class="flex items-center px-4 py-4 bg-white border-b border-gray-200">
+            <button @click="showPreview = false; previewImage = null" class="text-[#1C1C1E] mr-4 p-1">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
             </button>
-            <h2 class="text-white font-semibold text-lg">Preview</h2>
+            <h2 class="text-[#1C1C1E] font-bold text-base">Pratinjau Presensi</h2>
         </div>
 
-        <!-- Map -->
-        <div class="relative w-full h-72 bg-gray-800">
+        <!-- Map Container -->
+        <div class="relative w-full h-72 bg-gray-200">
             <div id="previewMap" class="w-full h-full z-0 relative"></div>
-            <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900/80 text-white text-xs px-3 py-1.5 rounded-md z-[40]"
-                x-text="'Location accuracy ' + (locationData.accuracy ? Math.round(locationData.accuracy) + ' meters' : '...')">
+            <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-full z-[40]"
+                x-text="'Akurasi GPS: ' + (locationData.accuracy ? Math.round(locationData.accuracy) + ' m' : '...')">
             </div>
         </div>
 
-        <div class="flex-1 px-5 py-4 flex flex-col items-center text-center">
-            <h3 class="text-lg font-semibold text-white">{{ $user->name }}</h3>
-            <p class="text-sm text-gray-400 mb-4">{{ now()->translatedFormat('M, d Y, H:i') }}</p>
+        <div class="flex-1 px-5 py-5 flex flex-col items-center text-center max-w-md mx-auto w-full">
+            <h3 class="text-base font-bold text-[#1C1C1E]">{{ $user->name }}</h3>
+            <p class="text-xs text-[#8E8E93] mb-4">{{ now()->locale('id')->translatedFormat('d F Y, H:i') }} WIB</p>
 
-            <img :src="previewImage" class="w-64 h-80 object-cover rounded-xl mb-2 border border-gray-600">
-            <p class="text-xs text-gray-400 mb-6">Attendance Photo</p>
+            <img :src="previewImage" class="w-56 h-72 object-cover rounded-2xl mb-2 border border-gray-200 shadow-md">
+            <p class="text-xs text-[#8E8E93] mb-5">Foto Presensi Terverifikasi</p>
 
-
-            <div class="flex items-center justify-center space-x-3 mb-3">
-                <p class="text-sm font-medium" :class="locationValid ? 'text-green-500' : 'text-red-500'"
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <p class="text-xs font-semibold" :class="locationValid ? 'text-emerald-600' : 'text-rose-600'"
                     x-text="locationStatusText"></p>
                 <button type="button" @click="getLocationAndInitMap()"
-                    class="text-gray-400 hover:text-white transition bg-gray-800 w-8 h-8 flex items-center justify-center rounded-full border border-gray-600 active:scale-95">
-                    <i class="fa-solid fa-arrows-rotate"></i>
+                    class="text-gray-500 hover:text-gray-800 transition bg-white w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
                 </button>
             </div>
 
             <button @click="submitAttendance()" :disabled="!locationValid"
-                class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3.5 rounded-xl transition active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
-                <span x-show="!isSubmitting">Save Attendance</span>
-                <span x-show="isSubmitting" style="display: none;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>
-                    Saving...</span>
+                class="w-full bg-[#FF21A4] hover:bg-[#E01890] text-white font-bold py-3.5 rounded-2xl transition active:scale-98 shadow-md shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center">
+                <span x-show="!isSubmitting">Simpan Presensi</span>
+                <span x-show="isSubmitting" style="display: none;">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...
+                </span>
             </button>
         </div>
     </div>
 
-    <!-- Lightbox Modal -->
+    <!-- 5. LIGHTBOX MODAL -->
     <div x-show="lightboxOpen" x-cloak style="display: none;"
-        class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-        @keydown.escape.window="closeLightbox()" x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0">
+        class="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+        @keydown.escape.window="closeLightbox()">
 
-        <!-- Close Button -->
         <button type="button" @click="closeLightbox()"
-            class="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-gray-800/90 hover:bg-gray-700 text-white flex items-center justify-center transition border border-gray-600 active:scale-95 shadow-xl">
-            <i class="fa-solid fa-xmark text-xl"></i>
+            class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center transition active:scale-95">
+            <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <!-- Lightbox Content Container -->
-        <div class="relative max-w-lg w-full flex flex-col items-center" @click.away="closeLightbox()"
-            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
-            x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90">
-
-            <!-- Title & Subtitle bar -->
+        <div class="relative max-w-md w-full flex flex-col items-center" @click.away="closeLightbox()">
             <div x-show="lightboxTitle" class="w-full text-center mb-3">
-                <h4 class="text-lg font-bold text-white tracking-wide" x-text="lightboxTitle"></h4>
+                <h4 class="text-base font-bold text-white tracking-wide" x-text="lightboxTitle"></h4>
                 <p class="text-xs text-gray-400 mt-0.5" x-text="lightboxSubtitle"></p>
             </div>
 
-            <!-- Image Frame -->
-            <div
-                class="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-950 shadow-2xl max-h-[75vh] w-full flex items-center justify-center p-1">
-                <img :src="lightboxImage" alt="Photo Preview"
-                    class="max-w-full max-h-[72vh] w-auto h-auto object-contain rounded-xl select-none shadow-md">
+            <div class="relative overflow-hidden rounded-2xl bg-black shadow-2xl max-h-[75vh] w-full flex items-center justify-center p-1">
+                <img :src="lightboxImage" alt="Preview"
+                    class="max-w-full max-h-[72vh] w-auto h-auto object-contain rounded-xl shadow-md">
             </div>
-
-            <!-- Hint text -->
-            <p class="text-[11px] text-gray-400 mt-3 flex items-center gap-1.5 opacity-80">
-                <i class="fa-solid fa-circle-info text-xs text-orange-400"></i> Ketuk di luar atau tombol silang untuk
-                menutup
-            </p>
         </div>
     </div>
 
-    <!-- Map Pinpoint Modal -->
+    <!-- 6. MAP PINPOINT MODAL -->
     <div x-show="showMapModal" x-cloak style="display: none;"
-        class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        @keydown.escape.window="closeMapModal()" x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0">
+        class="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        @keydown.escape.window="closeMapModal()">
 
-        <!-- Modal Card -->
-        <div class="relative max-w-lg w-full bg-[#313340] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            @click.away="closeMapModal()" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95">
+        <div class="relative max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            @click.away="closeMapModal()">
 
-            <!-- Header -->
-            <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-700 bg-gray-800/60">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
                 <div>
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-location-dot text-orange-500"></i>
+                    <h3 class="text-sm font-bold text-[#1C1C1E] flex items-center gap-1.5">
+                        <i class="fa-solid fa-location-dot text-[#FF21A4]"></i>
                         <span x-text="mapModalTitle"></span>
                     </h3>
-                    <p class="text-xs text-gray-400 mt-0.5" x-text="mapModalSubtitle"></p>
+                    <p class="text-[11px] text-[#8E8E93]" x-text="mapModalSubtitle"></p>
                 </div>
                 <button type="button" @click="closeMapModal()"
-                    class="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white flex items-center justify-center transition active:scale-95">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
-            <!-- Leaflet Map Container -->
-            <div class="relative w-full h-80 bg-gray-900">
+            <div class="relative w-full h-80 bg-gray-100">
                 <div id="historyMapContainer" class="w-full h-full z-0"></div>
-
-                <!-- Floating Coordinates Badge -->
-                <div
-                    class="absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none z-[40]">
-                    <div
-                        class="bg-gray-900/90 backdrop-blur-sm border border-gray-700 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg">
-                        <span class="text-gray-400">Koordinat: </span>
-                        <span class="font-mono text-orange-400"
+                <div class="absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none z-[40]">
+                    <div class="bg-white/95 backdrop-blur-sm border border-gray-200 text-[#1C1C1E] text-[10px] px-3 py-1.5 rounded-lg shadow">
+                        <span class="text-[#8E8E93]">Koordinat: </span>
+                        <span class="font-mono font-semibold"
                             x-text="(mapModalLat ? mapModalLat.toFixed(5) : '-') + ', ' + (mapModalLng ? mapModalLng.toFixed(5) : '-')"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer Actions -->
-            <div class="p-4 bg-gray-800/40 border-t border-gray-700 flex items-center justify-between gap-3">
-                <div class="flex items-center space-x-2 text-xs text-gray-400">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                    <span>Pinpoint Presensi</span>
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ml-2"></span>
+            <div class="p-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+                <div class="flex items-center space-x-2 text-xs text-[#8E8E93]">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#FF21A4]"></span>
+                    <span>Presensi</span>
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ml-1"></span>
                     <span>Kantor</span>
                 </div>
                 <a :href="'https://maps.google.com/?q=' + mapModalLat + ',' + mapModalLng" target="_blank"
-                    class="px-4 py-2 bg-[#f97316] hover:bg-[#ea580c] text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition active:scale-95 shadow">
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    class="px-3.5 py-1.5 bg-[#FF21A4] hover:bg-[#E01890] text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-sm">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                     <span>Google Maps</span>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
+    <!-- 7. EDIT PROFILE MODAL -->
     <div x-show="showEditProfileModal" x-cloak style="display: none;"
-        class="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        @keydown.escape.window="showEditProfileModal = false" x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0">
+        class="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        @keydown.escape.window="showEditProfileModal = false">
 
-        <!-- Modal Card -->
-        <div class="relative max-w-lg w-full bg-[#313340] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            @click.away="showEditProfileModal = false" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95">
+        <div class="relative max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            @click.away="showEditProfileModal = false">
 
-            <!-- Header -->
-            <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-700 bg-gray-800/60">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-[#f97316]"></i>
-                    <span>Edit Profile</span>
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <h3 class="text-base font-bold text-[#1C1C1E] flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-[#FF21A4]"></i>
+                    <span>Edit Profil</span>
                 </h3>
                 <button type="button" @click="showEditProfileModal = false"
-                    class="w-9 h-9 rounded-full bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white flex items-center justify-center transition active:scale-95">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
-            <!-- Form Body -->
-            <form method="POST" action="{{ route('attendance.profile.update') }}" enctype="multipart/form-data"
-                class="flex flex-col">
+            <form method="POST" action="{{ route('attendance.profile.update') }}" enctype="multipart/form-data" class="flex flex-col">
                 @csrf
                 @method('PUT')
 
@@ -1080,78 +1226,70 @@
                     <div class="flex flex-col items-center justify-center pb-2">
                         <div class="relative cursor-pointer group" @click="$refs.avatarInput.click()">
                             <img :src="avatarPreview ? avatarPreview : '{{ $user->avatar_url }}'"
-                                class="w-20 h-20 rounded-full border-2 border-gray-600 bg-white object-cover group-hover:border-orange-500 transition">
-                            <span
-                                class="absolute bottom-0 right-0 bg-gray-800 text-orange-400 rounded-full w-6 h-6 flex items-center justify-center border border-gray-600 shadow text-[10px]">
+                                class="w-20 h-20 rounded-full border-2 border-gray-200 bg-white object-cover group-hover:border-[#FF21A4] transition shadow-sm">
+                            <span class="absolute bottom-0 right-0 bg-[#FF21A4] text-white rounded-full w-6 h-6 flex items-center justify-center shadow text-[10px]">
                                 <i class="fa-solid fa-camera"></i>
                             </span>
                         </div>
                         <input type="file" x-ref="avatarInput" name="avatar" class="hidden" accept="image/*"
                             @change="previewAvatar($event)">
                         <button type="button" @click="$refs.avatarInput.click()"
-                            class="mt-2 text-xs text-orange-400 hover:text-orange-300 font-medium">
-                            Change Photo
+                            class="mt-2 text-xs text-[#FF21A4] hover:underline font-bold">
+                            Ganti Foto
                         </button>
                         @error('avatar')
-                            <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                            <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Phone Number -->
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
+                        <label class="block text-xs font-semibold text-[#8E8E93] mb-1">No. Telepon</label>
                         <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
-                            placeholder="e.g. 08123456789"
-                            class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                            placeholder="Contoh: 08123456789"
+                            class="w-full bg-[#F6F7FA] border border-gray-200 rounded-xl text-sm text-[#1C1C1E] px-3.5 py-2.5 focus:outline-none focus:border-[#FF21A4]">
                         @error('phone')
-                            <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                            <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <div class="h-[1px] bg-gray-700"></div>
-
-                    <!-- Change Password -->
-                    <div>
-                        <p class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-0.5">Change Password
-                        </p>
-                        <p class="text-[11px] text-gray-500 mb-3">Leave blank if you don't want to change it</p>
+                    <div class="border-t border-gray-100 pt-2">
+                        <p class="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider mb-0.5">Ubah Password</p>
+                        <p class="text-[11px] text-[#8E8E93] mb-3">Biarkan kosong jika tidak ingin mengganti password</p>
 
                         <div class="space-y-3">
-
                             <div>
-                                <label class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
-                                <input type="password" name="password" placeholder="New Password (min. 8 characters)"
-                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                                <label class="block text-xs font-medium text-[#8E8E93] mb-1">Password Baru</label>
+                                <input type="password" name="password" placeholder="Minimal 8 karakter"
+                                    class="w-full bg-[#F6F7FA] border border-gray-200 rounded-xl text-sm text-[#1C1C1E] px-3.5 py-2.5 focus:outline-none focus:border-[#FF21A4]">
                                 @error('password')
-                                    <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                                    <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-
                             <div>
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Confirm New Password</label>
-                                <input type="password" name="password_confirmation" placeholder="Confirm New Password"
-                                    class="block w-full bg-gray-800 border border-gray-600 rounded-lg text-sm text-white px-3 py-2.5 focus:outline-none focus:border-[#f97316]">
+                                <label class="block text-xs font-medium text-[#8E8E93] mb-1">Konfirmasi Password Baru</label>
+                                <input type="password" name="password_confirmation" placeholder="Ulangi password baru"
+                                    class="w-full bg-[#F6F7FA] border border-gray-200 rounded-xl text-sm text-[#1C1C1E] px-3.5 py-2.5 focus:outline-none focus:border-[#FF21A4]">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer Actions -->
-                <div class="p-4 bg-gray-800/40 border-t border-gray-700 flex items-center justify-end space-x-2">
+                <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end space-x-2">
                     <button type="button" @click="showEditProfileModal = false"
-                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold transition active:scale-95">
-                        Cancel
+                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition">
+                        Batal
                     </button>
                     <button type="submit"
-                        class="px-5 py-2 bg-[#f97316] hover:bg-[#ea580c] text-white rounded-lg text-xs font-bold transition active:scale-95 shadow">
-                        Save Changes
+                        class="px-5 py-2 bg-[#FF21A4] hover:bg-[#E01890] text-white rounded-xl text-xs font-bold transition shadow-sm">
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Trigger preview when file is selected -->
+    <!-- ==================== JAVASCRIPT ==================== -->
     <script>
         let videoStream = null;
         let currentTargetFormId = null;
@@ -1181,20 +1319,14 @@
             return { success: false };
         }
 
-        // Keep session alive and refresh token on tab focus & periodically
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                refreshCsrfToken();
-            }
+            if (document.visibilityState === 'visible') refreshCsrfToken();
         });
-        window.addEventListener('focus', () => {
-            refreshCsrfToken();
-        });
-        setInterval(refreshCsrfToken, 10 * 60 * 1000); // Refresh/heartbeat every 10 mins
+        window.addEventListener('focus', () => { refreshCsrfToken(); });
+        setInterval(refreshCsrfToken, 10 * 60 * 1000);
 
         function openCameraUI(formId) {
             currentTargetFormId = formId;
-            // Pre-emptively refresh CSRF token when camera UI is opened
             refreshCsrfToken();
 
             const alpineData = window.alpineApp;
@@ -1208,7 +1340,7 @@
                     video.play();
                 })
                 .catch(function (err) {
-                    alert("Unable to access camera: " + err.message);
+                    alert("Tidak dapat mengakses kamera: " + err.message);
                     alpineData.showCamera = false;
                 });
         }
@@ -1235,11 +1367,9 @@
             let offsetY = 0;
 
             if (videoRatio > targetRatio) {
-                // Video is wider than 3:4. Crop sides.
                 sourceWidth = video.videoHeight * targetRatio;
                 offsetX = (video.videoWidth - sourceWidth) / 2;
             } else {
-                // Video is taller than 3:4. Crop top/bottom.
                 sourceHeight = video.videoWidth / targetRatio;
                 offsetY = (video.videoHeight - sourceHeight) / 2;
             }
@@ -1247,11 +1377,8 @@
             canvas.width = sourceWidth;
             canvas.height = sourceHeight;
 
-            // Mirror the canvas context since we mirrored the video visually
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
-
-            // Draw video frame to canvas with crop to match the 3:4 UI container
             context.drawImage(video, offsetX, offsetY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
 
             function handleBlob(blob) {
@@ -1268,7 +1395,6 @@
                 }
                 fileInput.files = dataTransfer.files;
 
-                // Dispatch preview-ready event
                 const url = URL.createObjectURL(file);
                 window.dispatchEvent(new CustomEvent('preview-ready', {
                     detail: { image: url, formId: currentTargetFormId }
@@ -1277,14 +1403,13 @@
                 closeCameraUI();
             }
 
-            // Export to WebP format with fallback
             canvas.toBlob(function (blob) {
                 if (blob) {
                     handleBlob(blob);
                 } else {
-                    canvas.toBlob(handleBlob, 'image/jpeg', 0.8);
+                    canvas.toBlob(handleBlob, 'image/jpeg', 0.85);
                 }
-            }, 'image/webp', 0.8);
+            }, 'image/webp', 0.85);
         }
 
         async function submitAttendance() {
@@ -1299,7 +1424,6 @@
                 return;
             }
 
-            // Always ensure CSRF token is fresh and session is alive right before submitting
             try {
                 const status = await refreshCsrfToken();
                 if (status.success && status.authenticated === false) {
@@ -1314,12 +1438,275 @@
             form.submit();
         }
 
-        // Geofencing data
+        // Office Geofence Configuration
         const officeLat = {{ $user->location->latitude ?? 'null' }};
         const officeLng = {{ $user->location->longitude ?? 'null' }};
         const officeRadius = {{ $user->location->radius ?? 'null' }};
         const officeName = "{{ addslashes($user->location->name ?? 'Kantor') }}";
 
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (lat1 === null || lon1 === null || lat2 === null || lon2 === null) return null;
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c;
+        }
+
+        // Preview Map
+        let leafletMap = null;
+        let mapMarker = null;
+        let mapCircle = null;
+
+        function getLocationAndInitMap() {
+            const alpineData = window.alpineApp;
+            alpineData.locationStatusText = 'Mendeteksi lokasi GPS...';
+            alpineData.locationValid = false;
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    alpineData.locationData = {
+                        lat: currentLat,
+                        lng: currentLng,
+                        accuracy: accuracy,
+                        distance: null
+                    };
+
+                    document.getElementById('lat').value = currentLat;
+                    document.getElementById('lng').value = currentLng;
+                    document.getElementById('lat2').value = currentLat;
+                    document.getElementById('lng2').value = currentLng;
+
+                    setTimeout(() => {
+                        if (!leafletMap) {
+                            leafletMap = L.map('previewMap').setView([currentLat, currentLng], 16);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '&copy; OpenStreetMap'
+                            }).addTo(leafletMap);
+
+                            const userPinIcon = L.divIcon({
+                                className: 'user-pin-icon',
+                                html: `<div style="background-color: #FF21A4; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(255,33,164,0.4); display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="fa-solid fa-location-dot text-sm"></i>
+                                       </div>`,
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 32]
+                            });
+
+                            mapMarker = L.marker([currentLat, currentLng], { icon: userPinIcon }).addTo(leafletMap).bindPopup("Lokasi Anda").openPopup();
+                        } else {
+                            leafletMap.setView([currentLat, currentLng], 16);
+                            mapMarker.setLatLng([currentLat, currentLng]);
+                            leafletMap.invalidateSize();
+                        }
+
+                        if (officeLat !== null && officeLng !== null) {
+                            const distance = calculateDistance(currentLat, currentLng, officeLat, officeLng);
+                            alpineData.locationData.distance = distance;
+
+                            if (mapCircle) mapCircle.remove();
+
+                            const isValid = distance <= officeRadius;
+                            alpineData.locationValid = isValid;
+
+                            if (isValid) {
+                                alpineData.locationStatusText = 'Dalam Radius (' + Math.round(distance) + 'm dari kantor)';
+                            } else {
+                                alpineData.locationStatusText = 'Di Luar Radius (' + Math.round(distance) + 'm / Maks ' + officeRadius + 'm)';
+                            }
+
+                            mapCircle = L.circle([officeLat, officeLng], {
+                                color: isValid ? '#10B981' : '#EF4444',
+                                fillColor: isValid ? '#10B981' : '#EF4444',
+                                fillOpacity: 0.18,
+                                radius: officeRadius
+                            }).addTo(leafletMap);
+
+                            const officePin = L.divIcon({
+                                className: 'office-pin-icon',
+                                html: `<div style="background-color: #3b82f6; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="fa-solid fa-building text-xs"></i>
+                                       </div>`,
+                                iconSize: [28, 28],
+                                iconAnchor: [14, 28]
+                            });
+                            L.marker([officeLat, officeLng], { icon: officePin }).addTo(leafletMap).bindPopup(officeName);
+
+                            const bounds = L.latLngBounds([[currentLat, currentLng], [officeLat, officeLng]]);
+                            leafletMap.fitBounds(bounds, { padding: [30, 30] });
+                        } else {
+                            alpineData.locationStatusText = 'Anda tidak memiliki lokasi kerja yang diatur';
+                        }
+                    }, 100);
+
+                }, function (error) {
+                    alpineData.locationStatusText = 'Gagal mendeteksi GPS: ' + error.message;
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            } else {
+                alpineData.locationStatusText = 'Browser tidak mendukung GPS';
+            }
+        }
+
+        // Live Attendance Map (Peta Tab - Matching iOS AttendanceMapView.swift)
+        let liveMapInstance = null;
+        let liveUserMarker = null;
+        let liveOfficeMarker = null;
+        let liveGeofenceCircle = null;
+        let currentUserLat = null;
+        let currentUserLng = null;
+
+        function initLiveAttendanceMap() {
+            const container = document.getElementById('liveAttendanceMap');
+            if (!container) return;
+
+            const defaultLat = officeLat || -6.200000;
+            const defaultLng = officeLng || 106.816666;
+
+            if (!liveMapInstance) {
+                liveMapInstance = L.map('liveAttendanceMap', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([defaultLat, defaultLng], 16);
+                window.liveMapInstance = liveMapInstance;
+
+                // OpenStreetMap Open Source Map Tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(liveMapInstance);
+
+                if (officeLat !== null && officeLng !== null) {
+                    const officeIcon = L.divIcon({
+                        className: 'leaflet-office-pin',
+                        html: `<div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); pointer-events: none;">
+                            <div style="width: 38px; height: 38px; border-radius: 50%; background: white; box-shadow: 0 4px 14px rgba(0,0,0,0.14); display: flex; align-items: center; justify-content: center; border: 1.5px solid #F0F2F5;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: #FF21A4; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fa-solid fa-building" style="font-size: 13px;"></i>
+                                </div>
+                            </div>
+                            <div style="background: white; border: 1px solid #E5E7EB; border-radius: 9999px; padding: 2.5px 10px; margin-top: 3px; font-weight: 700; font-size: 10px; color: #1E222B; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+                                ${officeName}
+                            </div>
+                        </div>`,
+                        iconSize: [0, 0]
+                    });
+
+                    liveOfficeMarker = L.marker([officeLat, officeLng], { icon: officeIcon, zIndexOffset: 100 }).addTo(liveMapInstance);
+
+                    liveGeofenceCircle = L.circle([officeLat, officeLng], {
+                        color: '#10B981',
+                        weight: 2,
+                        fillColor: '#10B981',
+                        fillOpacity: 0.18,
+                        radius: officeRadius || 100
+                    }).addTo(liveMapInstance);
+                }
+            }
+
+            setTimeout(() => {
+                if (window.liveMapInstance) {
+                    window.liveMapInstance.invalidateSize(true);
+                }
+            }, 100);
+
+            refreshLiveMapLocation();
+        }
+
+        function refreshLiveMapLocation() {
+            if (!liveMapInstance) return;
+            const alpineData = window.alpineApp;
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    currentUserLat = currentLat;
+                    currentUserLng = currentLng;
+
+                    const userIcon = L.divIcon({
+                        className: 'leaflet-user-pin',
+                        html: `<div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: none;">
+                            <div style="background: #0B57D0; color: white; font-size: 9.5px; font-weight: 700; border-radius: 9999px; padding: 2px 8px; margin-bottom: 2px; white-space: nowrap; box-shadow: 0 2px 6px rgba(11,87,208,0.25); letter-spacing: 0.2px;">
+                                Posisi Anda
+                            </div>
+                            <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #007AFF; border: 2.5px solid white; box-shadow: 0 4px 12px rgba(0,122,255,0.4); display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fa-solid fa-person-walking" style="font-size: 14px;"></i>
+                                </div>
+                                <div style="width: 4px; height: 4px; border-radius: 50%; background: rgba(0,0,0,0.5); margin-top: 1px;"></div>
+                            </div>
+                        </div>`,
+                        iconSize: [0, 0]
+                    });
+
+                    if (!liveUserMarker) {
+                        liveUserMarker = L.marker([currentLat, currentLng], { icon: userIcon, zIndexOffset: 200 }).addTo(liveMapInstance);
+                    } else {
+                        liveUserMarker.setLatLng([currentLat, currentLng]);
+                    }
+
+                    if (officeLat !== null && officeLng !== null) {
+                        const dist = calculateDistance(currentLat, currentLng, officeLat, officeLng);
+                        const isValid = dist <= (officeRadius || 100);
+                        alpineData.locationValid = isValid;
+                        alpineData.locationDistanceText = `${Math.round(dist)} m dari titik kantor`;
+                        alpineData.locationStatusText = isValid ? 'Dalam Radius Presensi' : 'Di Luar Radius Presensi';
+                        alpineData.locationData = {
+                            lat: currentLat,
+                            lng: currentLng,
+                            accuracy: accuracy,
+                            distance: dist
+                        };
+
+                        fitLiveMapBounds();
+                    } else {
+                        liveMapInstance.setView([currentLat, currentLng], 16, { animate: true });
+                    }
+                }, function (err) {
+                    console.warn(err);
+                    alpineData.locationDistanceText = 'Gagal mendeteksi lokasi GPS';
+                }, { enableHighAccuracy: true });
+            }
+        }
+
+        function centerOnUserLiveMap() {
+            if (currentUserLat && currentUserLng && liveMapInstance) {
+                liveMapInstance.setView([currentUserLat, currentUserLng], 17, { animate: true });
+            } else {
+                refreshLiveMapLocation();
+            }
+        }
+
+        function fitLiveMapBounds() {
+            if (!liveMapInstance) return;
+            if (currentUserLat && officeLat) {
+                const bounds = L.latLngBounds([[currentUserLat, currentUserLng], [officeLat, officeLng]]);
+                liveMapInstance.fitBounds(bounds, { padding: [80, 80], maxZoom: 17, animate: true });
+            } else if (officeLat) {
+                liveMapInstance.setView([officeLat, officeLng], 16, { animate: true });
+            } else if (currentUserLat) {
+                liveMapInstance.setView([currentUserLat, currentUserLng], 16, { animate: true });
+            }
+        }
+
+        // History Pinpoint Map
         window.historyMapInstance = null;
         function initHistoryMap(lat, lng, title) {
             const mapContainer = document.getElementById('historyMapContainer');
@@ -1338,10 +1725,9 @@
                 maxZoom: 19
             }).addTo(map);
 
-            // User Event Marker
             const userIcon = L.divIcon({
                 className: 'custom-pin-marker',
-                html: `<div style="background-color: #f97316; width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white;">
+                html: `<div style="background-color: #FF21A4; width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(255,33,164,0.4); display: flex; align-items: center; justify-content: center; color: white;">
                         <i class="fa-solid fa-location-dot text-base"></i>
                        </div>`,
                 iconSize: [34, 34],
@@ -1353,11 +1739,10 @@
                 .bindPopup(`<b>${title}</b><br><span style="color:#666;font-size:11px;">Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</span>`)
                 .openPopup();
 
-            // Office Marker & Radius comparison if office location exists
             if (typeof officeLat === 'number' && typeof officeLng === 'number' && officeLat !== null && officeLng !== null) {
                 const officeIcon = L.divIcon({
                     className: 'custom-office-marker',
-                    html: `<div style="background-color: #3b82f6; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white;">
+                    html: `<div style="background-color: #3b82f6; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;">
                             <i class="fa-solid fa-building text-xs"></i>
                            </div>`,
                     iconSize: [30, 30],
@@ -1387,111 +1772,7 @@
                 map.fitBounds(group.getBounds().pad(0.25));
             }
 
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 250);
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            if (lat1 === null || lon1 === null || lat2 === null || lon2 === null) return null;
-            const R = 6371e3; // metres
-            const φ1 = lat1 * Math.PI / 180; // φ, λ in radians
-            const φ2 = lat2 * Math.PI / 180;
-            const Δφ = (lat2 - lat1) * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            return R * c; // in metres
-        }
-
-        let leafletMap = null;
-        let mapMarker = null;
-        let mapCircle = null;
-
-        function getLocationAndInitMap() {
-            const alpineData = window.alpineApp;
-            alpineData.locationStatusText = 'Getting GPS Location...';
-            alpineData.locationValid = false;
-
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const currentLat = position.coords.latitude;
-                    const currentLng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-
-                    alpineData.locationData = {
-                        lat: currentLat,
-                        lng: currentLng,
-                        accuracy: accuracy,
-                        distance: null
-                    };
-
-                    document.getElementById('lat').value = currentLat;
-                    document.getElementById('lng').value = currentLng;
-                    document.getElementById('lat2').value = currentLat;
-                    document.getElementById('lng2').value = currentLng;
-
-                    setTimeout(() => {
-                        if (!leafletMap) {
-                            leafletMap = L.map('previewMap').setView([currentLat, currentLng], 15);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '&copy; OpenStreetMap'
-                            }).addTo(leafletMap);
-
-                            mapMarker = L.marker([currentLat, currentLng]).addTo(leafletMap).bindPopup("Lokasi Anda").openPopup();
-                        } else {
-                            leafletMap.setView([currentLat, currentLng], 15);
-                            mapMarker.setLatLng([currentLat, currentLng]);
-                            leafletMap.invalidateSize();
-                        }
-
-                        if (officeLat !== null && officeLng !== null) {
-                            const distance = calculateDistance(currentLat, currentLng, officeLat, officeLng);
-                            alpineData.locationData.distance = distance;
-
-                            if (mapCircle) {
-                                mapCircle.remove();
-                            }
-
-                            const isValid = distance <= officeRadius;
-                            alpineData.locationValid = isValid;
-
-                            if (isValid) {
-                                alpineData.locationStatusText = 'Dalam Radius (' + Math.round(distance) + 'm)';
-                            } else {
-                                alpineData.locationStatusText = 'Di Luar Radius (' + Math.round(distance) + 'm / Max ' + officeRadius + 'm)';
-                            }
-
-                            mapCircle = L.circle([officeLat, officeLng], {
-                                color: isValid ? 'green' : 'red',
-                                fillColor: isValid ? '#3f0' : '#f03',
-                                fillOpacity: 0.2,
-                                radius: officeRadius
-                            }).addTo(leafletMap);
-
-                            L.marker([officeLat, officeLng]).addTo(leafletMap).bindPopup("Lokasi Kantor");
-
-                            var bounds = L.latLngBounds([[currentLat, currentLng], [officeLat, officeLng]]);
-                            leafletMap.fitBounds(bounds, { padding: [20, 20] });
-                        } else {
-                            alpineData.locationStatusText = 'Anda tidak memiliki lokasi kerja';
-                        }
-                    }, 100);
-
-                }, function (error) {
-                    alpineData.locationStatusText = 'Error Getting GPS Location';
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                });
-            } else {
-                alpineData.locationStatusText = 'Browser does not support GPS';
-            }
+            setTimeout(() => { map.invalidateSize(); }, 250);
         }
     </script>
 </body>

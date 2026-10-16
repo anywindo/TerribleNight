@@ -77,9 +77,10 @@ class AttendanceController extends Controller
             ->take(30)
             ->get();
             
-        $shift = $attendance ? $attendance->shift : \App\Models\Shift::first();
+        $availableShifts = \App\Models\Shift::all();
+        $shift = $attendance ? $attendance->shift : ($user->shift ?? $availableShifts->first());
         
-        return view('attendance.index', compact('user', 'events', 'historyEvents', 'attendancesHistory', 'nextAction', 'activeBreak', 'shift', 'activeNav'));
+        return view('attendance.index', compact('user', 'events', 'historyEvents', 'attendancesHistory', 'nextAction', 'activeBreak', 'shift', 'availableShifts', 'activeNav'));
     }
 
     public function store(Request $request, \App\Services\FileUploadService $fileUploadService)
@@ -88,7 +89,8 @@ class AttendanceController extends Controller
             'event_type' => 'required|in:START_SHIFT,START_BREAK,END_BREAK,END_SHIFT',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
-            'selfie' => 'required|image|max:10240'
+            'selfie' => 'required|image|max:10240',
+            'shift_id' => 'nullable|exists:shifts,id',
         ]);
         
         $user = Auth::user();
@@ -124,7 +126,9 @@ class AttendanceController extends Controller
         $status = 'EXACT';
         $latenessMinutes = 0;
         
-        $shift = $user->shift ?? \App\Models\Shift::first();
+        $shift = ($request->filled('shift_id') ? \App\Models\Shift::find($request->shift_id) : null) 
+            ?? $user->shift 
+            ?? \App\Models\Shift::first();
         $shiftId = $shift ? $shift->id : 1;
 
         if ($request->event_type === 'START_SHIFT') {
