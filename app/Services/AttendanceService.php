@@ -122,6 +122,12 @@ class AttendanceService extends BaseService
                 }
                 if ($shift->break_start) {
                     $breakStartTime = \Carbon\Carbon::parse($shift->break_start)->format('H:i:s');
+                    $isFriday = now()->isFriday();
+                    if ($isFriday && \App\Models\Setting::get('friday_break_enabled', true)) {
+                        $fridayStart = \App\Models\Setting::get('friday_break_start', '11:30');
+                        $breakStartTime = \Carbon\Carbon::parse($fridayStart)->format('H:i:s');
+                    }
+
                     $currentTime = now()->format('H:i:s');
                     if ($currentTime < $breakStartTime) {
                         throw ValidationException::withMessages([

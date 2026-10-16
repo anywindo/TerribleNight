@@ -11,6 +11,7 @@ use App\Models\Shift;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -176,5 +177,86 @@ class FridayBreakSettingTest extends TestCase
         $breakStatus = $attendance->break_status;
         $this->assertEquals('Tepat Waktu', $breakStatus['label']);
         $this->assertEquals('success', $breakStatus['color']);
+    }
+
+    public function test_attendance_service_allows_start_break_at_friday_break_time(): void
+    {
+        Setting::set('friday_break_enabled', 'true', 'boolean');
+        Setting::set('friday_break_start', '11:30', 'string');
+        Setting::set('friday_break_end', '13:00', 'string');
+
+        $user = User::factory()->create();
+        $shift = Shift::create([
+            'shift_name' => 'Regular',
+            'default_start_time' => '08:00',
+            'default_end_time' => '17:00',
+            'break_start' => '12:00',
+            'break_end' => '13:00',
+        ]);
+
+        $service = app(\App\Services\AttendanceService::class);
+
+        // Simulate Friday 08:05:00 for check-in
+        Carbon::setTestNow(Carbon::parse('2026-10-16 08:05:00'));
+        $service->recordEvent($user, $shift, EventType::START_SHIFT, [
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
+            'selfie_path' => 'selfies/dummy.jpg',
+        ]);
+
+        // Simulate Friday 11:35:00 for break (before standard 12:00 shift break, but after Friday 11:30 break)
+        Carbon::setTestNow(Carbon::parse('2026-10-16 11:35:00'));
+        $attendance = $service->recordEvent($user, $shift, EventType::START_BREAK, [
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
+            'selfie_path' => 'selfies/dummy.jpg',
+        ]);
+
+        $this->assertCount(2, $attendance->events);
+        $this->assertEquals(EventType::START_BREAK, $attendance->events->last()->event_type);
+
+        Carbon::setTestNow(); // Reset mock time
+    }
+
+    public function test_attendance_service_rejects_start_break_before_friday_break_time(): void
+    {
+        Setting::set('friday_break_enabled', 'true', 'boolean');
+        Setting::set('friday_break_start', '11:30', 'string');
+        Setting::set('friday_break_end', '13:00', 'string');
+
+        $user = User::factory()->create();
+        $shift = Shift::create([
+            'shift_name' => 'Regular',
+            'default_start_time' => '08:00',
+            'default_end_time' => '17:00',
+            'break_start' => '12:00',
+            'break_end' => '13:00',
+        ]);
+
+        $service = app(\App\Services\AttendanceService::class);
+
+        // Simulate Friday 08:05:00 for check-in
+        Carbon::setTestNow(Carbon::parse('2026-10-16 08:05:00'));
+        $service->recordEvent($user, $shift, EventType::START_SHIFT, [
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
+            'selfie_path' => 'selfies/dummy.jpg',
+        ]);
+
+        // Simulate Friday 11:15:00 (before Friday 11:30 break)
+        Carbon::setTestNow(Carbon::parse('2026-10-16 11:15:00'));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Belum waktu istirahat (jadwal istirahat mulai: 11:30:00).');
+
+        try {
+            $service->recordEvent($user, $shift, EventType::START_BREAK, [
+                'latitude' => -6.200000,
+                'longitude' => 106.816666,
+                'selfie_path' => 'selfies/dummy.jpg',
+            ]);
+        } finally {
+            Carbon::setTestNow(); // Reset mock time
+        }
     }
 }
