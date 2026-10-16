@@ -24,7 +24,7 @@ class ShiftController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'shift_name' => 'required|string|max:255',
             'default_start_time' => 'required|date_format:H:i',
             'default_end_time' => 'required|date_format:H:i',
@@ -32,7 +32,7 @@ class ShiftController extends Controller
             'break_end' => 'nullable|date_format:H:i|after:break_start',
         ]);
 
-        Shift::create($request->all());
+        Shift::create($validated);
 
         return redirect()->route('admin.shifts.index')->with('success', 'Shift created successfully.');
     }
@@ -44,7 +44,7 @@ class ShiftController extends Controller
 
     public function update(Request $request, Shift $shift)
     {
-        $request->validate([
+        $validated = $request->validate([
             'shift_name' => 'required|string|max:255',
             'default_start_time' => 'required|date_format:H:i',
             'default_end_time' => 'required|date_format:H:i',
@@ -52,7 +52,7 @@ class ShiftController extends Controller
             'break_end' => 'nullable|date_format:H:i|after:break_start',
         ]);
 
-        $shift->update($request->all());
+        $shift->update($validated);
 
         return redirect()->route('admin.shifts.index')->with('success', 'Shift updated successfully.');
     }
