@@ -327,7 +327,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(5px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -342,14 +342,14 @@
 
         .modal-card {
             background: #FFFFFF;
-            border-radius: 18px;
-            max-width: 460px;
+            border-radius: 20px;
+            max-width: 480px;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             display: flex;
             flex-direction: column;
             padding: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.16);
             animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -357,41 +357,130 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--tn-divider);
             margin-bottom: 16px;
         }
 
+        .modal-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-badge-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: var(--tn-accent-light);
+            color: var(--tn-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
         .modal-title {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--tn-text-primary);
+            line-height: 1.2;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--tn-text-secondary);
+            margin-top: 2px;
         }
 
         .modal-close-btn {
             background: none;
             border: none;
             color: var(--tn-text-secondary);
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
+            transition: color 0.15s ease;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--tn-text-primary);
         }
 
         .modal-body {
             overflow-y: auto;
-            padding-right: 4px;
+            padding-right: 6px;
             margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background-color: #E5E5EA;
+            border-radius: 10px;
+        }
+
+        .policy-card {
+            background-color: #F9FAFB;
+            border: 1px solid #EEF0F3;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .policy-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .policy-card-icon {
+            color: var(--tn-accent);
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .policy-card-title {
             font-size: 13.5px;
+            font-weight: 700;
+            color: var(--tn-text-primary);
+        }
+
+        .policy-card-content {
+            font-size: 12.5px;
             line-height: 1.55;
             color: #4B5563;
         }
 
-        .policy-section-title {
-            font-weight: 700;
+        .policy-agreement-box {
+            background-color: var(--tn-accent-light);
+            border: 1px solid rgba(255, 33, 164, 0.22);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12px;
             color: var(--tn-text-primary);
-            margin-top: 14px;
-            margin-bottom: 4px;
+            line-height: 1.45;
         }
 
-        .policy-section-title:first-child {
-            margin-top: 0;
+        .policy-agreement-box i {
+            color: var(--tn-accent);
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
         }
 
         @keyframes fadeIn {
@@ -518,28 +607,82 @@
     <div class="modal-overlay" id="privacyModal">
         <div class="modal-card">
             <div class="modal-header">
-                <span class="modal-title">Kebijakan Privasi & Ketentuan</span>
-                <button type="button" class="modal-close-btn" id="closePrivacyBtn">
-                    <i class="bi bi-x-lg"></i>
+                <div class="modal-title-group">
+                    <div class="modal-badge-icon">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div>
+                        <div class="modal-title">Kebijakan Privasi & Ketentuan</div>
+                        <div class="modal-subtitle">KIRANA People • Berlaku Efektif</div>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="closePrivacyBtn" aria-label="Tutup">
+                    <i class="bi bi-x-circle-fill"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="policy-section-title">1. Pengumpulan Data Lokasi (GPS & Geofence)</div>
-                <p>Aplikasi ini memproses koordinat lokasi (latitude dan longitude) perangkat Anda untuk memvalidasi presensi masuk, istirahat, dan pulang dilakukan di dalam batas radius area kantor kerja yang sah.</p>
+                <!-- Section 1: Lokasi & Geofence -->
+                <div class="policy-card">
+                    <div class="policy-card-header">
+                        <i class="bi bi-geo-alt-fill policy-card-icon"></i>
+                        <span class="policy-card-title">1. Pengumpulan Data Lokasi (GPS & Geofence)</span>
+                    </div>
+                    <div class="policy-card-content">
+                        Aplikasi ini memproses koordinat lokasi (latitude dan longitude) perangkat Anda untuk memvalidasi bahwa presensi masuk, istirahat, dan pulang dilakukan di dalam batas radius area kantor kerja yang sah. Data lokasi hanya diambil saat Anda membuka aplikasi dan saat proses presensi berlangsung. Aplikasi secara otomatis menolak lokasi tiruan (Fake GPS / mock location).
+                    </div>
+                </div>
 
-                <div class="policy-section-title">2. Verifikasi Foto Wajah & Kamera</div>
-                <p>Untuk menjamin keaslian dan mencegah manipulasi presensi (titip absen), aplikasi memerlukan akses kamera depan untuk mengambil foto selfie real-time saat melakukan presensi.</p>
+                <!-- Section 2: Verifikasi Kamera & Foto Wajah -->
+                <div class="policy-card">
+                    <div class="policy-card-header">
+                        <i class="bi bi-camera-fill policy-card-icon"></i>
+                        <span class="policy-card-title">2. Verifikasi Foto Wajah & Kamera</span>
+                    </div>
+                    <div class="policy-card-content">
+                        Untuk menjamin keaslian dan mencegah manipulasi presensi (titip absen), aplikasi memerlukan akses kamera depan untuk mengambil foto selfie real-time saat melakukan presensi. Foto diunggah dan disimpan secara terenkripsi pada server perusahaan sebagai bukti kehadiran resmi dan audit tim SDM/HR.
+                    </div>
+                </div>
 
-                <div class="policy-section-title">3. Keamanan Kata Sandi & Akun</div>
-                <p>Kata sandi yang Anda buat pada tahap aktivasi ini dienkripsi dengan standar industri. Anda bertanggung jawab penuh atas kerahasiaan kata sandi Anda.</p>
+                <!-- Section 3: Keamanan Kata Sandi & Akun -->
+                <div class="policy-card">
+                    <div class="policy-card-header">
+                        <i class="bi bi-shield-check policy-card-icon"></i>
+                        <span class="policy-card-title">3. Keamanan Kata Sandi & Akun</span>
+                    </div>
+                    <div class="policy-card-content">
+                        Kata sandi yang Anda buat pada tahap aktivasi ini dienkripsi menggunakan standar keamanan industri. Anda bertanggung jawab penuh atas kerahasiaan kata sandi Anda dan dilarang memberikan akses akun kepada pihak lain. Token otentikasi disimpan dengan aman pada sesi terenkripsi perangkat Anda.
+                    </div>
+                </div>
 
-                <div class="policy-section-title">4. Penyimpanan & Kerahasiaan Data</div>
-                <p>Seluruh data kehadiran dan foto presensi disimpan secara aman di infrastruktur server perusahaan KIRANA GROUP dan hanya dapat diakses oleh petugas HR yang berwenang.</p>
+                <!-- Section 4: Penyimpanan & Kerahasiaan Data -->
+                <div class="policy-card">
+                    <div class="policy-card-header">
+                        <i class="bi bi-hdd-network-fill policy-card-icon"></i>
+                        <span class="policy-card-title">4. Penyimpanan & Kerahasiaan Data</span>
+                    </div>
+                    <div class="policy-card-content">
+                        Seluruh data riwayat kehadiran, waktu kerja, dan foto presensi disimpan secara aman di infrastruktur server perusahaan KIRANA GROUP. Data hanya dapat diakses oleh petugas HR dan pimpinan yang berwenang, serta tidak akan pernah dibagikan atau diperjualbelikan kepada pihak ketiga di luar kepentingan operasional perusahaan.
+                    </div>
+                </div>
 
-                <div class="policy-section-title">5. Integritas Presensi & Kepatuhan</div>
-                <p>Karyawan berkewajiban mencatat kehadiran secara tertib dan berurutan sesuai jam kerja dan jadwal istirahat.</p>
+                <!-- Section 5: Integritas Presensi & Kepatuhan -->
+                <div class="policy-card">
+                    <div class="policy-card-header">
+                        <i class="bi bi-patch-check-fill policy-card-icon"></i>
+                        <span class="policy-card-title">5. Integritas Presensi & Kepatuhan</span>
+                    </div>
+                    <div class="policy-card-content">
+                        Karyawan berkewajiban mencatat kehadiran secara tertib dan berurutan sesuai jam kerja dan jadwal istirahat. Segala bentuk manipulasi data kehadiran, penggunaan emulator, atau kecurangan biometrik akan dikenakan tindakan disipliner sesuai peraturan kepegawaian perusahaan.
+                    </div>
+                </div>
+
+                <!-- Agreement Notice Box -->
+                <div class="policy-agreement-box">
+                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                    <span>Dengan menggunakan aplikasi ini, Anda menyetujui seluruh ketentuan privasi dan pemrosesan data kehadiran di atas.</span>
+                </div>
             </div>
-            <button type="button" class="submit-btn ready" id="acceptPrivacyBtn" style="height: 42px; font-size: 14px;">
+            <button type="button" class="submit-btn ready" id="acceptPrivacyBtn" style="height: 46px; font-size: 15px;">
                 Saya Mengerti & Setuju
             </button>
         </div>
