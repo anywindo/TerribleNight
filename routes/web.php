@@ -60,30 +60,35 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding/password', [OnboardingController::class, 'updatePassword'])->name('onboarding.password.update');
 });
 
-// Maintenance Route
+// Maintenance Route (Khusus Employee; HR & Superadmin otomatis diarahkan ke admin dashboard)
 Route::get('/maintenance', function () {
+    if (auth()->check() && auth()->user()->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    }
     return view('maintenance');
 })->name('maintenance');
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
-    // Role Selection (Commented out: HR langsung direct ke admin dashboard)
+    // Role Selection (HR & Admin langsung direct ke admin dashboard)
     Route::get('/role-selection', function () {
         if (!auth()->user()->isAdmin()) {
             return redirect()->route('maintenance');
         }
-        
-        // HR & Admin langsung diarahkan ke /admin/dashboard
         return redirect()->route('admin.dashboard');
-
-        // return view('auth.role-selection');
     })->name('role.selection');
 
-    // Attendance routes redirected to Maintenance page
+    // Attendance routes: HR & Admin otomatis masuk ke /admin/dashboard, Employee melihat maintenance page
     Route::get('/attendance', function () {
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
         return response()->view('maintenance');
     })->name('attendance.index');
 
     Route::any('/attendance/{any?}', function () {
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
         return redirect()->route('maintenance');
     })->where('any', '.*');
 

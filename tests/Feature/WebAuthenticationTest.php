@@ -72,12 +72,15 @@ class WebAuthenticationTest extends TestCase
 
     public function test_authenticated_hr_can_access_employee_routes()
     {
-        // Sebenarnya di sistem kita, HR juga bisa akses presensi mandiri.
+        // HR diarahkan langsung ke admin dashboard saat membuka attendance
         $hr = User::factory()->create();
         $hr->assignRole('HR');
 
         $response = $this->actingAs($hr)->get('/attendance');
-        $response->assertStatus(200);
+        $response->assertRedirect('/admin/dashboard');
+        
+        $dashboardResponse = $this->actingAs($hr)->get('/admin/dashboard');
+        $dashboardResponse->assertStatus(200);
     }
 
     public function test_authenticated_employee_cannot_access_hr_routes()

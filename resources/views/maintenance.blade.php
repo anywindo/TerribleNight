@@ -66,6 +66,14 @@
 
             <!-- Actions -->
             <div class="w-full space-y-2.5">
+                @if(auth()->check() && auth()->user()->isAdmin())
+                <a href="{{ route('admin.dashboard') }}"
+                    class="w-full bg-[#1C1C1E] hover:bg-black text-white font-bold py-3.5 rounded-2xl shadow-sm transition active:scale-[0.98] text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gauge text-xs text-[#FF21A4]"></i>
+                    <span>Buka Admin Dashboard</span>
+                </a>
+                @endif
+
                 <button type="button" onclick="window.location.reload()"
                     class="w-full bg-[#FF21A4] hover:bg-[#E00084] text-white font-bold py-3.5 rounded-2xl shadow-sm hover:shadow-md transition active:scale-[0.98] text-xs flex items-center justify-center gap-2">
                     <i class="fa-solid fa-rotate-right text-xs"></i>
