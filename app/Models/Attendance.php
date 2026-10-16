@@ -88,7 +88,7 @@ class Attendance extends Model
         }
 
         $actualDuration = \Carbon\Carbon::parse($endBreakEvent->timestamp)->diffInMinutes(\Carbon\Carbon::parse($startBreakEvent->timestamp), true);
-        
+
         $breakStart = $this->shift->break_start;
         $breakEnd = $this->shift->break_end;
 
