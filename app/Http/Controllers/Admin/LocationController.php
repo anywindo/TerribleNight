@@ -24,14 +24,14 @@ class LocationController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius' => 'required|integer|min:1',
         ]);
 
-        Location::create($request->all());
+        Location::create($validated);
 
         return redirect()->route('admin.locations.index')->with('success', 'Lokasi berhasil ditambahkan.');
     }
@@ -43,14 +43,14 @@ class LocationController extends Controller
 
     public function update(Request $request, Location $location)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius' => 'required|integer|min:1',
         ]);
 
-        $location->update($request->all());
+        $location->update($validated);
 
         return redirect()->route('admin.locations.index')->with('success', 'Lokasi berhasil diupdate.');
     }
