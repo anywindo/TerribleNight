@@ -60,11 +60,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding/password', [OnboardingController::class, 'updatePassword'])->name('onboarding.password.update');
 });
 
+// Maintenance Route
+Route::get('/maintenance', function () {
+    return view('maintenance');
+})->name('maintenance');
+
 Route::middleware(['auth', 'password.changed'])->group(function () {
     // Role Selection (Commented out: HR langsung direct ke admin dashboard)
     Route::get('/role-selection', function () {
         if (!auth()->user()->isAdmin()) {
-            return redirect('/attendance');
+            return redirect()->route('maintenance');
         }
         
         // HR & Admin langsung diarahkan ke /admin/dashboard
@@ -73,12 +78,21 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         // return view('auth.role-selection');
     })->name('role.selection');
 
-    // Employee Routes
-    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-    Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
-    Route::get('/attendance/profile', [AttendanceController::class, 'profile'])->name('attendance.profile');
-    Route::put('/attendance/profile', [AttendanceController::class, 'updateProfile'])->name('attendance.profile.update');
-    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    // Attendance routes redirected to Maintenance page
+    Route::get('/attendance', function () {
+        return response()->view('maintenance');
+    })->name('attendance.index');
+
+    Route::any('/attendance/{any?}', function () {
+        return redirect()->route('maintenance');
+    })->where('any', '.*');
+
+    // Employee Routes (Temporarily commented out)
+    // Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    // Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
+    // Route::get('/attendance/profile', [AttendanceController::class, 'profile'])->name('attendance.profile');
+    // Route::put('/attendance/profile', [AttendanceController::class, 'updateProfile'])->name('attendance.profile.update');
+    // Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     
     // HR / Admin Routes
     Route::middleware(['role:admin|HR|super-admin'])->prefix('admin')->name('admin.')->group(function () {
