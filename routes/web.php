@@ -19,7 +19,8 @@ Route::get('/', function () {
         if (auth()->user()->mustChangePassword()) {
             return redirect()->route('onboarding.password');
         }
-        return redirect()->intended(auth()->user()->isAdmin() ? '/role-selection' : '/attendance');
+        // HR & Admin langsung ke dashboard admin
+        return redirect()->intended(auth()->user()->isAdmin() ? '/admin/dashboard' : '/attendance');
     }
     return view('auth.login');
 });
@@ -29,7 +30,8 @@ Route::get('/login', function () {
         if (auth()->user()->mustChangePassword()) {
             return redirect()->route('onboarding.password');
         }
-        return redirect()->intended(auth()->user()->isAdmin() ? '/role-selection' : '/attendance');
+        // HR & Admin langsung ke dashboard admin
+        return redirect()->intended(auth()->user()->isAdmin() ? '/admin/dashboard' : '/attendance');
     }
     return view('auth.login');
 })->name('login');
@@ -59,17 +61,16 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
-    // Role Selection
+    // Role Selection (Commented out: HR langsung direct ke admin dashboard)
     Route::get('/role-selection', function () {
         if (!auth()->user()->isAdmin()) {
             return redirect('/attendance');
         }
         
-        if (auth()->user()->isSuperAdmin()) {
-            return redirect()->route('admin.dashboard');
-        }
+        // HR & Admin langsung diarahkan ke /admin/dashboard
+        return redirect()->route('admin.dashboard');
 
-        return view('auth.role-selection');
+        // return view('auth.role-selection');
     })->name('role.selection');
 
     // Employee Routes

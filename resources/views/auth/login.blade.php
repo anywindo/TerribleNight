@@ -38,66 +38,36 @@
             background-color: #FFFFFF;
             color: var(--tn-text-primary);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding: 0;
+            justify-content: center;
+            padding: 24px 20px;
             margin: 0;
         }
 
         .login-wrapper {
             width: 100%;
-            max-width: 414px;
-            min-height: 100vh;
+            max-width: 400px;
             display: flex;
             flex-direction: column;
-            padding: 16px 28px 24px 28px;
+            align-items: center;
             background-color: #FFFFFF;
-            position: relative;
-        }
-
-        /* Top Action Bar (Gear Button) */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            height: 48px;
-            margin-bottom: 8px;
-        }
-
-        .gear-button {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid var(--tn-divider);
-            background: #FFFFFF;
-            color: var(--tn-text-secondary);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .gear-button:hover {
-            background: #F9F9FA;
-            color: var(--tn-text-primary);
-            transform: rotate(30deg);
+            /* Medium vertical offset towards the top */
+            margin-top: -4vh;
+            padding: 0 8px;
         }
 
         .main-content {
-            flex: 1;
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
         }
 
         /* Logo */
         .logo-container {
-            margin-top: 12px;
             margin-bottom: 24px;
             display: flex;
             justify-content: center;
@@ -115,7 +85,7 @@
         /* Header texts */
         .header-section {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
             width: 100%;
         }
 
@@ -317,107 +287,22 @@
 
         /* Version Section */
         .version-section {
-            margin-top: 42px;
-            margin-bottom: 12px;
+            margin-top: 40px;
+            margin-bottom: 8px;
             text-align: center;
             font-size: 12.5px;
             color: var(--tn-text-secondary);
             font-weight: 400;
         }
 
-        /* Settings Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        .modal-card {
-            background: #FFFFFF;
-            border-radius: 18px;
-            max-width: 360px;
-            width: 100%;
-            padding: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .modal-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--tn-text-primary);
-        }
-
-        .modal-close-btn {
-            background: none;
-            border: none;
-            color: var(--tn-text-secondary);
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13.5px;
-            padding: 9px 0;
-            border-bottom: 1px solid var(--tn-divider);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: var(--tn-text-secondary);
-        }
-
-        .info-val {
-            font-weight: 600;
-            color: var(--tn-text-primary);
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-
-        @keyframes scaleUp {
-            from { opacity: 0; transform: scale(0.92); }
-            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
     <div class="login-wrapper">
-        <!-- Top Action Bar -->
-        <div class="top-bar">
-            <button type="button" class="gear-button" id="openSettingsBtn" title="Pengaturan & Informasi" aria-label="Pengaturan">
-                <i class="bi bi-gear"></i>
-            </button>
-        </div>
-
         <div class="main-content">
             <!-- App Logo -->
             <div class="logo-container">
@@ -463,7 +348,7 @@
                         name="email" 
                         id="identifierInput"
                         class="underline-input" 
-                        placeholder="arw.prt@gmail.com" 
+                        placeholder="Email / ID Karyawan / NIK" 
                         value="{{ old('email', old('login')) }}" 
                         required 
                         autocomplete="username"
@@ -512,43 +397,6 @@
             <!-- Version Section -->
             <div class="version-section">
                 Versi 1.0.0 (1)
-            </div>
-        </div>
-    </div>
-
-    <!-- System Info Modal -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <span class="modal-title">Pengaturan & Info Sistem</span>
-                <button type="button" class="modal-close-btn" id="closeSettingsBtn">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Aplikasi</span>
-                <span class="info-val">Kirana People</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Versi</span>
-                <span class="info-val">1.0.0 (1)</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Status Server</span>
-                <span class="info-val" style="color: #10B981;"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Terhubung</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Lingkungan</span>
-                <span class="info-val">{{ ucfirst(config('app.env', 'Production')) }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">API Version</span>
-                <span class="info-val">v1</span>
-            </div>
-            <div style="margin-top: 18px;">
-                <button type="button" class="submit-btn ready" id="closeModalActionBtn" style="height: 40px; font-size: 14px;">
-                    Selesai
-                </button>
             </div>
         </div>
     </div>
@@ -603,30 +451,6 @@
                 } else {
                     checkboxVisual.classList.add('unchecked');
                     checkboxVisual.innerHTML = '';
-                }
-            });
-
-            // Settings Modal
-            const openSettingsBtn = document.getElementById('openSettingsBtn');
-            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-            const closeModalActionBtn = document.getElementById('closeModalActionBtn');
-            const settingsModal = document.getElementById('settingsModal');
-
-            function openModal() {
-                settingsModal.classList.add('active');
-            }
-
-            function closeModal() {
-                settingsModal.classList.remove('active');
-            }
-
-            openSettingsBtn.addEventListener('click', openModal);
-            closeSettingsBtn.addEventListener('click', closeModal);
-            closeModalActionBtn.addEventListener('click', closeModal);
-
-            settingsModal.addEventListener('click', function (e) {
-                if (e.target === settingsModal) {
-                    closeModal();
                 }
             });
         });

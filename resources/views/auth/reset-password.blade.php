@@ -1,128 +1,411 @@
 <!DOCTYPE html>
 <html lang="id">
-<!--begin::Head-->
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Atur Ulang Kata Sandi | Kirana People</title>
-    <!--begin::Primary Meta Tags-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     @include('layouts.partials.favicons')
 
-    <!--begin::Fonts-->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <!--end::Fonts-->
-
-    <!--begin::Third Party Plugin(Bootstrap Icons)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
-    <!--end::Third Party Plugin(Bootstrap Icons)-->
-
-    <!--begin::Required Plugin(AdminLTE)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/css/adminlte.min.css">
-    <!--end::Required Plugin(AdminLTE)-->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
+        :root {
+            --tn-accent: #FF21A4;
+            --tn-accent-hover: #e01b8e;
+            --tn-accent-shadow: rgba(255, 33, 164, 0.32);
+            --tn-text-primary: #1C1C1E;
+            --tn-text-secondary: #8E8E93;
+            --tn-text-body: #333333;
+            --tn-divider: #E5E5EA;
+            --tn-input-placeholder: #C7C7CC;
+            --tn-btn-disabled-bg: #E2E4E9;
+            --tn-btn-disabled-text: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #FFFFFF;
+            color: var(--tn-text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            margin: 0;
         }
 
-        .login-page {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ asset('loginpage2.webp') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFFFFF;
+            /* Medium vertical offset towards the top */
+            margin-top: -3vh;
+            padding: 0 8px;
         }
 
-        .login-box {
-            width: 420px;
+        .main-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .login-box .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        /* Logo */
+        .logo-container {
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .login-logo a {
-            color: #fff !important;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        .app-logo {
+            width: 96px;
+            height: 96px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Header texts */
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .login-title {
+            font-size: 23px;
+            font-weight: 700;
+            color: var(--tn-text-primary);
+            letter-spacing: -0.4px;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--tn-text-secondary);
+            line-height: 1.4;
+            max-width: 340px;
+            margin: 0 auto;
+        }
+
+        /* Banner alerts */
+        .alert-banner {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.09);
+            color: #DC2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Form */
+        .login-form {
+            width: 100%;
+        }
+
+        .input-group-underline {
+            position: relative;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .underline-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 15.5px;
+            color: var(--tn-text-primary);
+            padding: 8px 0 10px 0;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .underline-input[readonly] {
+            color: var(--tn-text-secondary);
+        }
+
+        .underline-input::placeholder {
+            color: var(--tn-input-placeholder);
+            opacity: 1;
+        }
+
+        .underline-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1.5px;
+            background-color: var(--tn-divider);
+            transition: background-color 0.2s ease, height 0.15s ease;
+        }
+
+        .input-group-underline:focus-within .underline-bar {
+            background-color: var(--tn-accent);
+            height: 1.8px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-60%);
+            background: none;
+            border: none;
+            color: var(--tn-text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--tn-text-primary);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background-color: var(--tn-btn-disabled-bg);
+            color: var(--tn-btn-disabled-text);
+            box-shadow: none;
+            margin-top: 6px;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn.ready {
+            background-color: var(--tn-accent);
+            color: #FFFFFF;
+            box-shadow: 0 8px 18px var(--tn-accent-shadow);
+        }
+
+        .submit-btn.ready:hover {
+            background-color: var(--tn-accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px var(--tn-accent-shadow);
+        }
+
+        .submit-btn.ready:active {
+            transform: scale(0.98);
+        }
+
+        /* Back link */
+        .back-link-wrapper {
+            text-align: center;
+            width: 100%;
+        }
+
+        .back-link {
+            font-size: 14px;
+            color: var(--tn-text-body);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s ease;
+        }
+
+        .back-link:hover {
+            color: var(--tn-accent);
+            text-decoration: underline;
+        }
+
+        /* Version Section */
+        .version-section {
+            margin-top: 36px;
+            margin-bottom: 8px;
+            text-align: center;
+            font-size: 12.5px;
+            color: var(--tn-text-secondary);
+            font-weight: 400;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
-<!--end::Head-->
-
-<body class="login-page bg-body-secondary">
-    <div class="login-box">
-        <div class="login-logo">
-            <a href="/"><b>Kirana</b> People</a>
-        </div>
-        <!-- /.login-logo -->
-        <div class="card">
-            <div class="card-body login-card-body">
-                <p class="login-box-msg fw-semibold mb-2">Atur Ulang Kata Sandi</p>
-                <p class="text-muted small text-center mb-4">
-                    Masukkan kata sandi baru Anda. Kata sandi minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka.
-                </p>
-
-                @if ($errors->any())
-                    <div class="alert alert-danger" role="alert">
-                        <ul class="mb-0 small ps-3">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form action="{{ route('password.update') }}" method="post">
-                    @csrf
-                    <input type="hidden" name="token" value="{{ $token }}">
-
-                    <div class="input-group mb-3">
-                        <input type="email" name="email" class="form-control" placeholder="Email"
-                            value="{{ old('email', $email) }}" required readonly style="background-color: #f1f3f5;">
-                        <div class="input-group-text">
-                            <span class="bi bi-envelope"></span>
-                        </div>
-                    </div>
-
-                    <div class="input-group mb-3">
-                        <input type="password" name="password" class="form-control" placeholder="Kata Sandi Baru" required autofocus>
-                        <div class="input-group-text">
-                            <span class="bi bi-lock-fill"></span>
-                        </div>
-                    </div>
-
-                    <div class="input-group mb-4">
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Ulangi Kata Sandi Baru" required>
-                        <div class="input-group-text">
-                            <span class="bi bi-lock"></span>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 mb-3">
-                        <button type="submit" class="btn btn-primary fw-semibold py-2">
-                            <i class="bi bi-shield-check me-1"></i> Simpan Kata Sandi Baru
-                        </button>
-                    </div>
-                </form>
-
-                <p class="mb-0 text-center">
-                    <a href="{{ route('login') }}" class="text-decoration-none small text-muted">
-                        <i class="bi bi-arrow-left me-1"></i> Batal dan Kembali ke Masuk
-                    </a>
-                </p>
+<body>
+    <div class="login-wrapper">
+        <div class="main-content">
+            <!-- App Logo -->
+            <div class="logo-container">
+                <img src="{{ asset('logoKiranaSquare.jpeg') }}" alt="Kirana Logo" class="app-logo">
             </div>
-            <!-- /.login-card-body -->
+
+            <!-- Title & Subtitle -->
+            <div class="header-section">
+                <h1 class="login-title">Atur Ulang Kata Sandi</h1>
+                <p class="login-subtitle">Masukkan kata sandi baru yang aman untuk akun Anda</p>
+            </div>
+
+            <!-- Error Alerts -->
+            @if ($errors->any())
+                <div class="alert-banner alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
+
+            <!-- Form -->
+            <form action="{{ route('password.update') }}" method="POST" class="login-form" id="resetForm">
+                @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+
+                <!-- Email (Readonly) -->
+                <div class="input-group-underline">
+                    <input 
+                        type="email" 
+                        name="email" 
+                        id="emailInput"
+                        class="underline-input" 
+                        placeholder="Email" 
+                        value="{{ old('email', $email) }}" 
+                        required 
+                        readonly
+                    >
+                    <div class="underline-bar"></div>
+                </div>
+
+                <!-- New Password -->
+                <div class="input-group-underline">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="newPasswordInput"
+                        class="underline-input" 
+                        placeholder="Kata Sandi Baru" 
+                        required 
+                        autocomplete="new-password"
+                        autofocus
+                    >
+                    <button type="button" class="password-toggle-btn" id="toggleNewPasswordBtn" title="Tampilkan kata sandi" aria-label="Toggle password visibility">
+                        <i class="bi bi-eye-slash" id="toggleNewPasswordIcon"></i>
+                    </button>
+                    <div class="underline-bar"></div>
+                </div>
+
+                <!-- Password Confirmation -->
+                <div class="input-group-underline">
+                    <input 
+                        type="password" 
+                        name="password_confirmation" 
+                        id="confirmPasswordInput"
+                        class="underline-input" 
+                        placeholder="Ulangi Kata Sandi Baru" 
+                        required 
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="password-toggle-btn" id="toggleConfirmPasswordBtn" title="Tampilkan kata sandi" aria-label="Toggle password visibility">
+                        <i class="bi bi-eye-slash" id="toggleConfirmPasswordIcon"></i>
+                    </button>
+                    <div class="underline-bar"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Simpan Kata Sandi Baru
+                </button>
+
+                <!-- Back to Login -->
+                <div class="back-link-wrapper">
+                    <a href="{{ route('login') }}" class="back-link">
+                        <i class="bi bi-arrow-left"></i>
+                        Batal dan Kembali ke Masuk
+                    </a>
+                </div>
+            </form>
+
+            <!-- Version Section -->
+            <div class="version-section">
+                Versi 1.0.0 (1)
+            </div>
         </div>
     </div>
-    <!-- /.login-box -->
-</body>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const newPasswordInput = document.getElementById('newPasswordInput');
+            const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+            const submitBtn = document.getElementById('submitBtn');
+
+            function updateButtonState() {
+                const hasPass = newPasswordInput.value.length > 0;
+                const hasConfirm = confirmPasswordInput.value.length > 0;
+                if (hasPass && hasConfirm) {
+                    submitBtn.classList.add('ready');
+                } else {
+                    submitBtn.classList.remove('ready');
+                }
+            }
+
+            newPasswordInput.addEventListener('input', updateButtonState);
+            confirmPasswordInput.addEventListener('input', updateButtonState);
+            updateButtonState();
+
+            // Toggle visibility helpers
+            function setupToggle(btnId, iconId, inputId) {
+                const btn = document.getElementById(btnId);
+                const icon = document.getElementById(iconId);
+                const input = document.getElementById(inputId);
+
+                btn.addEventListener('click', function () {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                    }
+                });
+            }
+
+            setupToggle('toggleNewPasswordBtn', 'toggleNewPasswordIcon', 'newPasswordInput');
+            setupToggle('toggleConfirmPasswordBtn', 'toggleConfirmPasswordIcon', 'confirmPasswordInput');
+        });
+    </script>
+</body>
 </html>

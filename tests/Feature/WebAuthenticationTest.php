@@ -49,7 +49,7 @@ class WebAuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/role-selection');
+        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticatedAs($hr);
     }
 

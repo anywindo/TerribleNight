@@ -1,159 +1,549 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Aktivasi Akun & Ubah Kata Sandi | Kirana People</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktivasi Kata Sandi | KIRANA People</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     @include('layouts.partials.favicons')
-    <!--begin::Fonts-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
-        crossorigin="anonymous">
-    <!--begin::Third Party Plugin(Bootstrap Icons)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css"
-        crossorigin="anonymous">
-    <!--begin::Required Plugin(AdminLTE)-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/css/adminlte.min.css">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <style>
-        .check-item {
-            font-size: 0.85rem;
-            transition: color 0.2s;
+        :root {
+            --tn-accent: #FF21A4;
+            --tn-accent-hover: #e01b8e;
+            --tn-accent-shadow: rgba(255, 33, 164, 0.32);
+            --tn-accent-light: rgba(255, 33, 164, 0.12);
+            --tn-text-primary: #1C1C1E;
+            --tn-text-secondary: #8E8E93;
+            --tn-text-body: #333333;
+            --tn-divider: #E5E5EA;
+            --tn-input-bg: #F2F4F7;
+            --tn-input-placeholder: #9CA3AF;
+            --tn-btn-disabled-bg: #E2E4E9;
+            --tn-btn-disabled-text: #FFFFFF;
         }
 
-        .check-item.valid {
-            color: #198754;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #FFFFFF;
+            color: var(--tn-text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            margin: 0;
+        }
+
+        .onboarding-wrapper {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #FFFFFF;
+            /* Optical centering with medium upward offset */
+            margin-top: -3vh;
+            padding: 0 8px;
+            position: relative;
+        }
+
+        /* Key Icon Badge */
+        .badge-icon-container {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: var(--tn-accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .badge-icon {
+            font-size: 28px;
+            color: var(--tn-accent);
+            transform: rotate(-45deg);
+        }
+
+        /* Header Text */
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: 23px;
+            font-weight: 700;
+            color: var(--tn-text-primary);
+            letter-spacing: -0.4px;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--tn-text-secondary);
+            line-height: 1.45;
+            max-width: 340px;
+            margin: 0 auto;
+        }
+
+        .employee-badge {
+            display: inline-block;
             font-weight: 600;
+            color: var(--tn-text-primary);
         }
 
-        .check-item.invalid {
-            color: #6c757d;
+        /* Alert Banners */
+        .alert-banner {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 13.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.25s ease-out;
         }
 
-        .btn-toggle-pwd {
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.09);
+            color: #DC2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Form Controls */
+        .onboarding-form {
+            width: 100%;
+        }
+
+        .form-group-custom {
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .form-label-custom {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #4B5563;
+            margin-bottom: 7px;
+        }
+
+        .input-box-wrapper {
+            position: relative;
+            width: 100%;
+            background-color: var(--tn-input-bg);
+            border: 1.5px solid transparent;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .input-box-wrapper:focus-within {
+            background-color: #FFFFFF;
+            border-color: var(--tn-accent);
+            box-shadow: 0 0 0 3px rgba(255, 33, 164, 0.12);
+        }
+
+        .custom-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 14.5px;
+            color: var(--tn-text-primary);
+            padding: 13px 44px 13px 14px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .custom-input::placeholder {
+            color: var(--tn-input-placeholder);
+            opacity: 1;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--tn-text-secondary);
+            font-size: 18px;
             cursor: pointer;
-            border-left: 0;
-            background: #fff;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--tn-text-primary);
+        }
+
+        /* Requirements Checklist */
+        .requirements-container {
+            margin-top: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .rule-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            color: var(--tn-text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        .rule-row.valid {
+            color: var(--tn-text-primary);
+            font-weight: 500;
+        }
+
+        .rule-icon {
+            font-size: 16px;
+            color: #C7C7CC;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .rule-row.valid .rule-icon {
+            color: var(--tn-accent);
+        }
+
+        /* Privacy Policy Checkbox */
+        .privacy-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 26px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .privacy-checkbox-custom {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid #C7C7CC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: all 0.2s ease;
+            background-color: transparent;
+            color: transparent;
+            font-size: 11px;
+        }
+
+        .privacy-checkbox-custom.checked {
+            background-color: var(--tn-accent);
+            border-color: var(--tn-accent);
+            color: #FFFFFF;
+        }
+
+        .privacy-text {
+            font-size: 13px;
+            line-height: 1.45;
+            color: #4B5563;
+        }
+
+        .privacy-link {
+            color: var(--tn-accent);
+            text-decoration: underline;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .privacy-link:hover {
+            color: var(--tn-accent-hover);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background-color: var(--tn-btn-disabled-bg);
+            color: var(--tn-btn-disabled-text);
+            box-shadow: none;
+        }
+
+        .submit-btn.ready {
+            background-color: var(--tn-accent);
+            color: #FFFFFF;
+            box-shadow: 0 8px 18px var(--tn-accent-shadow);
+        }
+
+        .submit-btn.ready:hover {
+            background-color: var(--tn-accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px var(--tn-accent-shadow);
+        }
+
+        .submit-btn.ready:active {
+            transform: scale(0.98);
+        }
+
+        /* Privacy Policy Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 18px;
+            max-width: 460px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--tn-text-primary);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--tn-text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 18px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #4B5563;
+        }
+
+        .policy-section-title {
+            font-weight: 700;
+            color: var(--tn-text-primary);
+            margin-top: 14px;
+            margin-bottom: 4px;
+        }
+
+        .policy-section-title:first-child {
+            margin-top: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
-
-<body class="login-page bg-body-secondary">
-    <div class="login-box" style="width: 450px; max-width: 90vw;">
-        <div class="login-logo mb-4">
-            <a href="/"><b>KIRANA</b> GROUP</a>
+<body>
+    <div class="onboarding-wrapper">
+        <!-- Key Icon Badge -->
+        <div class="badge-icon-container">
+            <i class="bi bi-key-fill badge-icon"></i>
         </div>
 
-        <div class="text-center mb-4">
-            <h5 class="mb-1">
-                Selamat datang, <b>{{ $user->name }}</b>
+        <!-- Title & Subtitle -->
+        <div class="header-section">
+            <h1 class="page-title">Aktivasi Kata Sandi</h1>
+            <p class="page-subtitle">
+                Halo <span class="employee-badge">{{ $user->name }}</span>
                 @if($user->employee_id)
-                    <span class="text-secondary"><br>{{ $user->employee_id }}</span>
-                @endif
-            </h5>
-            <p class="text-muted small">Silakan ubah kata sandi default Anda untuk melanjutkan</p>
+                    (<span class="employee-badge">{{ $user->employee_id }}</span>)
+                @endif,
+                demi keamanan silakan buat kata sandi baru untuk akun KIRANA People Anda.
+            </p>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-                <div class="alert alert-warning py-2 px-3 mb-3 small d-flex align-items-start" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2 fs-5 text-warning"></i>
-                    <div>
-                        Akun Anda saat ini menggunakan <strong>kata sandi bawaan (tanggal lahir)</strong>. Silakan buat
-                        kata sandi baru.
-                    </div>
-                </div>
-
-                @if ($errors->any())
-                    <div class="alert alert-danger py-2 px-3 mb-3 small">
-                        <ul class="mb-0 ps-3">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form action="{{ route('onboarding.password.update') }}" method="POST" id="onboardingForm">
-                    @csrf
-
-                    <!-- Kata Sandi Baru -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary mb-1">
-                            Kata Sandi Baru <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white text-muted">
-                                <i class="bi bi-key-fill"></i>
-                            </span>
-                            <input type="password" name="password" id="passwordInput" class="form-control"
-                                placeholder="Minimal 8 karakter" required autofocus>
-                            <button type="button" class="input-group-text btn-toggle-pwd" id="togglePasswordBtn">
-                                <i class="bi bi-eye" id="passwordIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Konfirmasi Kata Sandi -->
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary mb-1">
-                            Konfirmasi Kata Sandi <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white text-muted">
-                                <i class="bi bi-shield-check"></i>
-                            </span>
-                            <input type="password" name="password_confirmation" id="confirmPasswordInput"
-                                class="form-control" placeholder="Ketik ulang kata sandi baru" required>
-                            <button type="button" class="input-group-text btn-toggle-pwd" id="toggleConfirmBtn">
-                                <i class="bi bi-eye" id="confirmIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Syarat Password -->
-                    <div class="p-2 px-3 rounded bg-light border mb-4">
-                        <div class="check-item invalid d-flex align-items-center mb-1" id="ruleLength">
-                            <i class="bi bi-circle me-2" id="iconLength"></i>
-                            <span>Panjang minimal 8 karakter</span>
-                        </div>
-                        <div class="check-item invalid d-flex align-items-center mb-1" id="ruleLetters">
-                            <i class="bi bi-circle me-2" id="iconLetters"></i>
-                            <span>Mengandung huruf besar & kecil (A-Z, a-z)</span>
-                        </div>
-                        <div class="check-item invalid d-flex align-items-center mb-1" id="ruleNumber">
-                            <i class="bi bi-circle me-2" id="iconNumber"></i>
-                            <span>Mengandung minimal 1 angka (0-9)</span>
-                        </div>
-                        <div class="check-item invalid d-flex align-items-center" id="ruleMatch">
-                            <i class="bi bi-circle me-2" id="iconMatch"></i>
-                            <span>Konfirmasi kata sandi cocok</span>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary py-2 fw-semibold" id="submitBtn" disabled>
-                            <span id="submitText">Simpan & Lanjutkan</span>
-                            <i class="bi bi-arrow-right ms-1"></i>
-                        </button>
-                    </div>
-                </form>
+        <!-- Error Alerts -->
+        @if ($errors->any())
+            <div class="alert-banner alert-error">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span>{{ $errors->first() }}</span>
             </div>
-        </div>
+        @endif
 
-        <div class="text-center mt-5">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-link text-secondary text-decoration-none hover-danger">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                </button>
-            </form>
-        </div>
+        <!-- Form -->
+        <form action="{{ route('onboarding.password.update') }}" method="POST" class="onboarding-form" id="onboardingForm">
+            @csrf
+
+            <!-- Kata Sandi Baru -->
+            <div class="form-group-custom">
+                <label class="form-label-custom" for="passwordInput">Kata Sandi Baru</label>
+                <div class="input-box-wrapper">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="passwordInput" 
+                        class="custom-input" 
+                        placeholder="Minimal 8 karakter" 
+                        required 
+                        autofocus
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="password-toggle-btn" id="togglePasswordBtn" title="Tampilkan kata sandi" aria-label="Toggle password">
+                        <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Konfirmasi Kata Sandi -->
+            <div class="form-group-custom">
+                <label class="form-label-custom" for="confirmPasswordInput">Konfirmasi Kata Sandi</label>
+                <div class="input-box-wrapper">
+                    <input 
+                        type="password" 
+                        name="password_confirmation" 
+                        id="confirmPasswordInput" 
+                        class="custom-input" 
+                        placeholder="Ketik ulang kata sandi" 
+                        required 
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="password-toggle-btn" id="toggleConfirmBtn" title="Tampilkan kata sandi" aria-label="Toggle confirm password">
+                        <i class="bi bi-eye-slash" id="toggleConfirmIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Requirements List -->
+            <div class="requirements-container">
+                <div class="rule-row" id="ruleLength">
+                    <i class="bi bi-circle rule-icon" id="iconLength"></i>
+                    <span>Minimal 8 karakter</span>
+                </div>
+                <div class="rule-row" id="ruleLetters">
+                    <i class="bi bi-circle rule-icon" id="iconLetters"></i>
+                    <span>Kombinasi huruf besar & huruf kecil</span>
+                </div>
+                <div class="rule-row" id="ruleNumber">
+                    <i class="bi bi-circle rule-icon" id="iconNumber"></i>
+                    <span>Mengandung minimal 1 angka</span>
+                </div>
+                <div class="rule-row" id="ruleMatch">
+                    <i class="bi bi-circle rule-icon" id="iconMatch"></i>
+                    <span>Konfirmasi kata sandi cocok</span>
+                </div>
+            </div>
+
+            <!-- Privacy Policy Row -->
+            <div class="privacy-row" id="privacyContainer">
+                <input type="checkbox" id="privacyCheckbox" style="display: none;" required>
+                <div class="privacy-checkbox-custom" id="privacyVisual">
+                    <i class="bi bi-check"></i>
+                </div>
+                <span class="privacy-text">
+                    Saya telah membaca dan menyetujui 
+                    <span class="privacy-link" id="openPrivacyBtn">Kebijakan Privasi & Ketentuan Layanan <i class="bi bi-box-arrow-up-right" style="font-size: 11px;"></i></span>
+                </span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Simpan & Lanjutkan
+            </button>
+        </form>
     </div>
 
-    <!--begin::Scripts-->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/js/adminlte.min.js"></script>
+    <!-- Privacy Policy Modal -->
+    <div class="modal-overlay" id="privacyModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Kebijakan Privasi & Ketentuan</span>
+                <button type="button" class="modal-close-btn" id="closePrivacyBtn">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="policy-section-title">1. Pengumpulan Data Lokasi (GPS & Geofence)</div>
+                <p>Aplikasi ini memproses koordinat lokasi (latitude dan longitude) perangkat Anda untuk memvalidasi presensi masuk, istirahat, dan pulang dilakukan di dalam batas radius area kantor kerja yang sah.</p>
+
+                <div class="policy-section-title">2. Verifikasi Foto Wajah & Kamera</div>
+                <p>Untuk menjamin keaslian dan mencegah manipulasi presensi (titip absen), aplikasi memerlukan akses kamera depan untuk mengambil foto selfie real-time saat melakukan presensi.</p>
+
+                <div class="policy-section-title">3. Keamanan Kata Sandi & Akun</div>
+                <p>Kata sandi yang Anda buat pada tahap aktivasi ini dienkripsi dengan standar industri. Anda bertanggung jawab penuh atas kerahasiaan kata sandi Anda.</p>
+
+                <div class="policy-section-title">4. Penyimpanan & Kerahasiaan Data</div>
+                <p>Seluruh data kehadiran dan foto presensi disimpan secara aman di infrastruktur server perusahaan KIRANA GROUP dan hanya dapat diakses oleh petugas HR yang berwenang.</p>
+
+                <div class="policy-section-title">5. Integritas Presensi & Kepatuhan</div>
+                <p>Karyawan berkewajiban mencatat kehadiran secara tertib dan berurutan sesuai jam kerja dan jadwal istirahat.</p>
+            </div>
+            <button type="button" class="submit-btn ready" id="acceptPrivacyBtn" style="height: 42px; font-size: 14px;">
+                Saya Mengerti & Setuju
+            </button>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -161,8 +551,8 @@
             const confirmInput = document.getElementById('confirmPasswordInput');
             const togglePwdBtn = document.getElementById('togglePasswordBtn');
             const toggleConfirmBtn = document.getElementById('toggleConfirmBtn');
-            const pwdIcon = document.getElementById('passwordIcon');
-            const confirmIcon = document.getElementById('confirmIcon');
+            const togglePwdIcon = document.getElementById('togglePasswordIcon');
+            const toggleConfirmIcon = document.getElementById('toggleConfirmIcon');
 
             const ruleLength = document.getElementById('ruleLength');
             const ruleLetters = document.getElementById('ruleLetters');
@@ -174,60 +564,125 @@
             const iconNumber = document.getElementById('iconNumber');
             const iconMatch = document.getElementById('iconMatch');
 
-            const submitBtn = document.getElementById('submitBtn');
-            const onboardingForm = document.getElementById('onboardingForm');
-            const submitText = document.getElementById('submitText');
+            const privacyContainer = document.getElementById('privacyContainer');
+            const privacyCheckbox = document.getElementById('privacyCheckbox');
+            const privacyVisual = document.getElementById('privacyVisual');
 
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Password toggles
             togglePwdBtn.addEventListener('click', function () {
-                const isPassword = pwdInput.type === 'password';
-                pwdInput.type = isPassword ? 'text' : 'password';
-                pwdIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                if (pwdInput.type === 'password') {
+                    pwdInput.type = 'text';
+                    togglePwdIcon.classList.remove('bi-eye-slash');
+                    togglePwdIcon.classList.add('bi-eye');
+                } else {
+                    pwdInput.type = 'password';
+                    togglePwdIcon.classList.remove('bi-eye');
+                    togglePwdIcon.classList.add('bi-eye-slash');
+                }
             });
 
             toggleConfirmBtn.addEventListener('click', function () {
-                const isPassword = confirmInput.type === 'password';
-                confirmInput.type = isPassword ? 'text' : 'password';
-                confirmIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                if (confirmInput.type === 'password') {
+                    confirmInput.type = 'text';
+                    toggleConfirmIcon.classList.remove('bi-eye-slash');
+                    toggleConfirmIcon.classList.add('bi-eye');
+                } else {
+                    confirmInput.type = 'password';
+                    toggleConfirmIcon.classList.remove('bi-eye');
+                    toggleConfirmIcon.classList.add('bi-eye-slash');
+                }
             });
 
+            // Validation rules
             function updateRule(elem, iconElem, isValid) {
                 if (isValid) {
-                    elem.className = elem.className.replace('invalid', 'valid');
-                    iconElem.className = 'bi bi-check-circle-fill me-2 text-success';
+                    elem.classList.add('valid');
+                    iconElem.className = 'bi bi-check-circle-fill rule-icon';
                 } else {
-                    elem.className = elem.className.replace('valid', 'invalid');
-                    iconElem.className = 'bi bi-circle me-2';
+                    elem.classList.remove('valid');
+                    iconElem.className = 'bi bi-circle rule-icon';
                 }
             }
 
-            function validatePasswords() {
+            function validateForm() {
                 const val = pwdInput.value;
                 const confirmVal = confirmInput.value;
 
-                const isLenValid = val.length >= 8;
-                const hasMixedCase = /[a-z]/.test(val) && /[A-Z]/.test(val);
+                const hasLength = val.length >= 8;
+                const hasLetters = /[a-z]/.test(val) && /[A-Z]/.test(val);
                 const hasNumber = /[0-9]/.test(val);
-                const isMatchValid = val.length > 0 && val === confirmVal;
+                const hasMatch = val.length > 0 && val === confirmVal;
 
-                updateRule(ruleLength, iconLength, isLenValid);
-                updateRule(ruleLetters, iconLetters, hasMixedCase);
+                updateRule(ruleLength, iconLength, hasLength);
+                updateRule(ruleLetters, iconLetters, hasLetters);
                 updateRule(ruleNumber, iconNumber, hasNumber);
-                updateRule(ruleMatch, iconMatch, isMatchValid);
+                updateRule(ruleMatch, iconMatch, hasMatch);
 
-                const allValid = isLenValid && hasMixedCase && hasNumber && isMatchValid;
-                submitBtn.disabled = !allValid;
+                const isAllValid = hasLength && hasLetters && hasNumber && hasMatch && privacyCheckbox.checked;
+
+                if (isAllValid) {
+                    submitBtn.classList.add('ready');
+                } else {
+                    submitBtn.classList.remove('ready');
+                }
             }
 
-            pwdInput.addEventListener('input', validatePasswords);
-            confirmInput.addEventListener('input', validatePasswords);
+            pwdInput.addEventListener('input', validateForm);
+            confirmInput.addEventListener('input', validateForm);
 
-            onboardingForm.addEventListener('submit', function () {
-                submitBtn.disabled = true;
-                submitText.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Menyimpan...';
+            // Privacy checkbox toggle
+            privacyContainer.addEventListener('click', function (e) {
+                if (e.target.closest('#openPrivacyBtn')) return;
+                privacyCheckbox.checked = !privacyCheckbox.checked;
+                updatePrivacyVisual();
+                validateForm();
             });
+
+            function updatePrivacyVisual() {
+                if (privacyCheckbox.checked) {
+                    privacyVisual.classList.add('checked');
+                } else {
+                    privacyVisual.classList.remove('checked');
+                }
+            }
+
+            // Privacy Modal
+            const privacyModal = document.getElementById('privacyModal');
+            const openPrivacyBtn = document.getElementById('openPrivacyBtn');
+            const closePrivacyBtn = document.getElementById('closePrivacyBtn');
+            const acceptPrivacyBtn = document.getElementById('acceptPrivacyBtn');
+
+            function openModal() {
+                privacyModal.classList.add('active');
+            }
+
+            function closeModal() {
+                privacyModal.classList.remove('active');
+            }
+
+            openPrivacyBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                openModal();
+            });
+
+            closePrivacyBtn.addEventListener('click', closeModal);
+            acceptPrivacyBtn.addEventListener('click', function () {
+                privacyCheckbox.checked = true;
+                updatePrivacyVisual();
+                validateForm();
+                closeModal();
+            });
+
+            privacyModal.addEventListener('click', function (e) {
+                if (e.target === privacyModal) {
+                    closeModal();
+                }
+            });
+
+            validateForm();
         });
     </script>
-    <!--end::Scripts-->
 </body>
-
 </html>

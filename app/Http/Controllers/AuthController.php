@@ -51,15 +51,17 @@ class AuthController extends Controller
                 return redirect()->route('onboarding.password');
             }
 
-            // Skip role selection for super-admin
-            if ($authenticatedUser->isSuperAdmin()) {
+            // HR & Admin langsung diarahkan ke /admin/dashboard
+            if ($authenticatedUser->isAdmin()) {
                 return redirect()->intended('/admin/dashboard');
             }
 
-            // Redirect based on role
+            /*
+            // Sebelumnya role selection untuk HR
             if ($authenticatedUser->isAdmin()) {
                 return redirect()->intended('/role-selection');
             }
+            */
 
             return redirect()->intended('/attendance');
         }

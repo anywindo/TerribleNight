@@ -35,7 +35,7 @@ class EnsurePasswordIsChanged
 
         // If user already changed password and visits onboarding, redirect to app
         if ($user && !$user->mustChangePassword() && ($request->routeIs('onboarding.*') || $request->is('onboarding*'))) {
-            return redirect()->intended($user->isAdmin() ? '/role-selection' : '/attendance');
+            return redirect()->intended($user->isAdmin() ? '/admin/dashboard' : '/attendance');
         }
 
         return $next($request);

@@ -16,7 +16,7 @@ class OnboardingController extends Controller
         $user = auth()->user();
 
         if (!$user->mustChangePassword()) {
-            return redirect()->intended($user->isAdmin() ? '/role-selection' : '/attendance');
+            return redirect()->intended($user->isAdmin() ? '/admin/dashboard' : '/attendance');
         }
 
         return view('auth.onboarding-password', [
@@ -62,7 +62,7 @@ class OnboardingController extends Controller
         $user->password_changed_at = now();
         $user->save();
 
-        $target = $user->isAdmin() ? '/role-selection' : '/attendance';
+        $target = $user->isAdmin() ? '/admin/dashboard' : '/attendance';
 
         return redirect()->intended($target)->with('success', 'Selamat datang! Kata sandi Anda berhasil diperbarui.');
     }
