@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Security: block access to hidden files, dotfiles, and composer/git
+    RewriteRule ^\.env - [F,L,NC]
+    RewriteRule ^\.git - [F,L,NC]
+    RewriteRule ^composer\.(json|lock) - [F,L,NC]
+
+    # Forward all traffic into the /public directory
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
