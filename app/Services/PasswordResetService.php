@@ -107,6 +107,43 @@ class PasswordResetService
     }
 
     /**
+     * Verify numeric OTP without resetting password (Mobile API).
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function verifyOtp(string $email, string $otp): array
+    {
+        $normalizedEmail = strtolower(trim($email));
+        $record = DB::table('password_reset_tokens')->where('email', $normalizedEmail)->first();
+
+        if (!$record || empty($record->otp)) {
+            return [
+                'success' => false,
+                'message' => 'Permintaan reset kata sandi tidak ditemukan atau telah kedaluwarsa.',
+            ];
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(self::EXPIRATION_MINUTES)->isPast()) {
+            return [
+                'success' => false,
+                'message' => 'Kode OTP telah kedaluwarsa. Silakan ajukan kode baru.',
+            ];
+        }
+
+        if (!Hash::check($otp, $record->otp)) {
+            return [
+                'success' => false,
+                'message' => 'Kode OTP yang Anda masukkan salah.',
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Kode OTP valid.',
+        ];
+    }
+
+    /**
      * Reset password using numeric OTP (Mobile API).
      *
      * @return array{success: bool, message: string}

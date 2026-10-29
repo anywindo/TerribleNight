@@ -234,11 +234,44 @@ class AuthController extends BaseController
             'email' => 'required|email',
         ], PasswordResetService::validationMessages());
 
-        $service->sendResetNotification($request->email);
+        $sent = $service->sendResetNotification($request->email);
+
+        if (!$sent) {
+            return $this->error('Email tidak terdaftar dalam sistem.', 404, [
+                'email' => ['Email tidak terdaftar dalam sistem.'],
+            ]);
+        }
 
         return $this->success(
             null,
-            'Jika email Anda terdaftar, instruksi reset kata sandi dan kode OTP telah dikirimkan ke email Anda.'
+            'Kode OTP verifikasi telah dikirimkan ke email Anda.'
+        );
+    }
+
+    /**
+     * Verify numeric OTP before setting a new password.
+     */
+    public function verifyOtp(Request $request, PasswordResetService $service): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+        ], PasswordResetService::validationMessages());
+
+        $result = $service->verifyOtp(
+            $request->email,
+            $request->otp
+        );
+
+        if (!$result['success']) {
+            return $this->error($result['message'], 422, [
+                'otp' => [$result['message']],
+            ]);
+        }
+
+        return $this->success(
+            null,
+            $result['message']
         );
     }
 

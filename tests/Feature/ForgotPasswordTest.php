@@ -222,7 +222,7 @@ class ForgotPasswordTest extends TestCase
         $this->assertFalse(Hash::check('NewPassword123!', $this->user->fresh()->password));
     }
 
-    public function test_forgot_password_prevents_user_enumeration(): void
+    public function test_forgot_password_rejects_unregistered_email(): void
     {
         Notification::fake();
 
@@ -231,15 +231,45 @@ class ForgotPasswordTest extends TestCase
             'email' => 'nobody@example.com',
         ]);
         $webResponse->assertRedirect();
-        $webResponse->assertSessionHas('status');
+        $webResponse->assertSessionHasErrors(['email']);
 
         // API submission with non-existent email
         $apiResponse = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'nobody@example.com',
         ]);
-        $apiResponse->assertStatus(200);
-        $apiResponse->assertJsonPath('meta.success', true);
+        $apiResponse->assertStatus(404);
+        $apiResponse->assertJsonPath('meta.success', false);
+        $apiResponse->assertJsonPath('meta.message', 'Email tidak terdaftar dalam sistem.');
 
         Notification::assertNothingSent();
+    }
+
+    public function test_api_verify_otp_with_valid_and_invalid_otp(): void
+    {
+        $token = Str::random(60);
+        $otp = '789123';
+
+        DB::table('password_reset_tokens')->insert([
+            'email' => 'employee@example.com',
+            'token' => Hash::make($token),
+            'otp' => Hash::make($otp),
+            'created_at' => now(),
+        ]);
+
+        // Wrong OTP
+        $wrongResponse = $this->postJson('/api/v1/auth/verify-otp', [
+            'email' => 'employee@example.com',
+            'otp' => '000000',
+        ]);
+        $wrongResponse->assertStatus(422);
+        $wrongResponse->assertJsonPath('meta.success', false);
+
+        // Correct OTP
+        $validResponse = $this->postJson('/api/v1/auth/verify-otp', [
+            'email' => 'employee@example.com',
+            'otp' => $otp,
+        ]);
+        $validResponse->assertStatus(200);
+        $validResponse->assertJsonPath('meta.success', true);
     }
 }

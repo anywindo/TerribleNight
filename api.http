@@ -44,6 +44,37 @@ POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{token}}
 Accept: application/json
 
+### Request Password Reset OTP (Forgot Password)
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "employee@example.com"
+}
+
+### Verify Password Reset OTP
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "employee@example.com",
+    "otp": "123456"
+}
+
+### Reset Password with OTP
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+Accept: application/json
+
+{
+    "email": "employee@example.com",
+    "otp": "123456",
+    "password": "NewPassword123!",
+    "password_confirmation": "NewPassword123!"
+}
+
 
 # =========================================================================
 # 2. CLIENTS

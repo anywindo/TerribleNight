@@ -32,9 +32,12 @@ class ForgotPasswordController extends Controller
             'email' => 'required|email',
         ], PasswordResetService::validationMessages());
 
-        // Always show the same status to prevent user enumeration
-        $this->resetService->sendResetNotification($request->email);
+        $sent = $this->resetService->sendResetNotification($request->email);
 
-        return back()->with('status', 'Jika email Anda terdaftar, tautan reset kata sandi beserta kode OTP telah dikirimkan ke email Anda.');
+        if (!$sent) {
+            return back()->withErrors(['email' => 'Email tidak terdaftar dalam sistem.'])->withInput();
+        }
+
+        return back()->with('status', 'Tautan reset kata sandi beserta kode OTP telah dikirimkan ke email Anda.');
     }
 }
