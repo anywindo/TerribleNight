@@ -29,7 +29,25 @@ class UserResource extends JsonResource
             ] : null,
             'avatar'               => $this->avatar,
             'avatar_url'           => $this->avatar_url,
-            'is_active'            => $this->is_active,
+            'is_active'            => (bool) ($this->is_active ?? true),
+            'shift'                => $this->shift ? [
+                'id'         => $this->shift->id,
+                'name'       => $this->shift->shift_name,
+                'start_time' => substr($this->shift->default_start_time ?? '', 0, 5),
+                'end_time'   => substr($this->shift->default_end_time ?? '', 0, 5),
+            ] : null,
+            'department'           => $this->relationLoaded('teams')
+                ? $this->teams->first()?->name
+                : ($this->teams()->first()?->name ?? null),
+            'gender'               => (function () {
+                if ($this->nik) {
+                    $clean = preg_replace('/[^0-9]/', '', (string) $this->nik);
+                    if (strlen($clean) === 16) {
+                        return (int) substr($clean, 6, 2) > 40 ? 'Perempuan' : 'Laki-laki';
+                    }
+                }
+                return null;
+            })(),
             'roles'                => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'permissions'          => $this->whenLoaded('permissions', fn () => $this->getAllPermissions()->pluck('name')),
             'created_at'           => $this->created_at?->toISOString(),
