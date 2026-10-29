@@ -86,6 +86,7 @@ class AttendanceController extends Controller
             'data' => [
                 'date' => $today->toDateString(),
                 'status' => $attendance?->status?->value ?? ($attendance?->status ?? 'EXACT'),
+                'break_status' => $attendance ? ($attendance->break_status['label'] ?? '-') : '-',
                 'next_allowed_action' => $nextAction,
                 'active_break' => $activeBreak,
                 'shift' => $this->formatShift($shift),

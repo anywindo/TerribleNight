@@ -76,8 +76,8 @@ class Attendance extends Model
 
     public function getBreakStatusAttribute()
     {
-        $startBreakEvent = $this->events->where('event_type', \App\Enums\EventType::START_BREAK)->first();
-        $endBreakEvent = $this->events->where('event_type', \App\Enums\EventType::END_BREAK)->first();
+        $startBreakEvent = $this->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK');
+        $endBreakEvent = $this->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
         
         if (!$startBreakEvent || !$this->shift || !$this->shift->break_start || !$this->shift->break_end) {
             return ['label' => '-', 'color' => 'secondary'];
@@ -98,12 +98,29 @@ class Attendance extends Model
             $breakEnd = \App\Models\Setting::get('friday_break_end', '13:00');
         }
 
+        $expectedStartTime = \Carbon\Carbon::parse($breakStart)->format('H:i:s');
+        $expectedEndTime = \Carbon\Carbon::parse($breakEnd)->format('H:i:s');
+        $actualStartTime = \Carbon\Carbon::parse($startBreakEvent->timestamp)->format('H:i:s');
+        $actualEndTime = \Carbon\Carbon::parse($endBreakEvent->timestamp)->format('H:i:s');
+
         $expectedDuration = \Carbon\Carbon::parse($breakEnd)->diffInMinutes(\Carbon\Carbon::parse($breakStart), true);
 
-        if ($actualDuration <= $expectedDuration) {
-            return ['label' => 'Tepat Waktu', 'color' => 'success'];
-        } else {
+        $isEarlyBreak = ($actualStartTime < $expectedStartTime);
+        $isLateBreak = ($actualStartTime > $expectedEndTime)
+            || ($actualEndTime > $expectedEndTime)
+            || ($actualDuration > $expectedDuration);
+
+        if ($isEarlyBreak) {
+            return [
+                'label' => $isLateBreak ? 'Terlambat, Istirahat Awal' : 'Istirahat Awal',
+                'color' => 'danger',
+            ];
+        }
+
+        if ($isLateBreak) {
             return ['label' => 'Terlambat', 'color' => 'danger'];
         }
+
+        return ['label' => 'Tepat Waktu', 'color' => 'success'];
     }
 }

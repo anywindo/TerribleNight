@@ -88,8 +88,8 @@ class BreakExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
     {
         $this->rowNumber++;
 
-        $startBreak = $attendance->events->where('event_type', 'START_BREAK')->first();
-        $endBreak = $attendance->events->where('event_type', 'END_BREAK')->first();
+        $startBreak = $attendance->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK');
+        $endBreak = $attendance->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
 
         $duration = '-';
         if ($startBreak && $endBreak) {

@@ -407,10 +407,14 @@
                             </div>
                             <div class="flex items-center space-x-1 mt-0.5">
                                 @if($startBreak)
-                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
-                                        {{ \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i') }}
+                                    @php
+                                        $actualStartBreakHi = \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i');
+                                        $isStartBreakLate = $actualStartBreakHi < $displayBreakStart || $actualStartBreakHi > $displayBreakEnd;
+                                    @endphp
+                                    <span class="text-[16px] font-bold {{ $isStartBreakLate ? 'text-red-500' : 'text-emerald-600' }} leading-tight">
+                                        {{ $actualStartBreakHi }}
                                     </span>
-                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                    <i class="fa-solid fa-circle-check {{ $isStartBreakLate ? 'text-red-500' : 'text-emerald-600' }} text-[12px]"></i>
                                 @else
                                     <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
                                 @endif
@@ -437,10 +441,14 @@
                             </div>
                             <div class="flex items-center space-x-1 mt-0.5">
                                 @if($endBreak)
-                                    <span class="text-[16px] font-bold text-emerald-600 leading-tight">
-                                        {{ \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i') }}
+                                    @php
+                                        $actualEndBreakHi = \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i');
+                                        $isEndBreakLate = $actualEndBreakHi < $displayBreakStart || $actualEndBreakHi > $displayBreakEnd;
+                                    @endphp
+                                    <span class="text-[16px] font-bold {{ $isEndBreakLate ? 'text-red-500' : 'text-emerald-600' }} leading-tight">
+                                        {{ $actualEndBreakHi }}
                                     </span>
-                                    <i class="fa-solid fa-circle-check text-emerald-600 text-[12px]"></i>
+                                    <i class="fa-solid fa-circle-check {{ $isEndBreakLate ? 'text-red-500' : 'text-emerald-600' }} text-[12px]"></i>
                                 @else
                                     <span class="text-[16px] font-bold text-[#8E8E93] leading-tight">--:--</span>
                                 @endif

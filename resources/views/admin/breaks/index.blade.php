@@ -73,8 +73,8 @@
                         <tbody>
                             @forelse($attendances as $attendance)
                                 @php
-                                    $startBreak = $attendance->events->where('event_type', 'START_BREAK')->first();
-                                    $endBreak = $attendance->events->where('event_type', 'END_BREAK')->first();
+                                    $startBreak = $attendance->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'START_BREAK');
+                                    $endBreak = $attendance->events->first(fn($e) => ($e->event_type?->value ?? $e->event_type) === 'END_BREAK');
 
                                     $duration = '-';
                                     if ($startBreak && $endBreak) {
@@ -82,46 +82,45 @@
                                         $duration = sprintf('%02d:%02d:%02d', $diff->h, $diff->i, $diff->s);
                                     }
 
-                                    // Custom Status Logic for Admin Panel
-                                    $breakStatusLabel = '-';
-                                    $breakStatusColor = 'secondary';
+                                    // Status Logic for Admin Panel (aligned with Attendance::break_status)
+                                    $breakStatus = $attendance->break_status;
+                                    $breakStatusLabel = is_array($breakStatus) ? ($breakStatus['label'] ?? '-') : ($breakStatus ?? '-');
+                                    $breakStatusColor = is_array($breakStatus) ? ($breakStatus['color'] ?? 'secondary') : 'secondary';
                                     $startColorClass = 'text-muted';
                                     $endColorClass = 'text-muted';
+                                    $isEarlyBreak = false;
+                                    $isLateStartBreak = false;
+                                    $isLateBreak = false;
 
                                     if ($startBreak && $attendance->shift && $attendance->shift->break_start && $attendance->shift->break_end) {
                                         $startColorClass = 'text-warning'; // Default
                                         $endColorClass = 'text-info'; // Default
 
-                                        if (!$endBreak) {
-                                            $breakStatusLabel = 'Sedang Istirahat';
-                                            $breakStatusColor = 'warning';
-                                        } else {
-                                            $actualStartTime = \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i:s');
-                                            $expectedStartTime = \Carbon\Carbon::parse($attendance->shift->break_start)->format('H:i:s');
+                                        $breakStartCfg = $attendance->shift->break_start;
+                                        $breakEndCfg = $attendance->shift->break_end;
+                                        $isFriday = $attendance->date ? \Carbon\Carbon::parse($attendance->date)->isFriday() : \Carbon\Carbon::parse($startBreak->timestamp)->isFriday();
+                                        if ($isFriday && \App\Models\Setting::get('friday_break_enabled', true)) {
+                                            $breakStartCfg = \App\Models\Setting::get('friday_break_start', '11:30');
+                                            $breakEndCfg = \App\Models\Setting::get('friday_break_end', '13:00');
+                                        }
 
+                                        $actualStartTime = \Carbon\Carbon::parse($startBreak->timestamp)->format('H:i:s');
+                                        $expectedStartTime = \Carbon\Carbon::parse($breakStartCfg)->format('H:i:s');
+                                        $expectedEndTime = \Carbon\Carbon::parse($breakEndCfg)->format('H:i:s');
+
+                                        $isEarlyBreak = ($actualStartTime < $expectedStartTime);
+                                        $isLateStartBreak = ($actualStartTime > $expectedEndTime);
+                                        $startColorClass = ($isEarlyBreak || $isLateStartBreak) ? 'text-danger' : 'text-success';
+
+                                        if ($endBreak) {
                                             $actualEndTime = \Carbon\Carbon::parse($endBreak->timestamp)->format('H:i:s');
-                                            $expectedEndTime = \Carbon\Carbon::parse($attendance->shift->break_end)->format('H:i:s');
+                                            $actualDuration = \Carbon\Carbon::parse($endBreak->timestamp)->diffInMinutes(\Carbon\Carbon::parse($startBreak->timestamp), true);
+                                            $expectedDuration = \Carbon\Carbon::parse($breakEndCfg)->diffInMinutes(\Carbon\Carbon::parse($breakStartCfg), true);
 
-                                            $isEarlyBreak = ($actualStartTime < $expectedStartTime);
-                                            $isLateBreak = ($actualEndTime > $expectedEndTime);
-
-                                            // Coloring the time texts
-                                            $startColorClass = $isEarlyBreak ? 'text-danger' : 'text-success';
+                                            $isLateBreak = ($actualEndTime > $expectedEndTime)
+                                                || ($actualEndTime < $expectedStartTime)
+                                                || ($actualDuration > $expectedDuration);
                                             $endColorClass = $isLateBreak ? 'text-danger' : 'text-success';
-
-                                            // Badge Status
-                                            if ($isLateBreak) {
-                                                $breakStatusLabel = 'Terlambat';
-                                                $breakStatusColor = 'danger';
-                                            } else {
-                                                $breakStatusLabel = 'Tepat Waktu';
-                                                $breakStatusColor = 'success';
-                                            }
-
-                                            if ($isEarlyBreak) {
-                                                $breakStatusLabel = $isLateBreak ? 'Terlambat, Istirahat Awal' : 'Istirahat Awal';
-                                                $breakStatusColor = 'danger';
-                                            }
                                         }
                                     }
 
@@ -129,11 +128,11 @@
                                     $inPhoto = $startBreak && $startBreak->selfie_url ? $startBreak->selfie_url : asset('placeholder.svg');
                                     $outPhoto = $endBreak && $endBreak->selfie_url ? $endBreak->selfie_url : asset('placeholder.svg');
 
-                                    $inStatusLabel = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'Awal' : 'Tepat') : '-';
-                                    $inStatusColor = $startBreak ? (isset($isEarlyBreak) && $isEarlyBreak ? 'danger' : 'success') : 'secondary';
+                                    $inStatusLabel = $startBreak ? ($isEarlyBreak ? 'Awal' : ($isLateStartBreak ? 'Terlambat' : 'Tepat')) : '-';
+                                    $inStatusColor = $startBreak ? (($isEarlyBreak || $isLateStartBreak) ? 'danger' : 'success') : 'secondary';
 
-                                    $outStatusLabel = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'Terlambat' : 'Tepat') : '-';
-                                    $outStatusColor = $endBreak ? (isset($isLateBreak) && $isLateBreak ? 'danger' : 'success') : 'secondary';
+                                    $outStatusLabel = $endBreak ? ($isLateBreak ? 'Terlambat' : 'Tepat') : '-';
+                                    $outStatusColor = $endBreak ? ($isLateBreak ? 'danger' : 'success') : 'secondary';
 
                                     $detailData = [
                                         'employee' => $attendance->user->name ?? '-',
